@@ -1,0 +1,575 @@
+import { useState, useRef, useCallback } from "react";
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  SACRED TEMPLES OF BHĀRATA
+//  Aesthetic: Dark Sanctum — gold on obsidian
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const C = {
+  bg: "#0E0A07", bg2: "#161210", bg3: "#1E1814",
+  card: "#1C1712", cardH: "#241E18", cardB: "rgba(255,255,255,0.04)",
+  saffron: "#D4853C", saffronH: "#E69A52", saffronDim: "rgba(212,133,60,0.12)",
+  saffronPale: "rgba(212,133,60,0.08)",
+  gold: "#C4A24E", goldDim: "rgba(196,162,78,0.1)",
+  cream: "#F2E8D4", creamM: "#D4C4A8", creamD: "#A89878",
+  text: "#EDE4D4", textM: "#A89878", textD: "#6E5E48", textDD: "#4A3E30",
+  red: "#C44040", div: "rgba(255,255,255,0.06)", divL: "rgba(255,255,255,0.03)",
+  glass: "rgba(20,16,12,0.75)", glassL: "rgba(20,16,12,0.6)",
+};
+
+const hsl = (h, s, l, a) => a != null ? `hsla(${h},${s}%,${l}%,${a})` : `hsl(${h},${s}%,${l}%)`;
+
+const TEMPLES = [
+  {id:"1",templeName:"Brihadeeswarar Temple",deityPrimary:"Shiva",deitySecondary:"Nandi",village:"",townOrCity:"Thanjavur",district:"Thanjavur",stateOrUnionTerritory:"Tamil Nadu",latitude:10.7828,longitude:79.1318,nearestCity:"Thanjavur",nearestRailwayStation:"Thanjavur Junction",nearestAirport:"Tiruchirappalli · 58 km",routeSummary:"From Trichy Airport, take NH83 towards Thanjavur. The temple stands at the heart of the old city.",historicalSignificance:"Commissioned by Raja Raja Chola I and completed in 1010 CE. UNESCO World Heritage Site with the tallest vimanam of its era at 216 feet. The crowning stone weighs 80 tonnes. The noon shadow of the main tower never falls on the ground.",architectureStyle:"Dravidian · Chola",majorFestivals:"Maha Shivaratri, Thai Poosam, Aippasi Annabhishekam",darshanTimings:"6:00 AM – 12:30 PM · 4:00 PM – 8:30 PM",specialNotes:"Photography in outer courtyard only. The Nandi is carved from a single granite rock weighing 25 tonnes.",isFavorite:true,hue:355},
+  {id:"2",templeName:"Meenakshi Amman Temple",deityPrimary:"Devi",deitySecondary:"Sundareswarar",village:"",townOrCity:"Madurai",district:"Madurai",stateOrUnionTerritory:"Tamil Nadu",latitude:9.9195,longitude:78.1193,nearestCity:"Madurai",nearestRailwayStation:"Madurai Junction",nearestAirport:"Madurai · 12 km",routeSummary:"The temple is the living heart of Madurai. Every road in the city converges toward it.",historicalSignificance:"Rebuilt by Nayak rulers in the 17th century. 14 magnificent gopurams covered in thousands of mythological stucco figures. The Golden Lotus Tank was where Tamil literary works were tested — if they floated, they were divine.",architectureStyle:"Dravidian · Nayak",majorFestivals:"Chithirai Thiruvizha, Navaratri, Float Festival",darshanTimings:"5:00 AM – 12:30 PM · 4:00 PM – 9:30 PM",specialNotes:"Evening ceremony is unforgettable. Sundareswarar is carried to Meenakshi's shrine nightly — symbolizing divine reunion.",isFavorite:false,hue:280},
+  {id:"3",templeName:"Tirumala Venkateswara Temple",deityPrimary:"Vishnu",deitySecondary:"Padmavathi",village:"Tirumala",townOrCity:"Tirupati",district:"Tirupati",stateOrUnionTerritory:"Andhra Pradesh",latitude:13.6833,longitude:79.3472,nearestCity:"Tirupati",nearestRailwayStation:"Tirupati Main",nearestAirport:"Tirupati · 18 km",routeSummary:"From Tirupati station, APSRTC buses run continuously up the ghat road to Tirumala hilltop.",historicalSignificance:"The wealthiest and most visited place of worship on Earth. 50,000–100,000 pilgrims arrive daily. The deity is Swayambhu — self-manifested — with references in Sangam literature spanning 2,000 years.",architectureStyle:"Dravidian",majorFestivals:"Brahmotsavam, Vaikuntha Ekadashi, Rathasapthami",darshanTimings:"3:00 AM – 12:00 AM (24h peak)",specialNotes:"Book via TTD website weeks ahead. Free darshan wait exceeds 10 hours. Strict dress code.",isFavorite:true,hue:215},
+  {id:"4",templeName:"Somnath Temple",deityPrimary:"Shiva",deitySecondary:"",village:"Prabhas Patan",townOrCity:"Veraval",district:"Gir Somnath",stateOrUnionTerritory:"Gujarat",latitude:20.888,longitude:70.4013,nearestCity:"Veraval",nearestRailwayStation:"Veraval",nearestAirport:"Diu · 85 km",routeSummary:"On the Arabian Sea coast. From Veraval station, 6 km east by auto-rickshaw.",historicalSignificance:"First of the 12 Jyotirlingas. Destroyed and rebuilt 17 times across 2,000 years — a symbol of indestructible faith. Rebuilt in 1951 under Sardar Patel. Mentioned in the Rigveda.",architectureStyle:"Chalukya · Kailash Mahameru",majorFestivals:"Maha Shivaratri, Kartik Purnima",darshanTimings:"6:00 AM – 9:30 PM",specialNotes:"Evening aarti on the seashore as the sun sets into the Arabian Sea is profoundly moving. Sound & light show 7:30 PM.",isFavorite:false,hue:32},
+  {id:"5",templeName:"Ramanathaswamy Temple",deityPrimary:"Shiva",deitySecondary:"Parvathavarthini",village:"",townOrCity:"Rameswaram",district:"Ramanathapuram",stateOrUnionTerritory:"Tamil Nadu",latitude:9.2885,longitude:79.3174,nearestCity:"Ramanathapuram",nearestRailwayStation:"Rameswaram",nearestAirport:"Madurai · 163 km",routeSummary:"Cross the Pamban Bridge — India's first sea bridge — to reach Rameswaram island.",historicalSignificance:"A Jyotirlinga and Char Dham site. The longest corridor of any Hindu temple in India at 1,220 metres. Lord Rama worshipped Shiva here before building the bridge to Lanka. 22 sacred wells produce water of different tastes.",architectureStyle:"Dravidian · Pandya-Nayak",majorFestivals:"Maha Shivaratri, Arudhra Darshanam",darshanTimings:"5:00 AM – 1:00 PM · 3:00 PM – 9:00 PM",specialNotes:"Bathing in all 22 theerthams is sacred tradition. The corridor walk is a meditative experience.",isFavorite:false,hue:160},
+  {id:"6",templeName:"Siddhivinayak Temple",deityPrimary:"Ganesha",deitySecondary:"",village:"",townOrCity:"Mumbai",district:"Mumbai City",stateOrUnionTerritory:"Maharashtra",latitude:19.0169,longitude:72.831,nearestCity:"Mumbai",nearestRailwayStation:"Dadar",nearestAirport:"CSMIA · 8 km",routeSummary:"In Prabhadevi, Mumbai. Walk from Dadar station or taxi from anywhere in the city.",historicalSignificance:"Built in 1801. The murti is carved from a single black stone with a right-curving trunk — exceptionally rare and auspicious. Bollywood and business moguls visit before every major venture.",architectureStyle:"Modern Hindu",majorFestivals:"Ganesh Chaturthi, Angarki Chaturthi",darshanTimings:"5:30 AM – 9:50 PM (Tue from 3:15 AM)",specialNotes:"Tuesdays are overwhelmingly crowded. Book paid darshan online. Gold-plated inner dome donated by a devotee.",isFavorite:true,hue:28},
+];
+
+const STATES = [
+  {name:"Tamil Nadu",n:847,h:15},{name:"Andhra Pradesh",n:612,h:345},{name:"Karnataka",n:534,h:42},
+  {name:"Kerala",n:421,h:140},{name:"Maharashtra",n:567,h:25},{name:"Gujarat",n:398,h:35},
+  {name:"Rajasthan",n:389,h:20},{name:"Uttar Pradesh",n:445,h:30},{name:"Odisha",n:312,h:150},
+  {name:"Telangana",n:287,h:10},
+];
+
+const DEITIES = [
+  {name:"Shiva",sk:"शिव",n:1847,h:350},{name:"Vishnu",sk:"विष्णु",n:1523,h:215},
+  {name:"Devi",sk:"देवी",n:1206,h:280},{name:"Ganesha",sk:"गणेश",n:1045,h:28},
+  {name:"Hanuman",sk:"हनुमान",n:892,h:15},{name:"Murugan",sk:"முருகன்",n:634,h:155},
+];
+
+const FD = "'EB Garamond',Georgia,serif";
+const FB = "'DM Sans',system-ui,sans-serif";
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:${C.bg}}
+body{font-family:${FB};background:${C.bg};color:${C.text};-webkit-font-smoothing:antialiased}
+@keyframes rv{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes breathe{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.5;transform:scale(1.04)}}
+@keyframes drift{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-8px)}}
+@keyframes shimmer{0%{left:-120%}60%{left:120%}100%{left:120%}}
+@keyframes glow{0%,100%{opacity:.6}50%{opacity:1}}
+.rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
+.fi{animation:fi .35s ease both}
+.t{transition:transform .1s cubic-bezier(.16,1,.3,1)}.t:active{transform:scale(.965)}
+::-webkit-scrollbar{width:0;height:0}
+input::placeholder{color:${C.textD}}
+`;
+
+// ── Components ──
+
+const SH = ({title, sub, act, onAct, d=0}) => (
+  <div className="rv" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",padding:"0 24px",marginBottom:20,animationDelay:`${d}s`}}>
+    <div>
+      <h2 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream,letterSpacing:-.3,lineHeight:1.1}}>{title}</h2>
+      {sub && <p style={{fontSize:11,color:C.textD,marginTop:6,letterSpacing:.5,fontWeight:500}}>{sub}</p>}
+    </div>
+    {act && <button className="t" onClick={onAct} style={{background:C.saffronDim,border:`1px solid rgba(212,133,60,0.15)`,color:C.saffron,fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:FB,padding:"7px 14px",borderRadius:10,letterSpacing:.6,textTransform:"uppercase",display:"flex",alignItems:"center",gap:4}}>
+      {act} <span style={{fontSize:13}}>→</span>
+    </button>}
+  </div>
+);
+
+const Chip = ({label, active, onClick}) => (
+  <button className="t" onClick={onClick} style={{
+    padding:"9px 18px",borderRadius:100,fontFamily:FB,fontSize:12,fontWeight:active?700:500,
+    cursor:"pointer",whiteSpace:"nowrap",letterSpacing:.3,
+    background:active?C.saffron:C.card,color:active?C.bg:C.textM,
+    border:active?"none":`1px solid ${C.div}`,
+    boxShadow:active?"0 4px 20px rgba(212,133,60,0.3)":"none",
+    transition:"all .2s cubic-bezier(.16,1,.3,1)",
+  }}>{label}</button>
+);
+
+// ── Featured Card ──
+const FCard = ({t, onClick, d=0}) => {
+  const b1 = hsl(t.hue,40,16), b2 = hsl(t.hue,45,8), b3 = hsl(t.hue,50,4);
+  const glow = hsl(t.hue,50,40,0.08);
+  return (
+    <div className="t rv" onClick={() => onClick(t)} style={{
+      width:268,minWidth:268,height:360,borderRadius:26,overflow:"hidden",
+      position:"relative",cursor:"pointer",flexShrink:0,scrollSnapAlign:"start",
+      boxShadow:`0 12px 48px ${hsl(t.hue,30,5,0.5)}, 0 0 0 1px ${hsl(t.hue,30,20,0.1)}`,
+      animationDelay:`${d}s`,
+    }}>
+      <div style={{position:"absolute",inset:0,background:`linear-gradient(168deg,${b1},${b2} 55%,${b3})`}}/>
+      <div style={{position:"absolute",top:"10%",right:"5%",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${glow},transparent 65%)`,filter:"blur(35px)",animation:"breathe 8s ease-in-out infinite",pointerEvents:"none"}}/>
+      {[88,58,32].map((r,i) => (
+        <div key={i} style={{position:"absolute",top:"32%",left:"50%",width:r*2,height:r*2,borderRadius:"50%",border:`1px solid ${hsl(t.hue,30,50,0.04)}`,transform:"translate(-50%,-50%)",animation:`breathe ${7+i*3}s ease-in-out infinite ${i*.6}s`,pointerEvents:"none"}}/>
+      ))}
+      <div style={{position:"absolute",top:"26%",left:"50%",animation:"drift 10s ease-in-out infinite",pointerEvents:"none"}}>
+        <span style={{fontFamily:FD,fontSize:68,color:hsl(t.hue,30,60,0.03),userSelect:"none"}}>ॐ</span>
+      </div>
+      {/* Shimmer */}
+      <div style={{position:"absolute",top:0,left:"-120%",width:"60%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent)",animation:"shimmer 5s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Fav */}
+      <div style={{position:"absolute",top:18,right:18,zIndex:3}}>
+        <div className="t" style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(255,255,255,0.05)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.3)":"rgba(255,255,255,0.04)"}`,fontSize:14,color:"#fff",transition:"all .3s"}}>
+          {t.isFavorite ? "♥" : "♡"}
+        </div>
+      </div>
+      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"100px 22px 24px",background:`linear-gradient(transparent,${b3}cc 30%,${b3} 100%)`}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 14px",borderRadius:100,background:"rgba(255,255,255,0.05)",backdropFilter:"blur(8px)",marginBottom:12,border:"1px solid rgba(255,255,255,0.04)",fontSize:10.5,color:"rgba(255,255,255,0.75)",fontWeight:700,letterSpacing:.7}}>
+          <div style={{width:5,height:5,borderRadius:"50%",background:C.saffronH,boxShadow:`0 0 8px ${C.saffron}`}}/>{t.deityPrimary}
+        </div>
+        <h3 style={{fontFamily:FD,fontSize:23,fontWeight:500,color:"#fff",lineHeight:1.15,marginBottom:8}}>{t.templeName}</h3>
+        <div style={{fontSize:11.5,color:"rgba(255,255,255,0.35)",display:"flex",alignItems:"center",gap:5}}>
+          <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>{t.townOrCity}, {t.stateOrUnionTerritory}
+        </div>
+        {t.architectureStyle && <div style={{marginTop:10,fontSize:11,color:"rgba(255,255,255,0.18)",fontFamily:FD,fontStyle:"italic"}}>{t.architectureStyle}</div>}
+      </div>
+    </div>
+  );
+};
+
+// ── List Card ──
+const LCard = ({t, onClick, d=0}) => (
+  <div className="t rv" onClick={() => onClick(t)} style={{
+    display:"flex",gap:16,padding:14,margin:"0 24px 12px",borderRadius:20,
+    background:C.card,cursor:"pointer",animationDelay:`${d}s`,
+    border:`1px solid ${C.div}`,
+  }}>
+    <div style={{width:88,height:88,minWidth:88,borderRadius:16,position:"relative",overflow:"hidden",background:`linear-gradient(155deg,${hsl(t.hue,40,16)},${hsl(t.hue,50,5)})`}}>
+      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <span style={{fontFamily:FD,fontSize:28,color:"rgba(255,255,255,0.04)"}}>ॐ</span>
+      </div>
+      <div style={{position:"absolute",top:"5%",right:"0",width:50,height:50,borderRadius:"50%",background:`radial-gradient(circle,${hsl(t.hue,50,40,0.1)},transparent)`,filter:"blur(10px)"}}/>
+      <div style={{position:"absolute",bottom:6,left:6,padding:"3px 9px",borderRadius:7,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(6px)",fontSize:9,color:"rgba(255,255,255,0.85)",fontWeight:700,letterSpacing:.5}}>{t.deityPrimary}</div>
+    </div>
+    <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
+      <h3 style={{fontFamily:FD,fontSize:17,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
+      <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
+        <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}, {t.district}
+      </div>
+      <div style={{marginTop:2}}>
+        <span style={{fontSize:10,padding:"3px 9px",borderRadius:99,background:C.saffronDim,color:C.saffron,fontWeight:700,letterSpacing:.3,border:`1px solid rgba(212,133,60,0.1)`}}>
+          {(t.architectureStyle || t.deityPrimary).split("·")[0].trim()}
+        </span>
+      </div>
+    </div>
+    <div style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD}}>{t.isFavorite?"♥":"♡"}</div>
+  </div>
+);
+
+const IR = ({emoji, label, value, action}) => (
+  <div className="t" onClick={action} style={{display:"flex",alignItems:"flex-start",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:action?"pointer":"default"}}>
+    <div style={{width:44,height:44,borderRadius:14,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>{emoji}</div>
+    <div style={{flex:1,paddingTop:1}}>
+      <div style={{fontSize:9.5,color:C.textDD,fontWeight:700,textTransform:"uppercase",letterSpacing:2,marginBottom:6}}>{label}</div>
+      <div style={{fontSize:14,color:C.creamM,lineHeight:1.65,whiteSpace:"pre-line"}}>{value}</div>
+    </div>
+    {action && <span style={{color:C.textDD,fontSize:16,paddingTop:12}}>→</span>}
+  </div>
+);
+
+const Empty = ({emoji, title, sub}) => (
+  <div className="fi" style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 40px",textAlign:"center"}}>
+    <div style={{width:96,height:96,borderRadius:32,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:40}}>{emoji}</div>
+    <h3 style={{fontFamily:FD,fontSize:22,color:C.cream,marginBottom:10}}>{title}</h3>
+    <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260}}>{sub}</p>
+  </div>
+);
+
+const BNav = ({a, on}) => {
+  const items = [{k:"home",e:"◈",l:"Home"},{k:"explore",e:"◎",l:"Explore"},{k:"nearby",e:"◉",l:"Nearby"},{k:"saved",e:"♥",l:"Saved"},{k:"profile",e:"◇",l:"Profile"}];
+  return (
+    <div style={{position:"sticky",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(24px) saturate(150%)",borderTop:`1px solid ${C.div}`,display:"flex",justifyContent:"space-around",padding:"6px 0 18px"}}>
+      {items.map(t => (
+        <button key={t.k} className="t" onClick={() => on(t.k)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
+          {a === t.k && <div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:20,height:3,borderRadius:2,background:C.saffron,boxShadow:`0 0 12px ${C.saffron}88`}}/>}
+          <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:a===t.k?C.saffronDim:"transparent",transition:"all .2s",fontSize:a===t.k?18:16,color:a===t.k?C.saffron:C.textDD}}>{t.e}</div>
+          <span style={{fontSize:9.5,fontWeight:a===t.k?700:500,color:a===t.k?C.saffron:C.textDD,letterSpacing:.6}}>{t.l}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
+
+const Home = ({nav, oT}) => (
+  <div className="fi" style={{paddingBottom:28}}>
+    {/* HERO */}
+    <div style={{background:`linear-gradient(175deg,${hsl(350,35,14)},${hsl(350,40,7)} 50%,${C.bg})`,padding:"26px 24px 40px",borderRadius:"0 0 38px 38px",position:"relative",overflow:"hidden",boxShadow:`0 20px 60px ${hsl(350,30,5,0.5)}`}}>
+      <div style={{position:"absolute",top:"-5%",right:"-10%",width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.06),transparent 60%)",filter:"blur(50px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",bottom:"10%",left:"-15%",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(160,80,180,0.03),transparent 60%)",filter:"blur(40px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none"}}/>
+      {[100,68,40].map((r,i) => <div key={i} style={{position:"absolute",top:"60%",left:"50%",width:r*2,height:r*2,borderRadius:"50%",border:"1px solid rgba(212,133,60,0.03)",transform:"translate(-50%,-50%)",animation:`breathe ${7+i*3}s ease-in-out infinite ${i*.7}s`,pointerEvents:"none"}}/>)}
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:36,position:"relative",zIndex:2}}>
+        <div>
+          <div style={{fontSize:9,color:"rgba(212,133,60,0.4)",fontWeight:800,letterSpacing:5,textTransform:"uppercase",marginBottom:10}}>Discover</div>
+          <h1 style={{fontFamily:FD,fontSize:40,color:C.cream,fontWeight:500,lineHeight:.96,letterSpacing:-.5}}>Sacred<br/>Temples</h1>
+          <p style={{fontFamily:FD,fontSize:16,color:C.textDD,marginTop:10,fontStyle:"italic"}}>of Bhārata</p>
+        </div>
+        <button className="t" style={{width:46,height:46,borderRadius:15,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:17,color:C.textD}}>⊙</button>
+      </div>
+
+      <div className="t" onClick={() => nav("search")} style={{padding:"15px 20px",borderRadius:18,background:"rgba(255,255,255,0.04)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",gap:14,border:`1px solid ${C.div}`,cursor:"pointer",position:"relative",zIndex:2}}>
+        <span style={{fontSize:16,color:C.textDD}}>⌕</span>
+        <span style={{flex:1,fontSize:14,color:C.textDD}}>Search temples, deities, places…</span>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"center",gap:44,marginTop:32,position:"relative",zIndex:2}}>
+        {[{v:"3,000+",l:"Temples"},{v:"28+",l:"States"},{v:"6",l:"Deities"}].map(s => (
+          <div key={s.l} style={{textAlign:"center"}}>
+            <div style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream}}>{s.v}</div>
+            <div style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,marginTop:4,textTransform:"uppercase"}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* DEITIES */}
+    <div style={{marginTop:38}}>
+      <SH title="Sacred Deities" sub="Explore by divine presence" d={.1}/>
+      <div style={{display:"flex",gap:14,overflowX:"auto",padding:"0 24px 8px",scrollSnapType:"x mandatory"}}>
+        {DEITIES.map((d,i) => (
+          <div key={d.name} className="t rv" onClick={() => nav("explore")} style={{minWidth:98,textAlign:"center",cursor:"pointer",animationDelay:`${.15+i*.08}s`,scrollSnapAlign:"start"}}>
+            <div style={{width:78,height:78,borderRadius:24,margin:"0 auto 12px",position:"relative",overflow:"hidden",background:`linear-gradient(155deg,${hsl(d.h,38,18)},${hsl(d.h,48,7)})`,boxShadow:`0 6px 24px ${hsl(d.h,30,8,0.5)}, 0 0 0 1px ${hsl(d.h,30,20,0.1)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span style={{fontFamily:FD,fontSize:28,color:"rgba(255,255,255,0.65)",userSelect:"none"}}>{d.sk}</span>
+              <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 25% 20%,rgba(255,255,255,0.1),transparent 55%)"}}/>
+            </div>
+            <div style={{fontSize:13,fontWeight:700,color:C.creamM,letterSpacing:.2}}>{d.name}</div>
+            <div style={{fontSize:10,color:C.textD,marginTop:3}}>{d.n.toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* FEATURED */}
+    <div style={{marginTop:40}}>
+      <SH title="Featured Temples" sub="Handpicked sacred destinations" act="See all" onAct={() => nav("explore")} d={.25}/>
+      <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
+        {TEMPLES.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.3+i*.1}/>)}
+      </div>
+    </div>
+
+    {/* BY STATE */}
+    <div style={{marginTop:42}}>
+      <SH title="By State" sub="Region by region" act="All" onAct={() => nav("stateBrowse")} d={.4}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"0 24px"}}>
+        {STATES.slice(0,6).map((s,i) => (
+          <div key={s.name} className="t rv" onClick={() => nav("stateBrowse")} style={{padding:"20px 16px",borderRadius:18,cursor:"pointer",background:C.card,border:`1px solid ${C.div}`,position:"relative",overflow:"hidden",animationDelay:`${.45+i*.06}s`}}>
+            <div style={{position:"absolute",top:-18,right:-18,width:55,height:55,borderRadius:"50%",background:hsl(s.h,40,40),opacity:.04}}/>
+            <div style={{width:8,height:8,borderRadius:4,background:hsl(s.h,40,45),opacity:.35,marginBottom:14}}/>
+            <div style={{fontFamily:FD,fontSize:16,fontWeight:500,color:C.creamM,lineHeight:1.2}}>{s.name}</div>
+            <div style={{fontSize:11,color:C.textD,marginTop:5}}>{s.n} temples</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* NEARBY + SAVED */}
+    <div style={{marginTop:42}}>
+      <SH title="Near You" act="Map" onAct={() => nav("nearby")} d={.55}/>
+      {TEMPLES.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.6+i*.08}/>)}
+    </div>
+    <div style={{marginTop:32,marginBottom:16}}>
+      <SH title="Saved" act="All" onAct={() => nav("saved")} d={.7}/>
+      <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px"}}>
+        {TEMPLES.filter(x => x.isFavorite).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.75+i*.08}/>)}
+      </div>
+    </div>
+
+    <div style={{textAlign:"center",padding:"48px 48px 16px"}}>
+      <div style={{fontFamily:FD,fontSize:15.5,color:C.textD,fontStyle:"italic",lineHeight:1.7}}>
+        "Where the temple bell resonates,<br/>the divine presence abides."
+      </div>
+      <div style={{width:36,height:1,background:C.div,margin:"20px auto 0"}}/>
+    </div>
+  </div>
+);
+
+const Explore = ({nav, oT}) => {
+  const [v, setV] = useState("list");
+  const [fl, setFl] = useState([]);
+  const opts = ["All","Shiva","Vishnu","Devi","Ganesha","Jyotirlinga","Heritage"];
+  const tg = f => { if (f === "All") { setFl([]); return; } setFl(p => p.includes(f) ? p.filter(x => x !== f) : [...p, f]); };
+  return (
+    <div className="fi" style={{paddingBottom:24}}>
+      <div style={{padding:"22px 24px 16px",display:"flex",alignItems:"center"}}>
+        <h1 style={{fontFamily:FD,fontSize:30,fontWeight:500,flex:1,color:C.cream}}>Explore</h1>
+        <div style={{display:"flex",gap:6}}>
+          {["grid","list"].map(m => (
+            <button key={m} className="t" onClick={() => setV(m)} style={{width:40,height:40,borderRadius:12,border:v===m?`2px solid ${C.saffron}`:`1px solid ${C.div}`,background:v===m?C.saffronDim:C.card,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:v===m?C.saffron:C.textD}}>
+              {m === "grid" ? "▦" : "☰"}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="t" onClick={() => nav("search")} style={{margin:"0 24px",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
+        <span style={{fontSize:15,color:C.textDD}}>⌕</span><span style={{flex:1,fontSize:14,color:C.textD}}>Search temples…</span>
+      </div>
+      <div style={{position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(20px)",padding:"14px 0 12px",borderBottom:`1px solid ${C.divL}`}}>
+        <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 24px"}}>{opts.map(f => <Chip key={f} label={f} active={f === "All" ? fl.length === 0 : fl.includes(f)} onClick={() => tg(f)}/>)}</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 24px 0"}}>
+          <span style={{fontSize:12,color:C.textD}}>{TEMPLES.length} temples</span>
+          <button className="t" style={{background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`,padding:"5px 12px",borderRadius:8,fontSize:11,color:C.saffron,fontWeight:700,cursor:"pointer",fontFamily:FB}}>↕ Sort</button>
+        </div>
+      </div>
+      <div style={{paddingTop:16}}>
+        {v === "list" ? TEMPLES.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.05}/>) : (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
+            {TEMPLES.map((t,i) => (
+              <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`,background:`linear-gradient(165deg,${hsl(t.hue,40,16)},${hsl(t.hue,50,4)})`}}>
+                <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontFamily:FD,fontSize:44,color:"rgba(255,255,255,0.02)"}}>ॐ</span></div>
+                <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"70px 14px 16px",background:`linear-gradient(transparent,${hsl(t.hue,50,3,0.9)})`}}>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontWeight:700,marginBottom:5,letterSpacing:.5}}>{t.deityPrimary}</div>
+                  <h3 style={{fontFamily:FD,fontSize:15.5,fontWeight:500,color:"#fff",lineHeight:1.2}}>{t.templeName}</h3>
+                  <div style={{marginTop:5,fontSize:11,color:"rgba(255,255,255,0.28)",display:"flex",alignItems:"center",gap:4}}>
+                    <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.15)"}}/>{t.townOrCity}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const Detail = ({temple: t, onBack}) => {
+  const [sv, setSv] = useState(t.isFavorite);
+  const [tab, setTab] = useState("overview");
+  const b1 = hsl(t.hue,40,16), b2 = hsl(t.hue,45,8), b3 = hsl(t.hue,50,3);
+  return (
+    <div className="fi" style={{paddingBottom:44}}>
+      <div style={{height:390,position:"relative",overflow:"hidden",background:`linear-gradient(178deg,${b1},${b2} 50%,${b3})`}}>
+        <div style={{position:"absolute",top:"12%",right:"0",width:300,height:300,borderRadius:"50%",background:`radial-gradient(circle,${hsl(t.hue,50,40,0.06)},transparent 55%)`,filter:"blur(50px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
+        {[100,68,40].map((r,i) => <div key={i} style={{position:"absolute",top:"38%",left:"50%",width:r*2,height:r*2,borderRadius:"50%",border:`1px solid ${hsl(t.hue,30,50,0.035)}`,transform:"translate(-50%,-50%)",animation:`breathe ${7+i*3}s ease-in-out infinite ${i*.5}s`,pointerEvents:"none"}}/>)}
+        <div style={{position:"absolute",top:"28%",left:"50%",animation:"drift 9s ease-in-out infinite",pointerEvents:"none"}}><span style={{fontFamily:FD,fontSize:80,color:hsl(t.hue,30,50,0.02)}}>{"\u0950"}</span></div>
+        <div style={{position:"absolute",top:18,left:18,right:18,display:"flex",justifyContent:"space-between",zIndex:5}}>
+          <button className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.25)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.05)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff"}}>←</button>
+          <div style={{display:"flex",gap:8}}>
+            <button className="t" style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.25)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.05)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(255,255,255,0.6)"}}>↗</button>
+            <button className="t" onClick={() => setSv(!sv)} style={{width:46,height:46,borderRadius:15,background:sv?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.25)",backdropFilter:"blur(14px)",border:`1px solid ${sv?"rgba(196,64,64,0.3)":"rgba(255,255,255,0.05)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,color:"#fff",boxShadow:sv?"0 4px 20px rgba(196,64,64,0.3)":"none",transition:"all .3s"}}>{sv?"♥":"♡"}</button>
+          </div>
+        </div>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"130px 24px 26px",background:`linear-gradient(transparent,${b3}bb 30%,${b3} 100%)`}}>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 15px",borderRadius:100,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.04)"}}>
+              <div style={{width:5,height:5,borderRadius:"50%",background:C.saffronH,boxShadow:`0 0 8px ${C.saffron}`}}/><span style={{fontSize:11,color:"rgba(255,255,255,0.85)",fontWeight:700,letterSpacing:.6}}>{t.deityPrimary}</span>
+            </div>
+            {t.deitySecondary && <div style={{padding:"5px 13px",borderRadius:100,background:"rgba(255,255,255,0.03)",fontSize:11,color:"rgba(255,255,255,0.35)"}}>{t.deitySecondary}</div>}
+          </div>
+          <h1 style={{fontFamily:FD,fontSize:32,fontWeight:500,color:"#fff",lineHeight:1.1}}>{t.templeName}</h1>
+          <div style={{marginTop:10,fontSize:12.5,color:"rgba(255,255,255,0.3)",display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.15)"}}/>{[t.village,t.townOrCity,t.district,t.stateOrUnionTerritory].filter(Boolean).join(" · ")}
+          </div>
+        </div>
+      </div>
+      <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50}}>
+        {["overview","travel","gallery"].map(tb => (
+          <button key={tb} className="t" onClick={() => setTab(tb)} style={{padding:"16px 18px",border:"none",background:"none",cursor:"pointer",fontSize:13,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
+        ))}
+      </div>
+      <div style={{padding:"10px 24px 0"}}>
+        {tab === "overview" && <div className="fi">
+          {t.architectureStyle && <IR emoji="🏛" label="Architecture" value={t.architectureStyle}/>}
+          <div style={{padding:"22px 0",borderBottom:`1px solid ${C.divL}`}}>
+            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+              <div style={{width:44,height:44,borderRadius:14,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>✦</div>
+              <div style={{fontSize:9.5,color:C.textDD,fontWeight:700,textTransform:"uppercase",letterSpacing:2}}>Historical Significance</div>
+            </div>
+            <p style={{fontSize:17,color:C.creamM,lineHeight:1.95,fontFamily:FD,paddingLeft:58}}>{t.historicalSignificance}</p>
+          </div>
+          <IR emoji="🕐" label="Darshan Timings" value={t.darshanTimings}/>
+          <IR emoji="🎪" label="Festivals" value={t.majorFestivals}/>
+          {t.specialNotes && <div style={{margin:"22px 0",padding:20,borderRadius:18,background:C.goldDim,border:`1px solid rgba(196,162,78,0.08)`}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><span style={{fontSize:14}}>📋</span><span style={{fontSize:9.5,fontWeight:800,color:C.gold,letterSpacing:1.2,textTransform:"uppercase"}}>Notes</span></div>
+            <p style={{fontSize:13.5,color:C.creamD,lineHeight:1.8}}>{t.specialNotes}</p>
+          </div>}
+        </div>}
+        {tab === "travel" && <div className="fi">
+          <IR emoji="📍" label="Nearest City" value={t.nearestCity}/>
+          <IR emoji="🚂" label="Railway" value={t.nearestRailwayStation}/>
+          <IR emoji="✈" label="Airport" value={t.nearestAirport}/>
+          <div style={{padding:"22px 0",borderBottom:`1px solid ${C.divL}`}}>
+            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+              <div style={{width:44,height:44,borderRadius:14,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🧭</div>
+              <div style={{fontSize:9.5,color:C.textDD,fontWeight:700,textTransform:"uppercase",letterSpacing:2}}>How to Get There</div>
+            </div>
+            <p style={{fontSize:14.5,color:C.creamM,lineHeight:1.8,paddingLeft:58}}>{t.routeSummary}</p>
+          </div>
+          <button className="t" style={{width:"100%",marginTop:24,padding:16,borderRadius:18,background:C.saffron,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 4px 24px rgba(212,133,60,0.3)"}}>🗺 Open in Maps</button>
+          <div style={{marginTop:16,padding:16,borderRadius:16,background:C.bg3,textAlign:"center",border:`1px solid ${C.div}`}}>
+            <span style={{fontSize:12,color:C.textD,letterSpacing:1,fontWeight:600}}>{t.latitude.toFixed(4)}°N · {t.longitude.toFixed(4)}°E</span>
+          </div>
+        </div>}
+        {tab === "gallery" && <Empty emoji="🖼" title="Gallery Coming Soon" sub="Photos will appear here as the collection grows."/>}
+      </div>
+    </div>
+  );
+};
+
+const Search = ({oT, onBack}) => {
+  const [q, setQ] = useState("");
+  const rec = ["Jyotirlinga temples","Temples near Chennai","Devi temples Kerala","UNESCO heritage"];
+  const res = TEMPLES.filter(t => [t.templeName,t.deityPrimary,t.townOrCity,t.district,t.stateOrUnionTerritory].some(f => f.toLowerCase().includes(q.toLowerCase())));
+  return (
+    <div className="fi" style={{minHeight:"100vh",background:C.bg}}>
+      <div style={{padding:"16px 24px",display:"flex",alignItems:"center",gap:14}}>
+        <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+        <div style={{flex:1,padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`2px solid ${C.saffron}`,boxShadow:`0 0 0 4px ${C.saffronDim}`}}>
+          <span style={{fontSize:15,color:C.saffron}}>⌕</span>
+          <input autoFocus type="text" placeholder="Temple, deity, city, state…" value={q} onChange={e => setQ(e.target.value)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
+          {q && <button className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button>}
+        </div>
+      </div>
+      {!q ? <div style={{padding:"18px 24px"}}>
+        <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:18}}>Recent</div>
+        {rec.map((s,i) => (
+          <div key={s} className="t rv" onClick={() => setQ(s)} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.04}s`}}>
+            <span style={{fontSize:13,color:C.textDD}}>↻</span><span style={{fontSize:14,color:C.textM}}>{s}</span>
+          </div>
+        ))}
+      </div> : res.length > 0 ? <div style={{paddingTop:10}}>
+        <div style={{padding:"0 24px 12px",fontSize:12,color:C.textD}}>{res.length} result{res.length !== 1 ? "s" : ""}</div>
+        {res.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.04}/>)}
+      </div> : <Empty emoji="⌕" title="No Results" sub={`Nothing for "${q}". Try another search.`}/>}
+    </div>
+  );
+};
+
+const StateBrowse = ({nav, onBack}) => (
+  <div className="fi" style={{paddingBottom:24}}>
+    <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
+      <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+      <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream}}>States</h1>
+    </div>
+    <div style={{padding:"0 24px"}}>{STATES.map((s,i) => (
+      <div key={s.name} className="t rv" onClick={() => nav("districtBrowse")} style={{display:"flex",alignItems:"center",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.03}s`}}>
+        <div style={{width:50,height:50,borderRadius:16,background:hsl(s.h,30,12),border:`1px solid ${hsl(s.h,30,20,0.15)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{width:10,height:10,borderRadius:4,background:hsl(s.h,40,40),opacity:.3}}/>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:FD,fontSize:17,fontWeight:500,color:C.creamM}}>{s.name}</div>
+          <div style={{fontSize:12,color:C.textD,marginTop:4}}>{s.n} temples</div>
+        </div>
+        <span style={{color:C.textDD,fontSize:16}}>→</span>
+      </div>
+    ))}</div>
+  </div>
+);
+
+const DistrictBrowse = ({onBack, oT}) => {
+  const ds = [{n:"Thanjavur",c:89},{n:"Madurai",c:72},{n:"Kanchipuram",c:65},{n:"Ramanathapuram",c:48},{n:"Tiruchirappalli",c:56},{n:"Chidambaram",c:34}];
+  return (
+    <div className="fi" style={{paddingBottom:24}}>
+      <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
+        <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+        <div><h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream}}>Tamil Nadu</h1><div style={{fontSize:12,color:C.textD,marginTop:3}}>847 temples</div></div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"12px 24px"}}>
+        {ds.map((d,i) => (
+          <div key={d.n} className="t rv" style={{padding:20,borderRadius:18,background:C.card,cursor:"pointer",border:`1px solid ${C.div}`,animationDelay:`${i*.04}s`}}>
+            <div style={{fontFamily:FD,fontSize:16,fontWeight:500,color:C.creamM}}>{d.n}</div><div style={{fontSize:11,color:C.textD,marginTop:5}}>{d.c} temples</div>
+          </div>))}
+      </div>
+      <div style={{marginTop:28}}><SH title="Top Temples" d={.2}/>
+        {TEMPLES.filter(t => t.stateOrUnionTerritory === "Tamil Nadu").map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.25+i*.06}/>)}
+      </div>
+    </div>
+  );
+};
+
+const Nearby = ({oT}) => (
+  <div className="fi" style={{paddingBottom:24}}>
+    <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Nearby</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>Temples around your location</p></div>
+    <div style={{margin:"0 24px",height:230,borderRadius:24,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
+      <div style={{width:72,height:72,borderRadius:22,background:C.card,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>🗺</div>
+      <span style={{fontSize:13,color:C.textD,fontWeight:600}}>Enable location for map</span>
+    </div>
+    <div style={{display:"flex",gap:8,padding:"20px 24px",overflowX:"auto"}}><Chip label="Within 10 km" active/><Chip label="10–50 km"/><Chip label="50–100 km"/></div>
+    {TEMPLES.slice(0,4).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.06}/>)}
+  </div>
+);
+
+const Saved = ({oT}) => {
+  const sv = TEMPLES.filter(t => t.isFavorite);
+  return (
+    <div className="fi" style={{paddingBottom:24}}>
+      <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temples</p></div>
+      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it."/>}
+    </div>
+  );
+};
+
+const Profile = () => (
+  <div className="fi" style={{paddingBottom:24}}>
+    <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Profile</h1></div>
+    <div style={{margin:"0 24px",padding:30,borderRadius:26,background:C.card,border:`1px solid ${C.div}`,textAlign:"center"}}>
+      <div style={{width:84,height:84,borderRadius:"50%",margin:"0 auto 18px",background:`linear-gradient(140deg,${C.saffron},${C.saffronH})`,boxShadow:"0 6px 28px rgba(212,133,60,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,color:"#fff",animation:"glow 4s ease-in-out infinite"}}>☸</div>
+      <h2 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream}}>Devotee</h2>
+      <p style={{fontSize:12,color:C.textD,marginTop:8,lineHeight:1.6}}>Sign in to sync across devices</p>
+      <button className="t" style={{marginTop:22,padding:"13px 38px",borderRadius:16,background:C.saffron,color:"#fff",border:"none",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:FB,boxShadow:"0 4px 20px rgba(212,133,60,0.3)"}}>Sign In</button>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,padding:"22px 24px 0"}}>
+      {[{l:"Saved",v:"3",e:"♥"},{l:"Visited",v:"0",e:"◉"},{l:"Reviews",v:"0",e:"✦"}].map((s,i) => (
+        <div key={s.l} className="rv" style={{padding:20,borderRadius:20,background:C.card,textAlign:"center",border:`1px solid ${C.div}`,animationDelay:`${.1+i*.06}s`}}>
+          <span style={{fontSize:20,color:C.saffron}}>{s.e}</span>
+          <div style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream,marginTop:10}}>{s.v}</div>
+          <div style={{fontSize:9.5,color:C.textD,marginTop:4,fontWeight:700,letterSpacing:.8,textTransform:"uppercase"}}>{s.l}</div>
+        </div>
+      ))}
+    </div>
+    <div style={{padding:"26px 24px 0"}}>
+      {[{e:"⚙",l:"Settings"},{e:"⊙",l:"Notifications"},{e:"☰",l:"Collections"},{e:"ⓘ",l:"About"}].map((m,i) => (
+        <div key={m.l} className="t rv" style={{display:"flex",alignItems:"center",gap:16,padding:"16px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${.2+i*.05}s`}}>
+          <div style={{width:46,height:46,borderRadius:15,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:C.saffron}}>{m.e}</div>
+          <span style={{flex:1,fontSize:14,fontWeight:600,color:C.creamM}}>{m.l}</span>
+          <span style={{color:C.textDD,fontSize:16}}>→</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ━━━━━━━━━━━━━━━━━━━ APP SHELL ━━━━━━━━━━━━━━━━━━━
+
+export default function App() {
+  const [scr, setScr] = useState("home");
+  const [tmp, setTmp] = useState(null);
+  const [stk, setStk] = useState(["home"]);
+  const ref = useRef(null);
+
+  const nav = useCallback(t => { setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  const back = useCallback(() => { setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  const oT = useCallback(t => { setTmp(t); nav("detail"); }, [nav]);
+  const onTab = useCallback(t => { setStk([t]); setScr(t); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+
+  const tabs = ["home","explore","nearby","saved","profile"];
+  const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
+  const showNav = !["detail","search","stateBrowse","districtBrowse"].includes(scr);
+
+  let page = null;
+  if (scr === "home") page = <Home nav={nav} oT={oT}/>;
+  else if (scr === "explore") page = <Explore nav={nav} oT={oT}/>;
+  else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back}/>;
+  else if (scr === "search") page = <Search oT={oT} onBack={back}/>;
+  else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back}/>;
+  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT}/>;
+  else if (scr === "nearby") page = <Nearby oT={oT}/>;
+  else if (scr === "saved") page = <Saved oT={oT}/>;
+  else if (scr === "profile") page = <Profile/>;
+  else page = <Home nav={nav} oT={oT}/>;
+
+  return (
+    <div>
+      <style>{CSS}</style>
+      <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,position:"relative",boxShadow:"0 0 120px rgba(0,0,0,0.3)",display:"flex",flexDirection:"column"}}>
+        <div ref={ref} style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
+          {page}
+        </div>
+        {showNav && <BNav a={aTab} on={onTab}/>}
+      </div>
+    </div>
+  );
+}

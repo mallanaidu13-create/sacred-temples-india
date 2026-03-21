@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1A1410"/>
+  <circle cx="256" cy="210" r="90" fill="none" stroke="rgba(212,133,60,0.2)" stroke-width="1.5"/>
+  <circle cx="256" cy="210" r="55" fill="none" stroke="rgba(212,133,60,0.12)" stroke-width="1"/>
+  <text x="256" y="238" text-anchor="middle" font-family="Georgia,serif" font-size="72" fill="rgba(242,232,212,0.85)">&#x0950;</text>
+  <text x="256" y="370" text-anchor="middle" font-family="Georgia,serif" font-size="32" fill="rgba(212,133,60,0.7)">&#x092E;&#x0902;&#x0926;&#x093F;&#x0930;</text>
+  <text x="256" y="410" text-anchor="middle" font-family="system-ui" font-size="18" fill="rgba(242,232,212,0.25)" font-weight="700" letter-spacing="5">TEMPLES</text>
+</svg>
