@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "./supabase.js";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  SACRED TEMPLES OF BHĀRATA
@@ -18,15 +19,6 @@ const C = {
 };
 
 const hsl = (h, s, l, a) => a != null ? `hsla(${h},${s}%,${l}%,${a})` : `hsl(${h},${s}%,${l}%)`;
-
-const TEMPLES = [
-  {id:"1",templeName:"Brihadeeswarar Temple",deityPrimary:"Shiva",deitySecondary:"Nandi",village:"",townOrCity:"Thanjavur",district:"Thanjavur",stateOrUnionTerritory:"Tamil Nadu",latitude:10.7828,longitude:79.1318,nearestCity:"Thanjavur",nearestRailwayStation:"Thanjavur Junction",nearestAirport:"Tiruchirappalli · 58 km",routeSummary:"From Trichy Airport, take NH83 towards Thanjavur. The temple stands at the heart of the old city.",historicalSignificance:"Commissioned by Raja Raja Chola I and completed in 1010 CE. UNESCO World Heritage Site with the tallest vimanam of its era at 216 feet. The crowning stone weighs 80 tonnes. The noon shadow of the main tower never falls on the ground.",architectureStyle:"Dravidian · Chola",majorFestivals:"Maha Shivaratri, Thai Poosam, Aippasi Annabhishekam",darshanTimings:"6:00 AM – 12:30 PM · 4:00 PM – 8:30 PM",specialNotes:"Photography in outer courtyard only. The Nandi is carved from a single granite rock weighing 25 tonnes.",isFavorite:true,hue:355},
-  {id:"2",templeName:"Meenakshi Amman Temple",deityPrimary:"Devi",deitySecondary:"Sundareswarar",village:"",townOrCity:"Madurai",district:"Madurai",stateOrUnionTerritory:"Tamil Nadu",latitude:9.9195,longitude:78.1193,nearestCity:"Madurai",nearestRailwayStation:"Madurai Junction",nearestAirport:"Madurai · 12 km",routeSummary:"The temple is the living heart of Madurai. Every road in the city converges toward it.",historicalSignificance:"Rebuilt by Nayak rulers in the 17th century. 14 magnificent gopurams covered in thousands of mythological stucco figures. The Golden Lotus Tank was where Tamil literary works were tested — if they floated, they were divine.",architectureStyle:"Dravidian · Nayak",majorFestivals:"Chithirai Thiruvizha, Navaratri, Float Festival",darshanTimings:"5:00 AM – 12:30 PM · 4:00 PM – 9:30 PM",specialNotes:"Evening ceremony is unforgettable. Sundareswarar is carried to Meenakshi's shrine nightly — symbolizing divine reunion.",isFavorite:false,hue:280},
-  {id:"3",templeName:"Tirumala Venkateswara Temple",deityPrimary:"Vishnu",deitySecondary:"Padmavathi",village:"Tirumala",townOrCity:"Tirupati",district:"Tirupati",stateOrUnionTerritory:"Andhra Pradesh",latitude:13.6833,longitude:79.3472,nearestCity:"Tirupati",nearestRailwayStation:"Tirupati Main",nearestAirport:"Tirupati · 18 km",routeSummary:"From Tirupati station, APSRTC buses run continuously up the ghat road to Tirumala hilltop.",historicalSignificance:"The wealthiest and most visited place of worship on Earth. 50,000–100,000 pilgrims arrive daily. The deity is Swayambhu — self-manifested — with references in Sangam literature spanning 2,000 years.",architectureStyle:"Dravidian",majorFestivals:"Brahmotsavam, Vaikuntha Ekadashi, Rathasapthami",darshanTimings:"3:00 AM – 12:00 AM (24h peak)",specialNotes:"Book via TTD website weeks ahead. Free darshan wait exceeds 10 hours. Strict dress code.",isFavorite:true,hue:215},
-  {id:"4",templeName:"Somnath Temple",deityPrimary:"Shiva",deitySecondary:"",village:"Prabhas Patan",townOrCity:"Veraval",district:"Gir Somnath",stateOrUnionTerritory:"Gujarat",latitude:20.888,longitude:70.4013,nearestCity:"Veraval",nearestRailwayStation:"Veraval",nearestAirport:"Diu · 85 km",routeSummary:"On the Arabian Sea coast. From Veraval station, 6 km east by auto-rickshaw.",historicalSignificance:"First of the 12 Jyotirlingas. Destroyed and rebuilt 17 times across 2,000 years — a symbol of indestructible faith. Rebuilt in 1951 under Sardar Patel. Mentioned in the Rigveda.",architectureStyle:"Chalukya · Kailash Mahameru",majorFestivals:"Maha Shivaratri, Kartik Purnima",darshanTimings:"6:00 AM – 9:30 PM",specialNotes:"Evening aarti on the seashore as the sun sets into the Arabian Sea is profoundly moving. Sound & light show 7:30 PM.",isFavorite:false,hue:32},
-  {id:"5",templeName:"Ramanathaswamy Temple",deityPrimary:"Shiva",deitySecondary:"Parvathavarthini",village:"",townOrCity:"Rameswaram",district:"Ramanathapuram",stateOrUnionTerritory:"Tamil Nadu",latitude:9.2885,longitude:79.3174,nearestCity:"Ramanathapuram",nearestRailwayStation:"Rameswaram",nearestAirport:"Madurai · 163 km",routeSummary:"Cross the Pamban Bridge — India's first sea bridge — to reach Rameswaram island.",historicalSignificance:"A Jyotirlinga and Char Dham site. The longest corridor of any Hindu temple in India at 1,220 metres. Lord Rama worshipped Shiva here before building the bridge to Lanka. 22 sacred wells produce water of different tastes.",architectureStyle:"Dravidian · Pandya-Nayak",majorFestivals:"Maha Shivaratri, Arudhra Darshanam",darshanTimings:"5:00 AM – 1:00 PM · 3:00 PM – 9:00 PM",specialNotes:"Bathing in all 22 theerthams is sacred tradition. The corridor walk is a meditative experience.",isFavorite:false,hue:160},
-  {id:"6",templeName:"Siddhivinayak Temple",deityPrimary:"Ganesha",deitySecondary:"",village:"",townOrCity:"Mumbai",district:"Mumbai City",stateOrUnionTerritory:"Maharashtra",latitude:19.0169,longitude:72.831,nearestCity:"Mumbai",nearestRailwayStation:"Dadar",nearestAirport:"CSMIA · 8 km",routeSummary:"In Prabhadevi, Mumbai. Walk from Dadar station or taxi from anywhere in the city.",historicalSignificance:"Built in 1801. The murti is carved from a single black stone with a right-curving trunk — exceptionally rare and auspicious. Bollywood and business moguls visit before every major venture.",architectureStyle:"Modern Hindu",majorFestivals:"Ganesh Chaturthi, Angarki Chaturthi",darshanTimings:"5:30 AM – 9:50 PM (Tue from 3:15 AM)",specialNotes:"Tuesdays are overwhelmingly crowded. Book paid darshan online. Gold-plated inner dome donated by a devotee.",isFavorite:true,hue:28},
-];
 
 const STATES = [
   {name:"Tamil Nadu",n:847,h:15},{name:"Andhra Pradesh",n:612,h:345},{name:"Karnataka",n:534,h:42},
@@ -193,7 +185,7 @@ const BNav = ({a, on}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
-const Home = ({nav, oT}) => (
+const Home = ({nav, oT, temples}) => (
   <div className="fi" style={{paddingBottom:28}}>
     {/* HERO */}
     <div style={{background:`linear-gradient(175deg,${hsl(350,35,14)},${hsl(350,40,7)} 50%,${C.bg})`,padding:"26px 24px 40px",borderRadius:"0 0 38px 38px",position:"relative",overflow:"hidden",boxShadow:`0 20px 60px ${hsl(350,30,5,0.5)}`}}>
@@ -246,7 +238,7 @@ const Home = ({nav, oT}) => (
     <div style={{marginTop:40}}>
       <SH title="Featured Temples" sub="Handpicked sacred destinations" act="See all" onAct={() => nav("explore")} d={.25}/>
       <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
-        {TEMPLES.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.3+i*.1}/>)}
+        {temples.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.3+i*.1}/>)}
       </div>
     </div>
 
@@ -268,12 +260,12 @@ const Home = ({nav, oT}) => (
     {/* NEARBY + SAVED */}
     <div style={{marginTop:42}}>
       <SH title="Near You" act="Map" onAct={() => nav("nearby")} d={.55}/>
-      {TEMPLES.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.6+i*.08}/>)}
+      {temples.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.6+i*.08}/>)}
     </div>
     <div style={{marginTop:32,marginBottom:16}}>
       <SH title="Saved" act="All" onAct={() => nav("saved")} d={.7}/>
       <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px"}}>
-        {TEMPLES.filter(x => x.isFavorite).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.75+i*.08}/>)}
+        {temples.filter(x => x.isFavorite).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.75+i*.08}/>)}
       </div>
     </div>
 
@@ -286,7 +278,7 @@ const Home = ({nav, oT}) => (
   </div>
 );
 
-const Explore = ({nav, oT}) => {
+const Explore = ({nav, oT, temples}) => {
   const [v, setV] = useState("list");
   const [fl, setFl] = useState([]);
   const opts = ["All","Shiva","Vishnu","Devi","Ganesha","Jyotirlinga","Heritage"];
@@ -309,14 +301,14 @@ const Explore = ({nav, oT}) => {
       <div style={{position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(20px)",padding:"14px 0 12px",borderBottom:`1px solid ${C.divL}`}}>
         <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 24px"}}>{opts.map(f => <Chip key={f} label={f} active={f === "All" ? fl.length === 0 : fl.includes(f)} onClick={() => tg(f)}/>)}</div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 24px 0"}}>
-          <span style={{fontSize:12,color:C.textD}}>{TEMPLES.length} temples</span>
+          <span style={{fontSize:12,color:C.textD}}>{temples.length} temples</span>
           <button className="t" style={{background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`,padding:"5px 12px",borderRadius:8,fontSize:11,color:C.saffron,fontWeight:700,cursor:"pointer",fontFamily:FB}}>↕ Sort</button>
         </div>
       </div>
       <div style={{paddingTop:16}}>
-        {v === "list" ? TEMPLES.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.05}/>) : (
+        {v === "list" ? temples.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.05}/>) : (
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
-            {TEMPLES.map((t,i) => (
+            {temples.map((t,i) => (
               <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`,background:`linear-gradient(165deg,${hsl(t.hue,40,16)},${hsl(t.hue,50,4)})`}}>
                 <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontFamily:FD,fontSize:44,color:"rgba(255,255,255,0.02)"}}>ॐ</span></div>
                 <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"70px 14px 16px",background:`linear-gradient(transparent,${hsl(t.hue,50,3,0.9)})`}}>
@@ -409,10 +401,10 @@ const Detail = ({temple: t, onBack}) => {
   );
 };
 
-const Search = ({oT, onBack}) => {
+const Search = ({oT, onBack, temples}) => {
   const [q, setQ] = useState("");
   const rec = ["Jyotirlinga temples","Temples near Chennai","Devi temples Kerala","UNESCO heritage"];
-  const res = TEMPLES.filter(t => [t.templeName,t.deityPrimary,t.townOrCity,t.district,t.stateOrUnionTerritory].some(f => f.toLowerCase().includes(q.toLowerCase())));
+  const res = temples.filter(t => [t.templeName,t.deityPrimary,t.townOrCity,t.district,t.stateOrUnionTerritory].some(f => f.toLowerCase().includes(q.toLowerCase())));
   return (
     <div className="fi" style={{minHeight:"100vh",background:C.bg}}>
       <div style={{padding:"16px 24px",display:"flex",alignItems:"center",gap:14}}>
@@ -459,7 +451,7 @@ const StateBrowse = ({nav, onBack}) => (
   </div>
 );
 
-const DistrictBrowse = ({onBack, oT}) => {
+const DistrictBrowse = ({onBack, oT, temples}) => {
   const ds = [{n:"Thanjavur",c:89},{n:"Madurai",c:72},{n:"Kanchipuram",c:65},{n:"Ramanathapuram",c:48},{n:"Tiruchirappalli",c:56},{n:"Chidambaram",c:34}];
   return (
     <div className="fi" style={{paddingBottom:24}}>
@@ -474,13 +466,13 @@ const DistrictBrowse = ({onBack, oT}) => {
           </div>))}
       </div>
       <div style={{marginTop:28}}><SH title="Top Temples" d={.2}/>
-        {TEMPLES.filter(t => t.stateOrUnionTerritory === "Tamil Nadu").map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.25+i*.06}/>)}
+        {temples.filter(t => t.stateOrUnionTerritory === "Tamil Nadu").map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.25+i*.06}/>)}
       </div>
     </div>
   );
 };
 
-const Nearby = ({oT}) => (
+const Nearby = ({oT, temples}) => (
   <div className="fi" style={{paddingBottom:24}}>
     <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Nearby</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>Temples around your location</p></div>
     <div style={{margin:"0 24px",height:230,borderRadius:24,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
@@ -488,12 +480,12 @@ const Nearby = ({oT}) => (
       <span style={{fontSize:13,color:C.textD,fontWeight:600}}>Enable location for map</span>
     </div>
     <div style={{display:"flex",gap:8,padding:"20px 24px",overflowX:"auto"}}><Chip label="Within 10 km" active/><Chip label="10–50 km"/><Chip label="50–100 km"/></div>
-    {TEMPLES.slice(0,4).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.06}/>)}
+    {temples.slice(0,4).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.06}/>)}
   </div>
 );
 
-const Saved = ({oT}) => {
-  const sv = TEMPLES.filter(t => t.isFavorite);
+const Saved = ({oT, temples}) => {
+  const sv = temples.filter(t => t.isFavorite);
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temples</p></div>
@@ -538,7 +530,16 @@ export default function App() {
   const [scr, setScr] = useState("home");
   const [tmp, setTmp] = useState(null);
   const [stk, setStk] = useState(["home"]);
+  const [temples, setTemples] = useState([]);
+  const [loading, setLoading] = useState(true);
   const ref = useRef(null);
+
+  useEffect(() => {
+    supabase.from("temples").select("*").then(({ data, error }) => {
+      if (!error && data) setTemples(data);
+      setLoading(false);
+    });
+  }, []);
 
   const nav = useCallback(t => { setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
   const back = useCallback(() => { setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
@@ -549,17 +550,25 @@ export default function App() {
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
   const showNav = !["detail","search","stateBrowse","districtBrowse"].includes(scr);
 
+  if (loading) return (
+    <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
+      <style>{CSS}</style>
+      <div style={{fontFamily:FD,fontSize:48,color:"rgba(212,133,60,0.15)",animation:"breathe 3s ease-in-out infinite"}}>ॐ</div>
+      <div style={{fontSize:11,color:C.textDD,fontWeight:700,letterSpacing:3,textTransform:"uppercase"}}>Loading</div>
+    </div>
+  );
+
   let page = null;
-  if (scr === "home") page = <Home nav={nav} oT={oT}/>;
-  else if (scr === "explore") page = <Explore nav={nav} oT={oT}/>;
+  if (scr === "home") page = <Home nav={nav} oT={oT} temples={temples}/>;
+  else if (scr === "explore") page = <Explore nav={nav} oT={oT} temples={temples}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back}/>;
-  else if (scr === "search") page = <Search oT={oT} onBack={back}/>;
+  else if (scr === "search") page = <Search oT={oT} onBack={back} temples={temples}/>;
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back}/>;
-  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT}/>;
-  else if (scr === "nearby") page = <Nearby oT={oT}/>;
-  else if (scr === "saved") page = <Saved oT={oT}/>;
+  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} temples={temples}/>;
+  else if (scr === "nearby") page = <Nearby oT={oT} temples={temples}/>;
+  else if (scr === "saved") page = <Saved oT={oT} temples={temples}/>;
   else if (scr === "profile") page = <Profile/>;
-  else page = <Home nav={nav} oT={oT}/>;
+  else page = <Home nav={nav} oT={oT} temples={temples}/>;
 
   return (
     <div>
