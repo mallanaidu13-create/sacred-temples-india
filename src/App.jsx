@@ -28,10 +28,29 @@ const STATES = [
 ];
 
 const DEITIES = [
-  {name:"Shiva",sk:"शिव",n:1847,h:350},{name:"Vishnu",sk:"विष्णु",n:1523,h:215},
-  {name:"Devi",sk:"देवी",n:1206,h:280},{name:"Ganesha",sk:"गणेश",n:1045,h:28},
-  {name:"Hanuman",sk:"हनुमान",n:892,h:15},{name:"Murugan",sk:"முருகன்",n:634,h:155},
+  {name:"Shiva",sk:"शिव",n:1847,h:350,icon:"☽"},
+  {name:"Vishnu",sk:"विष्णु",n:1523,h:215,icon:"☸"},
+  {name:"Devi",sk:"देवी",n:1206,h:280,icon:"✦"},
+  {name:"Ganesha",sk:"गणेश",n:1045,h:28,icon:"◈"},
+  {name:"Hanuman",sk:"हनुमान",n:892,h:15,icon:"◉"},
+  {name:"Murugan",sk:"முருகன்",n:634,h:155,icon:"⊹"},
 ];
+
+const SHLOKAS = [
+  {sk:"ॐ नमः शिवाय", tr:"Om Namah Shivaya", src:"Shiva Panchakshara"},
+  {sk:"ॐ नमो नारायणाय", tr:"Om Namo Narayanaya", src:"Vishnu Ashtakshara"},
+  {sk:"ॐ गं गणपतये नमः", tr:"Om Gam Ganapataye Namah", src:"Ganesha Mantra"},
+  {sk:"ॐ ऐं ह्रीं क्लीं चामुण्डायै विच्चे", tr:"Invocation of Chamunda Devi", src:"Devi Mantra"},
+  {sk:"ॐ हनुमते नमः", tr:"Om Hanumate Namah", src:"Hanuman Mantra"},
+];
+
+const PANCHANG = {
+  tithi: "Tritiya",
+  nakshatra: "Rohini",
+  yoga: "Siddha",
+  muhurta: "Abhijit (11:52 – 12:44)",
+  vara: "Ravivara (Sunday)",
+};
 
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
@@ -51,6 +70,8 @@ body{font-family:${FB};background:${C.bg};color:${C.text};-webkit-font-smoothing
 @keyframes omGlow{0%,100%{filter:drop-shadow(0 0 18px rgba(212,133,60,.45)) drop-shadow(0 0 40px rgba(212,133,60,.2))}50%{filter:drop-shadow(0 0 36px rgba(212,133,60,.75)) drop-shadow(0 0 80px rgba(212,133,60,.38)) drop-shadow(0 0 140px rgba(212,133,60,.12))}}
 @keyframes ringExpand{0%{transform:translate(-50%,-50%) scale(.55);opacity:.7}100%{transform:translate(-50%,-50%) scale(1.6);opacity:0}}
 @keyframes soundWave{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes panchangGlow{0%,100%{box-shadow:0 0 0 1px rgba(196,162,78,0.08)}50%{box-shadow:0 0 0 1px rgba(196,162,78,0.18),0 0 32px rgba(196,162,78,0.06)}}
 .rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
 .fi{animation:fi .35s ease both}
 .t{transition:transform .1s cubic-bezier(.16,1,.3,1)}.t:active{transform:scale(.965)}
@@ -114,7 +135,76 @@ const useOmChant = () => {
 
 // ── Components ──
 
-const SH = ({title, sub, act, onAct, d=0}) => (
+const ShlokaWidget = () => {
+  const [idx, setIdx] = useState(0);
+  const [fading, setFading] = useState(false);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setFading(true);
+      setTimeout(() => { setIdx(i => (i + 1) % SHLOKAS.length); setFading(false); }, 400);
+    }, 6000);
+    return () => clearInterval(id);
+  }, []);
+  const s = SHLOKAS[idx];
+  return (
+    <div style={{margin:"32px 24px 0",borderRadius:22,padding:"22px 20px",background:`linear-gradient(140deg,rgba(196,162,78,0.07),rgba(212,133,60,0.04))`,border:`1px solid rgba(196,162,78,0.1)`,animation:"panchangGlow 6s ease-in-out infinite",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:-12,right:-12,fontFamily:FD,fontSize:80,color:"rgba(196,162,78,0.04)",lineHeight:1,pointerEvents:"none",userSelect:"none"}}>ॐ</div>
+      <div style={{fontSize:9,color:C.gold,fontWeight:800,letterSpacing:3,textTransform:"uppercase",marginBottom:14,opacity:.7}}>Daily Mantra</div>
+      <div style={{transition:"opacity .4s ease",opacity:fading?0:1}}>
+        <div style={{fontFamily:FD,fontSize:22,color:C.cream,lineHeight:1.5,letterSpacing:.5,marginBottom:10}}>{s.sk}</div>
+        <div style={{fontSize:12.5,color:C.creamD,fontStyle:"italic",marginBottom:6}}>{s.tr}</div>
+        <div style={{fontSize:10,color:C.textDD,fontWeight:600,letterSpacing:.8}}>— {s.src}</div>
+      </div>
+      <div style={{display:"flex",gap:6,marginTop:18}}>
+        {SHLOKAS.map((_,i) => (
+          <div key={i} onClick={() => { setFading(true); setTimeout(()=>{setIdx(i);setFading(false);},300); }} style={{width:i===idx?18:6,height:5,borderRadius:3,background:i===idx?C.gold:`rgba(196,162,78,0.18)`,transition:"all .4s cubic-bezier(.16,1,.3,1)",cursor:"pointer"}}/>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const PanchangWidget = () => (
+  <div style={{margin:"28px 24px 0",borderRadius:22,padding:"20px 20px 18px",background:C.card,border:`1px solid ${C.div}`}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+      <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:3,textTransform:"uppercase"}}>Today's Panchang</div>
+      <div style={{fontSize:10,color:C.saffron,fontWeight:700,padding:"4px 10px",borderRadius:8,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`}}>{PANCHANG.vara}</div>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+      {[
+        {l:"Tithi",v:PANCHANG.tithi,e:"🌙"},
+        {l:"Nakshatra",v:PANCHANG.nakshatra,e:"✦"},
+        {l:"Yoga",v:PANCHANG.yoga,e:"◎"},
+        {l:"Muhurta",v:PANCHANG.muhurta,e:"⊙"},
+      ].map(p => (
+        <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.bg3,border:`1px solid ${C.divL}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+            <span style={{fontSize:12}}>{p.e}</span>
+            <span style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{p.l}</span>
+          </div>
+          <div style={{fontSize:13,color:C.creamM,fontWeight:600,lineHeight:1.3}}>{p.v}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const PilgrimageCard = ({onNav}) => (
+  <div className="t" onClick={() => onNav("explore")} style={{margin:"28px 24px 0",borderRadius:24,padding:"24px 22px",cursor:"pointer",position:"relative",overflow:"hidden",background:`linear-gradient(140deg,${hsl(215,40,12)},${hsl(215,50,6)})`}}>
+    <div style={{position:"absolute",top:"-20%",right:"-10%",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(100,140,255,0.07),transparent 65%)",filter:"blur(30px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
+    <div style={{fontSize:9,color:"rgba(140,170,255,0.5)",fontWeight:800,letterSpacing:3,textTransform:"uppercase",marginBottom:10}}>New Feature</div>
+    <h3 style={{fontFamily:FD,fontSize:20,fontWeight:500,color:"#fff",lineHeight:1.2,marginBottom:8}}>Pilgrimage Circuits</h3>
+    <p style={{fontSize:12.5,color:"rgba(255,255,255,0.35)",lineHeight:1.7,marginBottom:18}}>Curated sacred routes — Char Dham, Jyotirlinga Yatra, Shakti Peethas & more.</p>
+    <div style={{display:"flex",alignItems:"center",gap:8}}>
+      {["Char Dham","Jyotirlinga","Shakti Peethas"].map(t => (
+        <div key={t} style={{padding:"5px 12px",borderRadius:8,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.05)",fontSize:10,color:"rgba(255,255,255,0.5)",fontWeight:600,letterSpacing:.3}}>{t}</div>
+      ))}
+    </div>
+    <div style={{position:"absolute",top:20,right:20,width:40,height:40,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,color:"rgba(255,255,255,0.3)"}}>→</div>
+  </div>
+);
+
+const SH =({title, sub, act, onAct, d=0}) => (
   <div className="rv" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",padding:"0 24px",marginBottom:20,animationDelay:`${d}s`}}>
     <div>
       <h2 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream,letterSpacing:-.3,lineHeight:1.1}}>{title}</h2>
@@ -298,28 +388,34 @@ const Home = ({nav, oT, temples}) => {
       </div>
 
       {/* Stats */}
-      <div style={{display:"flex",justifyContent:"center",gap:44,marginTop:28,position:"relative",zIndex:2}}>
-        {[{v:"3,000+",l:"Temples"},{v:"28+",l:"States"},{v:"6",l:"Deities"}].map(s => (
-          <div key={s.l} style={{textAlign:"center"}}>
-            <div style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream}}>{s.v}</div>
-            <div style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,marginTop:4,textTransform:"uppercase"}}>{s.l}</div>
+      <div style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2}}>
+        {[{v:"3,000+",l:"Temples"},{v:"28+",l:"States"},{v:"6",l:"Deities"}].map((s,i) => (
+          <div key={s.l} style={{textAlign:"center",flex:1,padding:"14px 0",borderRadius:16,position:"relative"}}>
+            {i > 0 && <div style={{position:"absolute",left:0,top:"20%",bottom:"20%",width:1,background:C.divL}}/>}
+            <div style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.saffron,textShadow:`0 0 20px rgba(212,133,60,0.3)`}}>{s.v}</div>
+            <div style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,marginTop:5,textTransform:"uppercase"}}>{s.l}</div>
           </div>
         ))}
       </div>
     </div>
+
+    {/* DAILY SHLOKA */}
+    <ShlokaWidget/>
 
     {/* DEITIES */}
     <div style={{marginTop:38}}>
       <SH title="Sacred Deities" sub="Explore by divine presence" d={.1}/>
       <div style={{display:"flex",gap:14,overflowX:"auto",padding:"0 24px 8px",scrollSnapType:"x mandatory"}}>
         {DEITIES.map((d,i) => (
-          <div key={d.name} className="t rv" onClick={() => nav("explore")} style={{minWidth:98,textAlign:"center",cursor:"pointer",animationDelay:`${.15+i*.08}s`,scrollSnapAlign:"start"}}>
-            <div style={{width:78,height:78,borderRadius:24,margin:"0 auto 12px",position:"relative",overflow:"hidden",background:`linear-gradient(155deg,${hsl(d.h,38,18)},${hsl(d.h,48,7)})`,boxShadow:`0 6px 24px ${hsl(d.h,30,8,0.5)}, 0 0 0 1px ${hsl(d.h,30,20,0.1)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{fontFamily:FD,fontSize:28,color:"rgba(255,255,255,0.65)",userSelect:"none"}}>{d.sk}</span>
-              <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 25% 20%,rgba(255,255,255,0.1),transparent 55%)"}}/>
+          <div key={d.name} className="t rv" onClick={() => nav("explore")} style={{minWidth:102,textAlign:"center",cursor:"pointer",animationDelay:`${.15+i*.08}s`,scrollSnapAlign:"start"}}>
+            <div style={{width:82,height:82,borderRadius:26,margin:"0 auto 12px",position:"relative",overflow:"hidden",background:`linear-gradient(155deg,${hsl(d.h,38,18)},${hsl(d.h,48,7)})`,boxShadow:`0 8px 28px ${hsl(d.h,30,8,0.6)}, 0 0 0 1px ${hsl(d.h,30,20,0.12)}`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:2}}>
+              <span style={{fontFamily:FD,fontSize:22,color:hsl(d.h,40,70,0.9),userSelect:"none",lineHeight:1}}>{d.sk}</span>
+              <span style={{fontSize:18,color:hsl(d.h,50,75,0.35),lineHeight:1}}>{d.icon}</span>
+              <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 25% 18%,rgba(255,255,255,0.12),transparent 55%)"}}/>
+              <div style={{position:"absolute",bottom:0,left:0,right:0,height:28,background:`linear-gradient(transparent,${hsl(d.h,50,5,0.6)})`}}/>
             </div>
-            <div style={{fontSize:13,fontWeight:700,color:C.creamM,letterSpacing:.2}}>{d.name}</div>
-            <div style={{fontSize:10,color:C.textD,marginTop:3}}>{d.n.toLocaleString()}</div>
+            <div style={{fontSize:12.5,fontWeight:700,color:C.creamM,letterSpacing:.2}}>{d.name}</div>
+            <div style={{fontSize:10,color:C.textD,marginTop:3}}>{d.n.toLocaleString()} temples</div>
           </div>
         ))}
       </div>
@@ -347,6 +443,12 @@ const Home = ({nav, oT, temples}) => {
         ))}
       </div>
     </div>
+
+    {/* PANCHANG */}
+    <PanchangWidget/>
+
+    {/* PILGRIMAGE CIRCUIT */}
+    <PilgrimageCard onNav={nav}/>
 
     {/* NEARBY + SAVED */}
     <div style={{marginTop:42}}>
@@ -450,8 +552,8 @@ const Detail = ({temple: t, onBack}) => {
         </div>
       </div>
       <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50}}>
-        {["overview","travel","gallery"].map(tb => (
-          <button key={tb} className="t" onClick={() => setTab(tb)} style={{padding:"16px 18px",border:"none",background:"none",cursor:"pointer",fontSize:13,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
+        {["overview","travel","visit","gallery"].map(tb => (
+          <button key={tb} className="t" onClick={() => setTab(tb)} style={{padding:"16px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
         ))}
       </div>
       <div style={{padding:"10px 24px 0"}}>
@@ -485,6 +587,30 @@ const Detail = ({temple: t, onBack}) => {
           <button className="t" style={{width:"100%",marginTop:24,padding:16,borderRadius:18,background:C.saffron,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 4px 24px rgba(212,133,60,0.3)"}}>🗺 Open in Maps</button>
           <div style={{marginTop:16,padding:16,borderRadius:16,background:C.bg3,textAlign:"center",border:`1px solid ${C.div}`}}>
             <span style={{fontSize:12,color:C.textD,letterSpacing:1,fontWeight:600}}>{t.latitude.toFixed(4)}°N · {t.longitude.toFixed(4)}°E</span>
+          </div>
+        </div>}
+        {tab === "visit" && <div className="fi">
+          <div style={{padding:"18px 0",borderBottom:`1px solid ${C.divL}`}}>
+            <div style={{fontSize:9.5,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Visitor Checklist</div>
+            {[
+              {e:"👟",l:"Footwear",v:"Remove before entering the main sanctum"},
+              {e:"👘",l:"Dress Code",v:"Modest attire — cover shoulders and legs"},
+              {e:"🌸",l:"Offerings",v:"Flowers, fruits, or prasad as appropriate"},
+              {e:"📱",l:"Photography",v:"Check temple rules — some areas prohibited"},
+              {e:"🔕",l:"Mobile",v:"Keep on silent during darshan"},
+              {e:"💳",l:"Entry Fee",v:"Verify ticket/donation requirements at gate"},
+            ].map(c => (
+              <div key={c.l} style={{display:"flex",gap:14,padding:"14px 0",borderBottom:`1px solid ${C.divL}`}}>
+                <div style={{width:40,height:40,borderRadius:12,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{c.e}</div>
+                <div><div style={{fontSize:13,color:C.cream,fontWeight:600,marginBottom:4}}>{c.l}</div><div style={{fontSize:12,color:C.textD,lineHeight:1.6}}>{c.v}</div></div>
+              </div>
+            ))}
+          </div>
+          <button className="t" style={{width:"100%",marginTop:24,padding:16,borderRadius:18,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 6px 28px rgba(212,133,60,0.35)"}}>
+            ◎ Plan My Visit
+          </button>
+          <div style={{marginTop:12,textAlign:"center",fontSize:11.5,color:C.textDD,lineHeight:1.7}}>
+            Best season: Oct – Feb · Avoid: Amavasya crowds
           </div>
         </div>}
         {tab === "gallery" && <Empty emoji="🖼" title="Gallery Coming Soon" sub="Photos will appear here as the collection grows."/>}
