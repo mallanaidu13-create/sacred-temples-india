@@ -603,6 +603,8 @@ const BNav = ({a, on, savedCount=0}) => {
 
 const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
   const { playing, toggle } = useOmChant();
+  const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
+  const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* HERO */}
@@ -784,7 +786,7 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
               <div style={{fontSize:13,fontWeight:700,color:"rgba(255,242,200,0.88)"}}>Coming Soon</div>
               <div style={{fontSize:10.5,color:"rgba(255,215,140,0.38)",marginTop:3}}>Be first when it launches</div>
             </div>
-            <div style={{padding:"9px 18px",borderRadius:13,background:"rgba(196,162,78,0.16)",border:"1px solid rgba(196,162,78,0.32)",fontSize:11,fontWeight:700,color:"rgba(196,162,78,0.88)",letterSpacing:.5,cursor:"pointer",whiteSpace:"nowrap"}}>Notify Me →</div>
+            <div onClick={notified ? undefined : onNotify} style={{padding:"9px 18px",borderRadius:13,background:notified?"rgba(60,180,60,0.12)":"rgba(196,162,78,0.16)",border:`1px solid ${notified?"rgba(60,200,60,0.3)":"rgba(196,162,78,0.32)"}`,fontSize:11,fontWeight:700,color:notified?"rgba(100,220,100,0.9)":"rgba(196,162,78,0.88)",letterSpacing:.5,cursor:notified?"default":"pointer",whiteSpace:"nowrap",transition:"all .3s"}}>{notified?"✓ Noted!":"Notify Me →"}</div>
           </div>
         </div>
       </div>
@@ -866,7 +868,8 @@ const Explore = ({nav, oT, temples, isDark, onToggleTheme}) => {
         </div>
       </div>
       <div style={{paddingTop:16}}>
-        {v === "list" ? sorted.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.04}/>) : (
+        {sorted.length === 0 ? <Empty emoji="🏛" title="No Temples Found" sub="Try removing a filter or changing your sort order."/> :
+        v === "list" ? sorted.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.04}/>) : (
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
             {sorted.map((t,i) => (
               <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`}}>
@@ -890,6 +893,17 @@ const Explore = ({nav, oT, temples, isDark, onToggleTheme}) => {
 const Detail = ({temple: t, onBack, isDark, onToggleTheme}) => {
   const [sv, setSv] = useState(t.isFavorite);
   const [tab, setTab] = useState("overview");
+  const [shared, setShared] = useState(false);
+  const doShare = () => {
+    const text = `${t.templeName} — ${t.townOrCity}, ${t.stateOrUnionTerritory}`;
+    if (navigator.share) {
+      navigator.share({title: t.templeName, text, url: window.location.href}).catch(()=>{});
+    } else {
+      try { navigator.clipboard.writeText(text); } catch(e) {}
+    }
+    setShared(true);
+    setTimeout(() => setShared(false), 2200);
+  };
   const b3 = hsl(t.hue,50,3);
   const imgSrc = `https://source.unsplash.com/featured/860x520/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
@@ -910,7 +924,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme}) => {
                 : <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               }
             </button>
-            <button className="t" style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(255,255,255,0.7)"}}>↗</button>
+            <button className="t" onClick={doShare} title="Share temple" style={{width:46,height:46,borderRadius:15,background:shared?"rgba(60,160,60,0.7)":"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:`1px solid ${shared?"rgba(60,200,60,0.35)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:shared?"#fff":"rgba(255,255,255,0.7)",transition:"all .3s"}}>{shared?"✓":"↗"}</button>
             <button className="t" onClick={() => setSv(!sv)} style={{width:46,height:46,borderRadius:15,background:sv?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:`1px solid ${sv?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,color:"#fff",boxShadow:sv?"0 4px 20px rgba(196,64,64,0.3)":"none",transition:"all .3s"}}>{sv?"♥":"♡"}</button>
           </div>
         </div>
@@ -980,10 +994,12 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme}) => {
             </div>
             <p style={{fontSize:14.5,color:C.creamM,lineHeight:1.8,paddingLeft:58}}>{t.routeSummary}</p>
           </div>
-          <button className="t" style={{width:"100%",marginTop:24,padding:16,borderRadius:18,background:C.saffron,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 4px 24px rgba(212,133,60,0.3)"}}>🗺 Open in Maps</button>
-          <div style={{marginTop:16,padding:16,borderRadius:16,background:C.bg3,textAlign:"center",border:`1px solid ${C.div}`}}>
-            <span style={{fontSize:12,color:C.textD,letterSpacing:1,fontWeight:600}}>{t.latitude.toFixed(4)}°N · {t.longitude.toFixed(4)}°E</span>
-          </div>
+          <button className="t" onClick={() => t.latitude && t.longitude && window.open(`https://maps.google.com/maps?q=${t.latitude},${t.longitude}&z=15`,'_blank')} style={{width:"100%",marginTop:24,padding:16,borderRadius:18,background:C.saffron,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 4px 24px rgba(212,133,60,0.3)"}}>🗺 Open in Maps</button>
+          {(t.latitude || t.longitude) && (
+            <div style={{marginTop:16,padding:16,borderRadius:16,background:C.bg3,textAlign:"center",border:`1px solid ${C.div}`}}>
+              <span style={{fontSize:12,color:C.textD,letterSpacing:1,fontWeight:600}}>{t.latitude?.toFixed(4)}°N · {t.longitude?.toFixed(4)}°E</span>
+            </div>
+          )}
         </div>}
         {tab === "visit" && <div className="fi">
           <div style={{padding:"18px 0",borderBottom:`1px solid ${C.divL}`}}>
@@ -1049,10 +1065,11 @@ const Search = ({oT, onBack, temples}) => {
         </div>
       </div>
       {!q ? <div style={{padding:"18px 24px"}}>
-        <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:18}}>Recent</div>
+        <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:18}}>Popular Searches</div>
         {rec.map((s,i) => (
           <div key={s} className="t rv" onClick={() => setQ(s)} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.04}s`}}>
-            <span style={{fontSize:13,color:C.textDD}}>↻</span><span style={{fontSize:14,color:C.textM}}>{s}</span>
+            <svg width="13" height="13" fill="none" stroke={C.textDD} strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span style={{fontSize:14,color:C.textM}}>{s}</span>
           </div>
         ))}
       </div> : res.length > 0 ? <div style={{paddingTop:10}}>
@@ -1063,7 +1080,7 @@ const Search = ({oT, onBack, temples}) => {
   );
 };
 
-const StateBrowse = ({nav, onBack, isDark, onToggleTheme}) => (
+const StateBrowse = ({nav, onBack, isDark, onToggleTheme, onSelect}) => (
   <div className="fi" style={{paddingBottom:24}}>
     <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
       <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
@@ -1071,7 +1088,7 @@ const StateBrowse = ({nav, onBack, isDark, onToggleTheme}) => (
       <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
     </div>
     <div style={{padding:"0 24px"}}>{STATES.map((s,i) => (
-      <div key={s.name} className="t rv" onClick={() => nav("districtBrowse")} style={{display:"flex",alignItems:"center",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.03}s`}}>
+      <div key={s.name} className="t rv" onClick={() => { onSelect(s); nav("districtBrowse"); }} style={{display:"flex",alignItems:"center",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.03}s`}}>
         <div style={{width:50,height:50,borderRadius:16,background:hsl(s.h,30,12),border:`1px solid ${hsl(s.h,30,20,0.15)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div style={{width:10,height:10,borderRadius:4,background:hsl(s.h,40,40),opacity:.3}}/>
         </div>
@@ -1085,42 +1102,138 @@ const StateBrowse = ({nav, onBack, isDark, onToggleTheme}) => (
   </div>
 );
 
-const DistrictBrowse = ({onBack, oT, temples, isDark, onToggleTheme}) => {
-  const ds = [{n:"Thanjavur",c:89},{n:"Madurai",c:72},{n:"Kanchipuram",c:65},{n:"Ramanathapuram",c:48},{n:"Tiruchirappalli",c:56},{n:"Chidambaram",c:34}];
+const DISTRICT_MAP = {
+  "Tamil Nadu": [{n:"Thanjavur",c:89},{n:"Madurai",c:72},{n:"Kanchipuram",c:65},{n:"Ramanathapuram",c:48},{n:"Tiruchirappalli",c:56},{n:"Chidambaram",c:34}],
+  "Karnataka": [{n:"Mysuru",c:78},{n:"Hassan",c:54},{n:"Dakshina Kannada",c:42},{n:"Chikkamagaluru",c:38},{n:"Kodagu",c:29},{n:"Belagavi",c:47}],
+  "Andhra Pradesh": [{n:"Tirupati",c:95},{n:"Guntur",c:61},{n:"Krishna",c:53},{n:"Kurnool",c:49},{n:"Nellore",c:44},{n:"Srikakulam",c:38}],
+  "Kerala": [{n:"Thiruvananthapuram",c:67},{n:"Thrissur",c:72},{n:"Palakkad",c:55},{n:"Kozhikode",c:44},{n:"Malappuram",c:38},{n:"Idukki",c:29}],
+};
+
+const DistrictBrowse = ({onBack, oT, temples, isDark, onToggleTheme, state}) => {
+  const sName = state?.name || "Tamil Nadu";
+  const sCount = state?.n;
+  const ds = DISTRICT_MAP[sName] || [];
+  const stateTemples = temples.filter(t => t.stateOrUnionTerritory === sName);
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
         <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
-        <div style={{flex:1}}><h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream}}>Tamil Nadu</h1><div style={{fontSize:12,color:C.textD,marginTop:3}}>847 temples</div></div>
+        <div style={{flex:1}}>
+          <h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream}}>{sName}</h1>
+          <div style={{fontSize:12,color:C.textD,marginTop:3}}>{sCount ? `${sCount} temples` : `${stateTemples.length} temples in database`}</div>
+        </div>
         <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"12px 24px"}}>
-        {ds.map((d,i) => (
-          <div key={d.n} className="t rv" style={{padding:20,borderRadius:18,background:C.card,cursor:"pointer",border:`1px solid ${C.div}`,animationDelay:`${i*.04}s`}}>
-            <div style={{fontFamily:FD,fontSize:16,fontWeight:500,color:C.creamM}}>{d.n}</div><div style={{fontSize:11,color:C.textD,marginTop:5}}>{d.c} temples</div>
-          </div>))}
-      </div>
-      <div style={{marginTop:28}}><SH title="Top Temples" d={.2}/>
-        {temples.filter(t => t.stateOrUnionTerritory === "Tamil Nadu").map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.25+i*.06}/>)}
+      {ds.length > 0 ? (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"12px 24px"}}>
+          {ds.map((d,i) => (
+            <div key={d.n} className="t rv" style={{padding:20,borderRadius:18,background:C.card,cursor:"pointer",border:`1px solid ${C.div}`,animationDelay:`${i*.04}s`}}>
+              <div style={{fontFamily:FD,fontSize:16,fontWeight:500,color:C.creamM}}>{d.n}</div>
+              <div style={{fontSize:11,color:C.textD,marginTop:5}}>{d.c} temples</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{margin:"8px 24px",padding:"18px 20px",borderRadius:18,background:C.card,border:`1px solid ${C.div}`,textAlign:"center"}}>
+          <div style={{fontSize:12,color:C.textD,lineHeight:1.7}}>District breakdown for <span style={{color:C.saffron,fontWeight:600}}>{sName}</span> coming soon.</div>
+        </div>
+      )}
+      <div style={{marginTop:28}}>
+        <SH title={`Temples in ${sName}`} d={.2}/>
+        {stateTemples.length > 0
+          ? stateTemples.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.25+i*.06}/>)
+          : <Empty emoji="🏛" title="No Temples Yet" sub={`We're adding more temples from ${sName} soon.`}/>}
       </div>
     </div>
   );
 };
 
-const Nearby = ({oT, temples, isDark, onToggleTheme}) => (
-  <div className="fi" style={{paddingBottom:24}}>
-    <div style={{padding:"22px 24px",display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
-      <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Nearby</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>Temples around your location</p></div>
-      <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+const distKm = (lat1, lon1, lat2, lon2) => {
+  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+};
+
+const Nearby = ({oT, temples, isDark, onToggleTheme}) => {
+  const [geo, setGeo] = useState(null);
+  const [geoErr, setGeoErr] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [range, setRange] = useState(50);
+  const RANGES = [{l:"10 km",v:10},{l:"50 km",v:50},{l:"100 km",v:100},{l:"All",v:99999}];
+
+  const locate = () => {
+    if (!navigator.geolocation) { setGeoErr("Geolocation not supported by your browser."); return; }
+    setLocating(true); setGeoErr(null);
+    navigator.geolocation.getCurrentPosition(
+      pos => { setGeo({lat:pos.coords.latitude, lng:pos.coords.longitude}); setLocating(false); },
+      err => { setGeoErr(err.code === 1 ? "Location access denied. Please allow location in browser settings." : "Could not get your location. Please try again."); setLocating(false); },
+      {timeout:12000, maximumAge:60000}
+    );
+  };
+
+  const nearby = geo
+    ? temples
+        .filter(t => t.latitude && t.longitude)
+        .map(t => ({...t, _dist: distKm(geo.lat, geo.lng, t.latitude, t.longitude)}))
+        .filter(t => t._dist <= range)
+        .sort((a,b) => a._dist - b._dist)
+    : [];
+
+  return (
+    <div className="fi" style={{paddingBottom:24}}>
+      <div style={{padding:"22px 24px",display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
+        <div>
+          <h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Nearby</h1>
+          <p style={{fontSize:13,color:C.textD,marginTop:5}}>{geo ? `${nearby.length} temples within ${range === 99999 ? "any distance" : range+" km"}` : "Temples around your location"}</p>
+        </div>
+        <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+      </div>
+
+      {/* Location card */}
+      {!geo ? (
+        <div style={{margin:"0 24px",borderRadius:24,background:C.card,border:`1px solid ${C.div}`,padding:"32px 24px",display:"flex",flexDirection:"column",alignItems:"center",gap:16,textAlign:"center"}}>
+          <div style={{width:72,height:72,borderRadius:22,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.15)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg width="30" height="30" fill="none" stroke={C.saffron} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          </div>
+          {geoErr
+            ? <p style={{fontSize:12.5,color:"#ef4444",lineHeight:1.7,maxWidth:260}}>{geoErr}</p>
+            : <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260}}>Share your location to discover sacred temples near you.</p>
+          }
+          <button className="t" onClick={locate} disabled={locating} style={{padding:"13px 36px",borderRadius:16,background:`linear-gradient(120deg,${C.saffron},${C.saffronH})`,color:"#fff",border:"none",fontSize:13,fontWeight:700,cursor:locating?"default":"pointer",fontFamily:FB,boxShadow:"0 4px 20px rgba(212,133,60,0.32)",opacity:locating?.7:1,transition:"all .3s"}}>
+            {locating ? "Locating…" : geoErr ? "Try Again" : "Enable Location"}
+          </button>
+        </div>
+      ) : (
+        <div style={{margin:"0 24px",padding:"14px 18px",borderRadius:18,background:C.card,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",gap:12}}>
+          <svg width="16" height="16" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          <span style={{fontSize:12,color:C.creamM,flex:1}}>Location: {geo.lat.toFixed(3)}°N, {geo.lng.toFixed(3)}°E</span>
+          <button className="t" onClick={() => { setGeo(null); setGeoErr(null); }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.textD,fontWeight:600}}>Change</button>
+        </div>
+      )}
+
+      {/* Range filter */}
+      {geo && (
+        <div style={{display:"flex",gap:8,padding:"16px 24px 4px",overflowX:"auto"}}>
+          {RANGES.map(r => <Chip key={r.l} label={r.l} active={range===r.v} onClick={() => setRange(r.v)}/>)}
+        </div>
+      )}
+
+      {/* Results */}
+      {geo && (nearby.length > 0
+        ? nearby.map((t,i) => (
+            <div key={t.id}>
+              <LCard t={t} onClick={oT} d={i*.06}/>
+              <div style={{fontSize:11,color:C.textD,fontWeight:600,padding:"0 24px 6px",marginTop:-8,display:"flex",alignItems:"center",gap:4}}>
+                <svg width="10" height="10" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                {t._dist < 1 ? `${(t._dist*1000).toFixed(0)} m away` : `${t._dist.toFixed(1)} km away`}
+              </div>
+            </div>
+          ))
+        : <Empty emoji="🏛" title="No Temples Nearby" sub={`No temples found within ${range} km. Try a larger radius.`}/>
+      )}
     </div>
-    <div style={{margin:"0 24px",height:230,borderRadius:24,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
-      <div style={{width:72,height:72,borderRadius:22,background:C.card,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>🗺</div>
-      <span style={{fontSize:13,color:C.textD,fontWeight:600}}>Enable location for map</span>
-    </div>
-    <div style={{display:"flex",gap:8,padding:"20px 24px",overflowX:"auto"}}><Chip label="Within 10 km" active/><Chip label="10–50 km"/><Chip label="50–100 km"/></div>
-    {temples.slice(0,4).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.06}/>)}
-  </div>
-);
+  );
+};
 
 const Saved = ({oT, temples, isDark, onToggleTheme}) => {
   const sv = temples.filter(t => t.isFavorite);
@@ -1783,8 +1896,8 @@ export default function App() {
   else if (scr === "explore") page = <Explore nav={nav} oT={oT} temples={temples} {...th}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} {...th}/>;
   else if (scr === "search") page = <Search oT={oT} onBack={back} temples={temples}/>;
-  else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} {...th}/>;
-  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} temples={temples} {...th}/>;
+  else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
+  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} temples={temples} state={tmp} {...th}/>;
   else if (scr === "nearby") page = <Nearby oT={oT} temples={temples} {...th}/>;
   else if (scr === "saved") page = <Saved oT={oT} temples={temples} {...th}/>;
   else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
