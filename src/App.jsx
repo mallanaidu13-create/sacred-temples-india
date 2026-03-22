@@ -66,9 +66,25 @@ const PANCHANG = {
 
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
+const FOM = "'Noto Serif Devanagari','EB Garamond',Georgia,serif";
+
+const OmSymbol = ({ size = 140, style = {} }) => (
+  <span style={{
+    fontFamily: FOM,
+    fontSize: size,
+    color: C.saffron,
+    display: "inline-block",
+    lineHeight: 1,
+    position: "relative",
+    zIndex: 2,
+    animation: "omPulse 5s ease-in-out infinite, omGlow 5s ease-in-out infinite, omFloat 6s ease-in-out infinite",
+    userSelect: "none",
+    ...style,
+  }}>ॐ</span>
+);
 
 const getCss = (theme) => `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Serif+Devanagari:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:${theme.bg};transition:background-color 0.35s ease}
 body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-smoothing:antialiased;transition:background-color 0.35s ease,color 0.25s ease}
@@ -78,8 +94,10 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes drift{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-8px)}}
 @keyframes shimmer{0%{left:-120%}60%{left:120%}100%{left:120%}}
 @keyframes glow{0%,100%{opacity:.6}50%{opacity:1}}
-@keyframes omPulse{0%,100%{opacity:.92;transform:scale(1)}50%{opacity:1;transform:scale(1.035)}}
-@keyframes omGlow{0%,100%{filter:drop-shadow(0 0 18px rgba(212,133,60,.45)) drop-shadow(0 0 40px rgba(212,133,60,.2))}50%{filter:drop-shadow(0 0 36px rgba(212,133,60,.75)) drop-shadow(0 0 80px rgba(212,133,60,.38)) drop-shadow(0 0 140px rgba(212,133,60,.12))}}
+@keyframes omPulse{0%,100%{opacity:.9;transform:scale(1) rotate(-1deg)}33%{opacity:1;transform:scale(1.06) rotate(0deg)}66%{opacity:.96;transform:scale(1.03) rotate(1deg)}}
+@keyframes omGlow{0%,100%{filter:drop-shadow(0 0 24px rgba(212,133,60,.55)) drop-shadow(0 0 52px rgba(212,133,60,.25)) drop-shadow(0 0 90px rgba(212,133,60,.1))}50%{filter:drop-shadow(0 0 48px rgba(230,154,82,.9)) drop-shadow(0 0 100px rgba(212,133,60,.5)) drop-shadow(0 0 180px rgba(212,133,60,.18))}}
+@keyframes omFloat{0%,100%{transform:translateY(0px) scale(1)}50%{transform:translateY(-6px) scale(1.02)}}
+@keyframes omHaloSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 @keyframes ringExpand{0%{transform:translate(-50%,-50%) scale(.55);opacity:.7}100%{transform:translate(-50%,-50%) scale(1.6);opacity:0}}
 @keyframes soundWave{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:1}}
 @keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
@@ -641,7 +659,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
         {/* Deep glow behind OM */}
         <div style={{position:"absolute",top:"50%",left:"50%",width:130,height:130,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.22),rgba(212,133,60,0.06) 50%,transparent 70%)",transform:"translate(-50%,-50%)",filter:"blur(18px)",animation:"breathe 4s ease-in-out infinite",pointerEvents:"none"}}/>
         {/* OM glyph */}
-        <span style={{fontFamily:FD,fontSize:108,color:C.saffron,display:"inline-block",lineHeight:1,position:"relative",zIndex:2,animation:"omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite",userSelect:"none"}}>ॐ</span>
+        <OmSymbol size={148} />
         {/* Om chant button */}
         <div style={{position:"absolute",bottom:-14,left:"50%",transform:"translateX(-50%)",zIndex:3}}>
           <button className="t" onClick={toggle} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 22px",borderRadius:100,background:playing?"rgba(212,133,60,0.9)":"rgba(212,133,60,0.12)",border:`1.5px solid ${playing?C.saffron:"rgba(212,133,60,0.3)"}`,cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:playing?`0 4px 28px rgba(212,133,60,0.4)`:"none"}}>
@@ -1281,7 +1299,7 @@ const About = ({onBack, isDark, onToggleTheme, temples}) => (
       {[160,118,80].map((r,i) => (
         <div key={i} style={{position:"absolute",top:"36%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.05+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${8+i*2}s ease-in-out infinite ${i*.8}s`,pointerEvents:"none"}}/>
       ))}
-      <span style={{fontFamily:FD,fontSize:72,color:C.saffron,lineHeight:1,display:"inline-block",position:"relative",zIndex:2,animation:"omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite",userSelect:"none"}}>ॐ</span>
+      <OmSymbol size={100} />
       <div style={{marginTop:24,position:"relative",zIndex:2}}>
         <h2 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,letterSpacing:-.2,lineHeight:1.15}}>Sacred Temples<br/>of India</h2>
         <p style={{fontFamily:FD,fontSize:14,color:"rgba(212,133,60,0.45)",fontStyle:"italic",marginTop:10,letterSpacing:.3}}>A personal journey by Malla</p>
@@ -1706,7 +1724,7 @@ const Discover = ({temples, oT, onBack}) => {
         <div key={`rp${i}`} style={{position:'absolute',top:'42%',left:'50%',width:140,height:140,borderRadius:'50%',border:'1.5px solid rgba(212,133,60,0.12)',transform:'translate(-50%,-50%)',animation:`ringExpand 3.4s ease-out infinite ${i*1.13}s`,pointerEvents:'none'}}/>
       ))}
       {/* OM */}
-      <span className="fi" style={{fontFamily:FD,fontSize:84,color:C.saffron,lineHeight:1,position:'relative',zIndex:2,animation:'omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite',userSelect:'none',marginBottom:28}}>ॐ</span>
+      <OmSymbol size={112} style={{marginBottom:28}} />
       {/* Text */}
       <h2 className="rv" style={{fontFamily:FD,fontSize:28,color:C.cream,textAlign:'center',lineHeight:1.25,position:'relative',zIndex:2,animationDelay:'.1s'}}>Sacred Journey<br/>Complete</h2>
       <p className="rv" style={{fontSize:13,color:C.textD,textAlign:'center',lineHeight:1.85,maxWidth:270,marginTop:14,position:'relative',zIndex:2,animationDelay:'.18s'}}>
@@ -2102,7 +2120,7 @@ export default function App() {
         <div key={`rp${i}`} style={{position:"absolute",top:"50%",left:"50%",width:160,height:160,borderRadius:"50%",border:"1.5px solid rgba(212,133,60,0.14)",transform:"translate(-50%,-50%)",animation:`ringExpand 3.4s ease-out infinite ${i*1.13}s`,pointerEvents:"none"}}/>
       ))}
       {/* OM */}
-      <span style={{fontFamily:FD,fontSize:96,color:C.saffron,lineHeight:1,position:"relative",zIndex:2,animation:"omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite",userSelect:"none"}}>ॐ</span>
+      <OmSymbol size={130} />
       {/* Brand */}
       <div style={{marginTop:38,display:"flex",flexDirection:"column",alignItems:"center",gap:8,position:"relative",zIndex:2}}>
         <div style={{fontSize:11,color:C.textDD,fontWeight:700,letterSpacing:4,textTransform:"uppercase"}}>Sacred Temples</div>
