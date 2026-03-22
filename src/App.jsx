@@ -890,7 +890,7 @@ const Explore = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF}) => {
+const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
   const [sv, setSv] = useState(t.isFavorite);
   const [tab, setTab] = useState("overview");
   const [shared, setShared] = useState(false);
@@ -982,6 +982,18 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF}) => {
               </div>
             </div>
           </div>
+          {/* ── Ask Sarathi ── */}
+          <button className="t" onClick={() => nav?.("chat")} style={{width:"100%",marginTop:14,marginBottom:4,padding:"15px 20px",borderRadius:22,background:`linear-gradient(135deg,rgba(212,133,60,0.13),rgba(212,133,60,0.06))`,border:`1.5px solid rgba(212,133,60,0.28)`,cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",position:"relative",overflow:"hidden"}}>
+            <div style={{width:44,height:44,borderRadius:14,background:"rgba(212,133,60,0.14)",border:"1px solid rgba(212,133,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FD,fontSize:22,color:C.saffron,flexShrink:0}}>ॐ</div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <span style={{fontSize:13.5,fontWeight:700,color:C.saffron,fontFamily:FD}}>Ask Sarathi</span>
+                <span style={{fontSize:9,color:C.textDD,fontWeight:600,letterSpacing:1.2,textTransform:"uppercase",fontFamily:FB}}>सारथी</span>
+              </div>
+              <div style={{fontSize:11.5,color:C.textD,lineHeight:1.55}}>Temple history · routes · rituals · travel advice</div>
+            </div>
+            <svg width="16" height="16" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{flexShrink:0,opacity:.65}}><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
         </div>}
         {tab === "travel" && <div className="fi">
           <IR emoji="📍" label="Nearest City" value={t.nearestCity}/>
@@ -1816,6 +1828,209 @@ const Discover = ({temples, oT, onBack}) => {
   );
 };
 
+// ━━━━━━━━━━━━━━━━━━━ SARATHI CHATBOT ━━━━━━━━━━━━━━━━━━━
+
+const SARATHI_SYSTEM_PROMPT = `You are Sarathi (सारथी), a wise and knowledgeable divine guide for the Sacred Temples of India app. Your name means "divine charioteer" in Sanskrit — just as Lord Krishna guided Arjuna, you guide devotees and travellers through India's sacred heritage.
+
+Your expertise covers:
+• Temple history, mythology, and architecture (Dravidian, Nagara, Vesara, Hoysala, etc.)
+• The 12 Jyotirlingas, 51 Shakti Peethas, 108 Divya Desams, Char Dham, Pancha Bhuta Stalas
+• Pilgrimage circuits, travel routes, transport options (rail, road, air), accommodation
+• Rituals, puja types, festival calendars, darshan timings, dress codes, offerings
+• Sanskrit mantras and shloka meanings
+• Temple etiquette, visitor guidelines, best seasons to visit
+• Regional cuisines, prasad specialties, nearby attractions
+
+Tone: Warm, reverent, knowledgeable — like a learned temple priest who is also a well-travelled guide. Use gentle Sanskrit terms where appropriate (Namaste, Darshan, Prasad, etc.). Keep responses concise but meaningful. Use bullet points or numbered lists for routes/steps. When asked about a specific temple, provide rich context including mythology, architecture, and travel guidance. Always end pilgrimage guidance with a brief blessing or auspicious note.
+
+Respond in English unless the user writes in another language. Do not make up specific temple facts you are unsure about — acknowledge uncertainty gracefully.`;
+
+const SUGGESTIONS_DEFAULT = [
+  "What are the 12 Jyotirlingas?",
+  "Tell me about Char Dham pilgrimage",
+  "Best time to visit temples in South India?",
+  "What is the significance of Abhishek?",
+];
+
+// Simple markdown → React renderer (bold, code, line breaks)
+const renderMd = (text) => {
+  const lines = text.split('\n');
+  return lines.map((line, li) => {
+    const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    const rendered = parts.map((p, i) => {
+      if (p.startsWith('**') && p.endsWith('**')) return <strong key={i}>{p.slice(2,-2)}</strong>;
+      if (p.startsWith('`') && p.endsWith('`')) return <code key={i} style={{background:'rgba(212,133,60,0.15)',padding:'1px 5px',borderRadius:4,fontSize:'0.88em',fontFamily:'monospace'}}>{p.slice(1,-1)}</code>;
+      return p;
+    });
+    return <span key={li}>{rendered}{li < lines.length - 1 ? <br/> : null}</span>;
+  });
+};
+
+const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
+  const greeting = temple
+    ? `Namaste 🙏 I'm **Sarathi**, your divine guide. You're exploring **${temple.templeName}** in ${temple.townOrCity || temple.stateOrUnionTerritory}. Ask me anything — history, rituals, travel routes, or nearby temples.`
+    : `Namaste 🙏 I'm **Sarathi**, your divine guide to the sacred temples of Bhārata. I can help with temple history, pilgrimage routes, rituals, festivals, and travel. What would you like to know?`;
+
+  const [msgs, setMsgs] = useState([{role:'assistant', text: greeting}]);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const endRef = useRef(null);
+  const taRef = useRef(null);
+
+  const suggestions = temple ? [
+    `Tell me about ${temple.templeName}`,
+    `How do I travel to ${temple.townOrCity || temple.stateOrUnionTerritory}?`,
+    `What festivals are celebrated here?`,
+    `Best time to visit and darshan tips`,
+  ] : SUGGESTIONS_DEFAULT;
+
+  const hasUserMsg = msgs.some(m => m.role === 'user');
+
+  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs, busy]);
+
+  const autoResize = (el) => { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; };
+
+  const send = async (text) => {
+    const q = (text || input).trim();
+    if (!q || busy) return;
+    setMsgs(prev => [...prev, {role:'user', text: q}]);
+    setInput('');
+    if (taRef.current) { taRef.current.style.height = 'auto'; }
+    setBusy(true);
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      let systemPrompt = SARATHI_SYSTEM_PROMPT;
+      if (temple) {
+        systemPrompt += `\n\nCurrent temple the user is viewing:\nName: ${temple.templeName}\nLocation: ${[temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ')}\nPrimary Deity: ${temple.deityPrimary}${temple.deitySecondary ? '\nSecondary Deity: ' + temple.deitySecondary : ''}\nArchitecture: ${temple.architectureStyle || 'N/A'}\nDarshan Timings: ${temple.darshanTimings || 'N/A'}\nMajor Festivals: ${temple.majorFestivals || 'N/A'}\nNearest City: ${temple.nearestCity || 'N/A'}\nNearest Railway: ${temple.nearestRailwayStation || 'N/A'}\nNearest Airport: ${temple.nearestAirport || 'N/A'}\nTravel Route: ${temple.routeSummary || 'N/A'}\nHistorical Significance: ${temple.historicalSignificance || 'N/A'}\nSpecial Notes: ${temple.specialNotes || 'N/A'}`;
+      }
+      // Build history: skip the initial assistant greeting (index 0), include all user/assistant after
+      const history = [];
+      for (let i = 1; i < msgs.length; i++) {
+        history.push({role: msgs[i].role === 'assistant' ? 'model' : 'user', parts:[{text: msgs[i].text}]});
+      }
+      history.push({role:'user', parts:[{text: q}]});
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({system_instruction:{parts:[{text:systemPrompt}]}, contents:history, generationConfig:{temperature:0.7,maxOutputTokens:600}})}
+      );
+      const data = await res.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+        || (data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
+      setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
+    } catch(e) {
+      setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Could not connect. Please check your internet and try again.'}]);
+    }
+    setBusy(false);
+  };
+
+  const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',height:'100vh',background:C.bg,position:'relative'}}>
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px 12px',background:C.glass,backdropFilter:'blur(20px)',borderBottom:`1px solid ${C.divL}`,flexShrink:0,position:'sticky',top:0,zIndex:60}}>
+        <button className="t" onClick={onBack} style={{width:40,height:40,borderRadius:13,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'pointer',color:C.text,flexShrink:0}}>←</button>
+        <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.25)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:22,flexShrink:0}}>ॐ</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:7}}>
+            <span style={{fontSize:15.5,fontWeight:700,color:C.text,fontFamily:FD}}>Sarathi</span>
+            <span style={{fontSize:9,color:C.textDD,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',fontFamily:FB}}>सारथी</span>
+            <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 6px rgba(74,222,128,0.6)',flexShrink:0}}/>
+          </div>
+          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by Gemini</div>
+        </div>
+        <button className="t" onClick={onToggleTheme} style={{width:36,height:36,borderRadius:11,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
+          {isDark
+            ? <svg width="15" height="15" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            : <svg width="15" height="15" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          }
+        </button>
+      </div>
+
+      {/* Temple context pill */}
+      {temple && (
+        <div style={{padding:'10px 18px 0',flexShrink:0}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:7,padding:'6px 14px',borderRadius:100,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.18)`}}>
+            <div style={{width:5,height:5,borderRadius:'50%',background:C.saffron}}/>
+            <span style={{fontSize:11,color:C.saffron,fontWeight:600}}>{temple.templeName}</span>
+            <span style={{fontSize:10,color:C.textD,fontWeight:400}}>· {temple.stateOrUnionTerritory}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Messages */}
+      <div style={{flex:1,overflowY:'auto',padding:'14px 16px 8px',display:'flex',flexDirection:'column',gap:10}}>
+        {msgs.map((m, i) => (
+          <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start',alignItems:'flex-end',gap:8}}>
+            {m.role === 'assistant' && (
+              <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:14,flexShrink:0,marginBottom:2}}>ॐ</div>
+            )}
+            <div style={{
+              maxWidth:'78%',
+              padding:m.role==='user'?'10px 14px':'12px 16px',
+              borderRadius:m.role==='user'?'18px 18px 4px 18px':'4px 18px 18px 18px',
+              background:m.role==='user'?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.card}`,
+              border:m.role==='user'?'none':`1px solid ${C.div}`,
+              boxShadow:m.role==='user'?`0 3px 16px rgba(212,133,60,0.25)`:`0 2px 12px rgba(0,0,0,0.08)`,
+            }}>
+              <div style={{fontSize:13.5,color:m.role==='user'?'#fff':C.text,lineHeight:1.75,fontFamily:FB}}>
+                {renderMd(m.text)}
+              </div>
+            </div>
+          </div>
+        ))}
+        {busy && (
+          <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
+            <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:14,flexShrink:0}}>ॐ</div>
+            <div style={{padding:'12px 16px',borderRadius:'4px 18px 18px 18px',background:C.card,border:`1px solid ${C.div}`,display:'flex',gap:4,alignItems:'center'}}>
+              {[0,1,2].map(i => (
+                <div key={i} style={{width:6,height:6,borderRadius:'50%',background:C.saffron,opacity:0.7,animation:`soundWave 1.1s ease-in-out infinite ${i*0.18}s`}}/>
+              ))}
+            </div>
+          </div>
+        )}
+        <div ref={endRef}/>
+      </div>
+
+      {/* Suggestions */}
+      {!hasUserMsg && (
+        <div style={{padding:'6px 16px 8px',flexShrink:0,display:'flex',gap:7,flexWrap:'wrap'}}>
+          {suggestions.map(s => (
+            <button key={s} className="t" onClick={() => send(s)} style={{padding:'7px 13px',borderRadius:100,background:C.bg3,border:`1px solid ${C.div}`,fontSize:11.5,color:C.textM,cursor:'pointer',fontFamily:FB,fontWeight:500,whiteSpace:'nowrap'}}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Input area */}
+      <div style={{padding:'10px 14px 28px',flexShrink:0,background:C.glass,backdropFilter:'blur(20px)',borderTop:`1px solid ${C.divL}`}}>
+        <div style={{display:'flex',alignItems:'flex-end',gap:10,background:C.bg3,borderRadius:22,border:`1.5px solid ${input.trim() ? C.saffron+'60' : C.div}`,padding:'10px 12px',transition:'border-color .2s'}}>
+          <textarea
+            ref={taRef}
+            value={input}
+            onChange={e => { setInput(e.target.value); autoResize(e.target); }}
+            onKeyDown={onKey}
+            placeholder="Ask about temples, routes, rituals…"
+            rows={1}
+            style={{flex:1,background:'none',border:'none',outline:'none',resize:'none',fontFamily:FB,fontSize:13.5,color:C.text,lineHeight:1.55,minHeight:22,maxHeight:120,padding:0}}
+          />
+          <button
+            className="t"
+            onClick={() => send()}
+            disabled={!input.trim() || busy}
+            style={{width:38,height:38,borderRadius:12,background:input.trim()&&!busy?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.bg2}`,border:'none',cursor:input.trim()&&!busy?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .2s',boxShadow:input.trim()&&!busy?`0 3px 14px rgba(212,133,60,0.35)`:'none'}}
+          >
+            <svg width="15" height="15" fill="none" stroke={input.trim()&&!busy?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by Google Gemini · Sarathi may make mistakes</div>
+      </div>
+    </div>
+  );
+};
+
 // ━━━━━━━━━━━━━━━━━━━ APP SHELL ━━━━━━━━━━━━━━━━━━━
 
 export default function App() {
@@ -1852,6 +2067,8 @@ export default function App() {
 
   const nav = useCallback(t => { setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
   const back = useCallback(() => { setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  // backNoTmpReset: go back without clearing tmp — used from Chat so Detail context is preserved
+  const backNoTmpReset = useCallback(() => { setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
   const oT = useCallback(t => { setTmp(t); nav("detail"); }, [nav]);
   const onTab = useCallback(t => { setStk([t]); setScr(t); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
 
@@ -1868,7 +2085,7 @@ export default function App() {
 
   const tabs = ["home","explore","nearby","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
-  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about"].includes(scr);
+  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat"].includes(scr);
 
   if (loading) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
@@ -1905,7 +2122,8 @@ export default function App() {
   if (scr === "home") page = <Home nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
   else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
   else if (scr === "explore") page = <Explore nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
-  else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} oF={oF} {...th}/>;
+  else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} oF={oF} nav={nav} {...th}/>;
+  else if (scr === "chat") page = <Chat onBack={backNoTmpReset} temple={tmp} {...th}/>;
   else if (scr === "search") page = <Search oT={oT} oF={oF} onBack={back} temples={temples}/>;
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
@@ -1922,6 +2140,10 @@ export default function App() {
         <div ref={ref} style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
           {page}
         </div>
+        {/* Sarathi FAB — floats above BNav */}
+        {showNav && (
+          <button className="t" onClick={() => nav("chat")} title="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,boxShadow:`0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)`,fontFamily:FD,fontSize:24,color:"#fff",lineHeight:1}}>ॐ</button>
+        )}
         {showNav && <BNav a={aTab} on={onTab} savedCount={temples.filter(t=>t.isFavorite).length}/>}
       </div>
     </div>
