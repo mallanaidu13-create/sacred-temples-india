@@ -67,8 +67,53 @@ const PANCHANG = {
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
 
+/* Traditional iconic Om SVG — two lobes, tail, virama, bindu */
+const OmSvg = ({ size = 160, color }) => {
+  const c = color || C.saffron;
+  const sw = Math.max(6, size * 0.075); // stroke scales with size
+  return (
+    <svg width={size} height={Math.round(size * 1.08)} viewBox="0 0 112 122" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="omGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#F0C060"/>
+          <stop offset="50%" stopColor={c}/>
+          <stop offset="100%" stopColor="#C06820"/>
+        </linearGradient>
+      </defs>
+      <g stroke="url(#omGrad)" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+        {/* Upper lobe — C-curve opening to the left */}
+        <path d="M40,52 C40,36 56,28 70,32 C84,36 92,50 90,66 C88,80 74,84 62,82 C50,80 40,72 40,66"/>
+        {/* Lower lobe — larger C-curve opening to the left */}
+        <path d="M36,78 C60,68 90,80 92,100 C94,118 80,126 64,124 C48,122 33,110 30,100"/>
+        {/* Sweeping tail — curves from bottom of lower lobe to lower-left */}
+        <path d="M30,100 C20,110 10,116 4,124"/>
+        {/* Upper arm — rises from top of upper lobe, curves right into virama */}
+        <path d="M44,46 C42,28 50,12 62,6 C74,0 88,6 88,22"/>
+        {/* Virama arc — the curved hook at top-right */}
+        <path d="M94,14 C102,18 106,32 102,44 C98,56 86,58 80,48"/>
+      </g>
+      {/* Bindu — small filled diamond at very top of virama */}
+      <polygon points="94,2 103,11 94,20 85,11" fill="url(#omGrad)"/>
+    </svg>
+  );
+};
+
+const OmSymbol = ({ size = 160, style = {} }) => (
+  <span style={{
+    display: "inline-block",
+    position: "relative",
+    zIndex: 2,
+    animation: "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
+    userSelect: "none",
+    lineHeight: 0,
+    ...style,
+  }}>
+    <OmSvg size={size}/>
+  </span>
+);
+
 const getCss = (theme) => `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Serif+Devanagari:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:${theme.bg};transition:background-color 0.35s ease}
 body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-smoothing:antialiased;transition:background-color 0.35s ease,color 0.25s ease}
@@ -78,8 +123,9 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes drift{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-8px)}}
 @keyframes shimmer{0%{left:-120%}60%{left:120%}100%{left:120%}}
 @keyframes glow{0%,100%{opacity:.6}50%{opacity:1}}
-@keyframes omPulse{0%,100%{opacity:.92;transform:scale(1)}50%{opacity:1;transform:scale(1.035)}}
-@keyframes omGlow{0%,100%{filter:drop-shadow(0 0 18px rgba(212,133,60,.45)) drop-shadow(0 0 40px rgba(212,133,60,.2))}50%{filter:drop-shadow(0 0 36px rgba(212,133,60,.75)) drop-shadow(0 0 80px rgba(212,133,60,.38)) drop-shadow(0 0 140px rgba(212,133,60,.12))}}
+@keyframes omLive{0%{transform:translateY(0) scale(1) rotate(-1.2deg);opacity:.88}25%{transform:translateY(-4px) scale(1.05) rotate(0deg);opacity:1}50%{transform:translateY(-7px) scale(1.07) rotate(1deg);opacity:.97}75%{transform:translateY(-4px) scale(1.04) rotate(0.4deg);opacity:.96}100%{transform:translateY(0) scale(1) rotate(-1.2deg);opacity:.88}}
+@keyframes omGlow{0%,100%{filter:drop-shadow(0 0 10px rgba(240,192,96,.7)) drop-shadow(0 0 28px rgba(212,133,60,.5)) drop-shadow(0 0 60px rgba(212,133,60,.22)) drop-shadow(0 0 120px rgba(212,133,60,.08))}50%{filter:drop-shadow(0 0 22px rgba(255,220,100,1)) drop-shadow(0 0 55px rgba(230,154,82,.85)) drop-shadow(0 0 110px rgba(212,133,60,.45)) drop-shadow(0 0 200px rgba(212,133,60,.18))}}
+@keyframes omHaloSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 @keyframes ringExpand{0%{transform:translate(-50%,-50%) scale(.55);opacity:.7}100%{transform:translate(-50%,-50%) scale(1.6);opacity:0}}
 @keyframes soundWave{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:1}}
 @keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
@@ -629,19 +675,28 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
       </div>
 
       {/* OM SYMBOL — Central sacred focal point */}
-      <div style={{position:"relative",textAlign:"center",marginBottom:24,paddingTop:4}}>
+      <div style={{position:"relative",textAlign:"center",marginBottom:24,paddingTop:8}}>
         {/* Expanding pulse rings */}
         {[0,1,2].map(i => (
-          <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:170,height:170,borderRadius:"50%",border:`1.5px solid rgba(212,133,60,0.18)`,transform:"translate(-50%,-50%)",animation:`ringExpand 3.6s ease-out infinite ${i*1.2}s`,pointerEvents:"none"}}/>
+          <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:190,height:190,borderRadius:"50%",border:`1.5px solid rgba(212,133,60,0.18)`,transform:"translate(-50%,-50%)",animation:`ringExpand 3.6s ease-out infinite ${i*1.2}s`,pointerEvents:"none"}}/>
         ))}
+        {/* Slow spinning golden dashed halo */}
+        <div style={{position:"absolute",top:"50%",left:"50%",width:240,height:240,borderRadius:"50%",border:"1px dashed rgba(212,133,60,0.18)",transform:"translate(-50%,-50%)",animation:"omHaloSpin 28s linear infinite",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",top:"50%",left:"50%",width:210,height:210,borderRadius:"50%",border:"1px dashed rgba(240,192,96,0.12)",transform:"translate(-50%,-50%)",animation:"omHaloSpin 18s linear infinite reverse",pointerEvents:"none"}}/>
         {/* Static concentric rings */}
-        {[200,150,104].map((r,i) => (
-          <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.05+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${7+i*2}s ease-in-out infinite ${i*.6}s`,pointerEvents:"none"}}/>
+        {[220,168,116].map((r,i) => (
+          <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.04+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${7+i*2}s ease-in-out infinite ${i*.6}s`,pointerEvents:"none"}}/>
         ))}
-        {/* Deep glow behind OM */}
-        <div style={{position:"absolute",top:"50%",left:"50%",width:130,height:130,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.22),rgba(212,133,60,0.06) 50%,transparent 70%)",transform:"translate(-50%,-50%)",filter:"blur(18px)",animation:"breathe 4s ease-in-out infinite",pointerEvents:"none"}}/>
+        {/* Sunburst rays */}
+        <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-52%)",pointerEvents:"none",zIndex:1,animation:"omHaloSpin 60s linear infinite"}}>
+          <svg width={220} height={220} viewBox="0 0 220 220" style={{opacity:0.09}}>
+            {Array.from({length:24},(_,i)=>{const a=(i*15)*Math.PI/180;return<line key={i} x1="110" y1="110" x2={110+104*Math.cos(a)} y2={110+104*Math.sin(a)} stroke="#F0C060" strokeWidth="2"/>;})}
+          </svg>
+        </div>
+        {/* Deep radial glow behind OM */}
+        <div style={{position:"absolute",top:"50%",left:"50%",width:170,height:170,borderRadius:"50%",background:"radial-gradient(circle,rgba(240,192,96,0.28),rgba(212,133,60,0.10) 50%,transparent 70%)",transform:"translate(-50%,-50%)",filter:"blur(22px)",animation:"breathe 4s ease-in-out infinite",pointerEvents:"none"}}/>
         {/* OM glyph */}
-        <span style={{fontFamily:FD,fontSize:108,color:C.saffron,display:"inline-block",lineHeight:1,position:"relative",zIndex:2,animation:"omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite",userSelect:"none"}}>ॐ</span>
+        <OmSymbol size={168} />
         {/* Om chant button */}
         <div style={{position:"absolute",bottom:-14,left:"50%",transform:"translateX(-50%)",zIndex:3}}>
           <button className="t" onClick={toggle} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 22px",borderRadius:100,background:playing?"rgba(212,133,60,0.9)":"rgba(212,133,60,0.12)",border:`1.5px solid ${playing?C.saffron:"rgba(212,133,60,0.3)"}`,cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:playing?`0 4px 28px rgba(212,133,60,0.4)`:"none"}}>
@@ -985,7 +1040,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           </div>
           {/* ── Ask Sarathi ── */}
           <button className="t" onClick={() => nav?.("chat")} style={{width:"100%",marginTop:14,marginBottom:4,padding:"15px 20px",borderRadius:22,background:`linear-gradient(135deg,rgba(212,133,60,0.13),rgba(212,133,60,0.06))`,border:`1.5px solid rgba(212,133,60,0.28)`,cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",position:"relative",overflow:"hidden"}}>
-            <div style={{width:44,height:44,borderRadius:14,background:"rgba(212,133,60,0.14)",border:"1px solid rgba(212,133,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FD,fontSize:22,color:C.saffron,flexShrink:0}}>ॐ</div>
+            <div style={{width:44,height:44,borderRadius:14,background:"rgba(212,133,60,0.14)",border:"1px solid rgba(212,133,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><OmSvg size={26}/></div>
             <div style={{flex:1}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                 <span style={{fontSize:13.5,fontWeight:700,color:C.saffron,fontFamily:FD}}>Ask Sarathi</span>
@@ -1281,7 +1336,7 @@ const About = ({onBack, isDark, onToggleTheme, temples}) => (
       {[160,118,80].map((r,i) => (
         <div key={i} style={{position:"absolute",top:"36%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.05+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${8+i*2}s ease-in-out infinite ${i*.8}s`,pointerEvents:"none"}}/>
       ))}
-      <span style={{fontFamily:FD,fontSize:72,color:C.saffron,lineHeight:1,display:"inline-block",position:"relative",zIndex:2,animation:"omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite",userSelect:"none"}}>ॐ</span>
+      <OmSymbol size={100} />
       <div style={{marginTop:24,position:"relative",zIndex:2}}>
         <h2 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,letterSpacing:-.2,lineHeight:1.15}}>Sacred Temples<br/>of India</h2>
         <p style={{fontFamily:FD,fontSize:14,color:"rgba(212,133,60,0.45)",fontStyle:"italic",marginTop:10,letterSpacing:.3}}>A personal journey by Malla</p>
@@ -1706,7 +1761,7 @@ const Discover = ({temples, oT, onBack}) => {
         <div key={`rp${i}`} style={{position:'absolute',top:'42%',left:'50%',width:140,height:140,borderRadius:'50%',border:'1.5px solid rgba(212,133,60,0.12)',transform:'translate(-50%,-50%)',animation:`ringExpand 3.4s ease-out infinite ${i*1.13}s`,pointerEvents:'none'}}/>
       ))}
       {/* OM */}
-      <span className="fi" style={{fontFamily:FD,fontSize:84,color:C.saffron,lineHeight:1,position:'relative',zIndex:2,animation:'omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite',userSelect:'none',marginBottom:28}}>ॐ</span>
+      <OmSymbol size={112} style={{marginBottom:28}} />
       {/* Text */}
       <h2 className="rv" style={{fontFamily:FD,fontSize:28,color:C.cream,textAlign:'center',lineHeight:1.25,position:'relative',zIndex:2,animationDelay:'.1s'}}>Sacred Journey<br/>Complete</h2>
       <p className="rv" style={{fontSize:13,color:C.textD,textAlign:'center',lineHeight:1.85,maxWidth:270,marginTop:14,position:'relative',zIndex:2,animationDelay:'.18s'}}>
@@ -1899,24 +1954,34 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
     if (taRef.current) { taRef.current.style.height = 'auto'; }
     setBusy(true);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
       let systemPrompt = SARATHI_SYSTEM_PROMPT;
       if (temple) {
         systemPrompt += `\n\nCurrent temple the user is viewing:\nName: ${temple.templeName}\nLocation: ${[temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ')}\nPrimary Deity: ${temple.deityPrimary}${temple.deitySecondary ? '\nSecondary Deity: ' + temple.deitySecondary : ''}\nArchitecture: ${temple.architectureStyle || 'N/A'}\nDarshan Timings: ${temple.darshanTimings || 'N/A'}\nMajor Festivals: ${temple.majorFestivals || 'N/A'}\nNearest City: ${temple.nearestCity || 'N/A'}\nNearest Railway: ${temple.nearestRailwayStation || 'N/A'}\nNearest Airport: ${temple.nearestAirport || 'N/A'}\nTravel Route: ${temple.routeSummary || 'N/A'}\nHistorical Significance: ${temple.historicalSignificance || 'N/A'}\nSpecial Notes: ${temple.specialNotes || 'N/A'}`;
       }
-      // Build history: skip the initial assistant greeting (index 0), include all user/assistant after
-      const history = [];
+      // Build OpenAI-compatible messages array
+      const messages = [{role:'system', content: systemPrompt}];
       for (let i = 1; i < msgs.length; i++) {
-        history.push({role: msgs[i].role === 'assistant' ? 'model' : 'user', parts:[{text: msgs[i].text}]});
+        messages.push({role: msgs[i].role, content: msgs[i].text});
       }
-      history.push({role:'user', parts:[{text: q}]});
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({system_instruction:{parts:[{text:systemPrompt}]}, contents:history, generationConfig:{temperature:0.7,maxOutputTokens:600}})}
-      );
+      messages.push({role:'user', content: q});
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':`Bearer ${apiKey}`,
+          'HTTP-Referer':'https://sacred-temples-india.pages.dev',
+          'X-Title':'Sacred Temples India - Sarathi'
+        },
+        body: JSON.stringify({
+          model:'google/gemma-2-9b-it:free',
+          messages,
+          temperature:0.7,
+          max_tokens:600
+        })
+      });
       const data = await res.json();
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+      const reply = data?.choices?.[0]?.message?.content
         || (data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
       setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
     } catch(e) {
@@ -1932,14 +1997,14 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
       {/* Header */}
       <div style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px 12px',background:C.glass,backdropFilter:'blur(20px)',borderBottom:`1px solid ${C.divL}`,flexShrink:0,position:'sticky',top:0,zIndex:60}}>
         <button className="t" onClick={onBack} style={{width:40,height:40,borderRadius:13,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'pointer',color:C.text,flexShrink:0}}>←</button>
-        <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.25)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:22,flexShrink:0}}>ॐ</div>
+        <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.25)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={26}/></div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:7}}>
             <span style={{fontSize:15.5,fontWeight:700,color:C.text,fontFamily:FD}}>Sarathi</span>
             <span style={{fontSize:9,color:C.textDD,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',fontFamily:FB}}>सारथी</span>
             <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 6px rgba(74,222,128,0.6)',flexShrink:0}}/>
           </div>
-          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by Gemini</div>
+          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by OpenRouter</div>
         </div>
         <button className="t" onClick={onToggleTheme} style={{width:36,height:36,borderRadius:11,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           {isDark
@@ -1965,7 +2030,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
         {msgs.map((m, i) => (
           <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start',alignItems:'flex-end',gap:8}}>
             {m.role === 'assistant' && (
-              <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:14,flexShrink:0,marginBottom:2}}>ॐ</div>
+              <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginBottom:2}}><OmSvg size={17}/></div>
             )}
             <div style={{
               maxWidth:'78%',
@@ -1983,7 +2048,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
         ))}
         {busy && (
           <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
-            <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:14,flexShrink:0}}>ॐ</div>
+            <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={17}/></div>
             <div style={{padding:'12px 16px',borderRadius:'4px 18px 18px 18px',background:C.card,border:`1px solid ${C.div}`,display:'flex',gap:4,alignItems:'center'}}>
               {[0,1,2].map(i => (
                 <div key={i} style={{width:6,height:6,borderRadius:'50%',background:C.saffron,opacity:0.7,animation:`soundWave 1.1s ease-in-out infinite ${i*0.18}s`}}/>
@@ -2102,7 +2167,7 @@ export default function App() {
         <div key={`rp${i}`} style={{position:"absolute",top:"50%",left:"50%",width:160,height:160,borderRadius:"50%",border:"1.5px solid rgba(212,133,60,0.14)",transform:"translate(-50%,-50%)",animation:`ringExpand 3.4s ease-out infinite ${i*1.13}s`,pointerEvents:"none"}}/>
       ))}
       {/* OM */}
-      <span style={{fontFamily:FD,fontSize:96,color:C.saffron,lineHeight:1,position:"relative",zIndex:2,animation:"omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite",userSelect:"none"}}>ॐ</span>
+      <OmSymbol size={130} />
       {/* Brand */}
       <div style={{marginTop:38,display:"flex",flexDirection:"column",alignItems:"center",gap:8,position:"relative",zIndex:2}}>
         <div style={{fontSize:11,color:C.textDD,fontWeight:700,letterSpacing:4,textTransform:"uppercase"}}>Sacred Temples</div>
@@ -2143,7 +2208,7 @@ export default function App() {
         </div>
         {/* Sarathi FAB — floats above BNav */}
         {showNav && (
-          <button className="t" onClick={() => nav("chat")} title="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,boxShadow:`0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)`,fontFamily:FD,fontSize:24,color:"#fff",lineHeight:1}}>ॐ</button>
+          <button className="t" onClick={() => nav("chat")} title="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,boxShadow:`0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)`}}><OmSvg size={28} color="#fff"/></button>
         )}
         {showNav && <BNav a={aTab} on={onTab} savedCount={temples.filter(t=>t.isFavorite).length}/>}
       </div>
