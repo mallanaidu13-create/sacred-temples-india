@@ -7,15 +7,15 @@ import { supabase } from "./supabase.js";
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const CDark = {
-  bg: "#0E0A07", bg2: "#161210", bg3: "#1E1814",
-  card: "#1C1712", cardH: "#241E18", cardB: "rgba(255,255,255,0.04)",
+  bg: "#1A1109", bg2: "#201610", bg3: "#2A1E14",
+  card: "#241A10", cardH: "#2E2218", cardB: "rgba(255,255,255,0.055)",
   saffron: "#D4853C", saffronH: "#E69A52", saffronDim: "rgba(212,133,60,0.12)",
   saffronPale: "rgba(212,133,60,0.08)",
   gold: "#C4A24E", goldDim: "rgba(196,162,78,0.1)",
   cream: "#F2E8D4", creamM: "#D4C4A8", creamD: "#A89878",
-  text: "#EDE4D4", textM: "#A89878", textD: "#6E5E48", textDD: "#4A3E30",
-  red: "#C44040", div: "rgba(255,255,255,0.06)", divL: "rgba(255,255,255,0.03)",
-  glass: "rgba(20,16,12,0.75)", glassL: "rgba(20,16,12,0.6)",
+  text: "#EDE4D4", textM: "#A89878", textD: "#6E5E48", textDD: "#5C4E3A",
+  red: "#C44040", div: "rgba(255,255,255,0.07)", divL: "rgba(255,255,255,0.035)",
+  glass: "rgba(26,17,9,0.78)", glassL: "rgba(26,17,9,0.62)",
 };
 const CLight = {
   bg: "#FAFAF8", bg2: "#F4F0EA", bg3: "#EDE8DF",
@@ -417,26 +417,29 @@ const ShlokaWidget = () => {
 };
 
 const PanchangWidget = () => (
-  <div style={{margin:"28px 24px 0",borderRadius:22,padding:"20px 20px 18px",background:C.card,border:`1px solid ${C.div}`}}>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-      <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:3,textTransform:"uppercase"}}>Today's Panchang</div>
-      <div style={{fontSize:10,color:C.saffron,fontWeight:700,padding:"4px 10px",borderRadius:8,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`}}>{PANCHANG.vara}</div>
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-      {[
-        {l:"Tithi",v:PANCHANG.tithi,e:"🌙"},
-        {l:"Nakshatra",v:PANCHANG.nakshatra,e:"✦"},
-        {l:"Yoga",v:PANCHANG.yoga,e:"◎"},
-        {l:"Muhurta",v:PANCHANG.muhurta,e:"⊙"},
-      ].map(p => (
-        <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.bg3,border:`1px solid ${C.divL}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-            <span style={{fontSize:12}}>{p.e}</span>
-            <span style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{p.l}</span>
+  <div style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
+    <div style={{height:3,background:`linear-gradient(90deg,${C.saffron},${C.gold},transparent)`}}/>
+    <div style={{padding:"16px 20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <div style={{fontFamily:FE,fontSize:13,color:C.textM,fontWeight:500,letterSpacing:.3}}>Today's Panchang</div>
+        <div style={{fontSize:11,color:C.saffron,fontWeight:700,padding:"4px 12px",borderRadius:8,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`,fontFamily:FD}}>{PANCHANG.vara}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {[
+          {l:"Tithi",v:PANCHANG.tithi,e:"🌙"},
+          {l:"Nakshatra",v:PANCHANG.nakshatra,e:"✦"},
+          {l:"Yoga",v:PANCHANG.yoga,e:"◎"},
+          {l:"Muhurta",v:PANCHANG.muhurta,e:"⊙"},
+        ].map(p => (
+          <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.saffronPale,border:`1px solid rgba(212,133,60,0.08)`}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+              <span style={{fontSize:16}}>{p.e}</span>
+              <span style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{p.l}</span>
+            </div>
+            <div style={{fontFamily:FE,fontSize:14,color:C.creamM,fontWeight:500,lineHeight:1.3}}>{p.v}</div>
           </div>
-          <div style={{fontSize:13,color:C.creamM,fontWeight:600,lineHeight:1.3}}>{p.v}</div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -523,26 +526,30 @@ const LCard = ({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/featured/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
-      display:"flex",gap:16,padding:14,margin:"0 24px 12px",borderRadius:20,
+      display:"flex",gap:0,padding:0,margin:"0 24px 12px",borderRadius:20,
       background:C.card,cursor:"pointer",animationDelay:`${d}s`,
-      border:`1px solid ${C.div}`,
+      border:`1px solid ${C.div}`,overflow:"hidden",
+      boxShadow:`0 2px 12px rgba(0,0,0,0.18)`,
     }}>
-      <div style={{width:88,height:88,minWidth:88,borderRadius:16,overflow:"hidden",position:"relative"}}>
-        <TempleImage src={imgSrc} hue={t.hue} style={{width:88,height:88}} omSize={24}/>
-        <div style={{position:"absolute",bottom:5,left:5,padding:"3px 7px",borderRadius:6,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",fontSize:8.5,color:"rgba(255,255,255,0.9)",fontWeight:700,letterSpacing:.3}}>{t.deityPrimary}</div>
-      </div>
-      <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
-        <h3 style={{fontFamily:FD,fontSize:17,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
-        <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
-          <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}, {t.district}
+      <div style={{width:3,flexShrink:0,background:`linear-gradient(180deg,${C.saffron},${C.gold})`}}/>
+      <div style={{display:"flex",gap:14,padding:14,flex:1,minWidth:0}}>
+        <div style={{width:96,height:96,minWidth:96,borderRadius:16,overflow:"hidden",position:"relative"}}>
+          <TempleImage src={imgSrc} hue={t.hue} style={{width:96,height:96}} omSize={24}/>
+          <div style={{position:"absolute",bottom:5,left:5,padding:"3px 7px",borderRadius:6,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",fontSize:8.5,color:"rgba(255,255,255,0.9)",fontWeight:700,letterSpacing:.3}}>{t.deityPrimary}</div>
         </div>
-        <div style={{marginTop:2}}>
-          <span style={{fontSize:10,padding:"3px 9px",borderRadius:99,background:C.saffronDim,color:C.saffron,fontWeight:700,letterSpacing:.3,border:`1px solid rgba(212,133,60,0.1)`}}>
-            {(t.architectureStyle || t.deityPrimary).split("·")[0].trim()}
-          </span>
+        <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
+          <h3 style={{fontFamily:FE,fontSize:18,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
+          <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
+            <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}{t.stateOrUnionTerritory ? `, ${t.stateOrUnionTerritory}` : ""}
+          </div>
+          <div style={{marginTop:2}}>
+            <span style={{fontSize:10.5,padding:"3px 9px",borderRadius:99,background:C.saffronDim,color:C.saffron,fontWeight:700,letterSpacing:.3,border:`1px solid rgba(212,133,60,0.1)`}}>
+              {(t.architectureStyle || t.deityPrimary).split("·")[0].trim()}
+            </span>
+          </div>
         </div>
+        <div onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
       </div>
-      <div onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
     </div>
   );
 };
@@ -575,11 +582,15 @@ const ThemeBtn = ({isDark, onToggle}) => (
   </button>
 );
 
-const Empty = ({emoji, title, sub}) => (
+const Empty = ({emoji, title, sub, action}) => (
   <div className="fi" style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 40px",textAlign:"center"}}>
-    <div style={{width:96,height:96,borderRadius:32,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:40}}>{emoji}</div>
-    <h3 style={{fontFamily:FD,fontSize:22,color:C.cream,marginBottom:10}}>{title}</h3>
-    <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260}}>{sub}</p>
+    <div style={{width:96,height:96,borderRadius:"50%",background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,boxShadow:`0 0 32px rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:38,position:"relative"}}>
+      <span style={{position:"absolute",fontSize:72,fontFamily:FE,color:C.saffron,opacity:.07,userSelect:"none",lineHeight:1}}>ॐ</span>
+      <span style={{position:"relative"}}>{emoji}</span>
+    </div>
+    <h3 style={{fontFamily:FE,fontSize:24,color:C.cream,marginBottom:10}}>{title}</h3>
+    <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260,marginBottom:action?24:0}}>{sub}</p>
+    {action && <button className="t" onClick={action.onPress} style={{padding:"11px 28px",borderRadius:99,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 18px rgba(212,133,60,0.3)`}}>{action.label}</button>}
   </div>
 );
 
@@ -638,7 +649,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* HERO */}
-    <div style={{background:isDark?`linear-gradient(175deg,${hsl(30,45,10)},${hsl(350,40,7)} 55%,${C.bg})`:`linear-gradient(175deg,${hsl(30,60,94)},${hsl(350,50,97)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:isDark?`0 24px 80px ${hsl(350,30,5,0.6)}`:`0 24px 80px ${hsl(30,40,80,0.18)}`}}>
+    <div style={{background:isDark?`linear-gradient(175deg,${hsl(30,48,13)},${hsl(350,42,10)} 55%,${C.bg})`:`linear-gradient(175deg,${hsl(30,60,94)},${hsl(350,50,97)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:isDark?`0 24px 80px ${hsl(350,30,7,0.55)}`:`0 24px 80px ${hsl(30,40,80,0.18)}`}}>
       {/* Ambient glows */}
       <div style={{position:"absolute",top:"-8%",right:"-12%",width:320,height:320,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",filter:"blur(60px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
       <div style={{position:"absolute",bottom:"5%",left:"-18%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(160,80,180,0.04),transparent 60%)",filter:"blur(45px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none"}}/>
@@ -745,7 +756,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
 
     {/* DISCOVER MODE ENTRY */}
     <div className="rv t" onClick={() => nav("discover")} style={{margin:"32px 24px 0",borderRadius:26,overflow:"hidden",position:"relative",height:158,cursor:"pointer",animationDelay:".35s",boxShadow:`0 12px 48px rgba(0,0,0,0.18)`}}>
-      <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${hsl(28,55,11)},${hsl(350,45,7)})`}}/>
+      <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${hsl(28,55,14)},${hsl(350,45,10)})`}}/>
       <div style={{position:"absolute",top:"-15%",right:"-8%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.08),transparent 60%)",filter:"blur(40px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
       {/* Animated card deck hint */}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-58%)",display:"flex",alignItems:"center",gap:14}}>
@@ -766,11 +777,10 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
       <SH title="By State" sub="Region by region" act="All" onAct={() => nav("stateBrowse")} d={.4}/>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"0 24px"}}>
         {STATES.slice(0,6).map((s,i) => (
-          <div key={s.name} className="t rv" onClick={() => nav("stateBrowse")} style={{padding:"20px 16px",borderRadius:18,cursor:"pointer",background:C.card,border:`1px solid ${C.div}`,position:"relative",overflow:"hidden",animationDelay:`${.45+i*.06}s`}}>
-            <div style={{position:"absolute",top:-18,right:-18,width:55,height:55,borderRadius:"50%",background:hsl(s.h,40,40),opacity:.04}}/>
-            <div style={{width:8,height:8,borderRadius:4,background:hsl(s.h,40,45),opacity:.35,marginBottom:14}}/>
-            <div style={{fontFamily:FD,fontSize:16,fontWeight:500,color:C.creamM,lineHeight:1.2}}>{s.name}</div>
-            <div style={{fontSize:11,color:C.textD,marginTop:5}}>{s.n} temples</div>
+          <div key={s.name} className="t rv" onClick={() => nav("stateBrowse")} style={{padding:"20px 16px",borderRadius:18,cursor:"pointer",background:`linear-gradient(135deg,${hsl(s.h,35,isDark?13:90)},${C.card})`,border:`1px solid ${C.div}`,borderTop:`2px solid ${hsl(s.h,40,isDark?35:60,0.35)}`,position:"relative",overflow:"hidden",animationDelay:`${.45+i*.06}s`}}>
+            <div style={{width:10,height:10,borderRadius:5,background:hsl(s.h,50,50),opacity:.6,marginBottom:12}}/>
+            <div style={{fontFamily:FE,fontSize:17,fontWeight:500,color:C.creamM,lineHeight:1.2}}>{s.name}</div>
+            <div style={{fontSize:12,color:C.textM,marginTop:5}}>{s.n} temples</div>
           </div>
         ))}
       </div>
@@ -784,7 +794,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
 
     {/* ━━━ SACRED PREMIUM TEASER ━━━ */}
     <div className="rv" style={{margin:"42px 24px 0",animationDelay:".48s"}}>
-      <div style={{borderRadius:28,overflow:"hidden",position:"relative",background:`linear-gradient(140deg,${hsl(42,55,7)},${hsl(28,65,4)},${hsl(355,40,7)})`}}>
+      <div style={{borderRadius:28,overflow:"hidden",position:"relative",background:`linear-gradient(140deg,${hsl(42,55,10)},${hsl(28,65,7)},${hsl(355,40,10)})`}}>
         {/* Gold shimmer sweep */}
         <div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(196,162,78,0.06),transparent)",animation:"shimmer 8s ease-in-out infinite",pointerEvents:"none"}}/>
         {/* Radial ambient */}
@@ -1004,7 +1014,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           </div>}
           {/* ── Premium Audio Guide teaser ── */}
           <div style={{margin:"22px 0 8px",borderRadius:22,overflow:"hidden",position:"relative",border:"1px solid rgba(196,162,78,0.18)"}}>
-            <div style={{position:"absolute",inset:0,background:`linear-gradient(140deg,${hsl(42,55,7)},${hsl(28,65,4)})`,pointerEvents:"none"}}/>
+            <div style={{position:"absolute",inset:0,background:`linear-gradient(140deg,${hsl(42,55,10)},${hsl(28,65,7)})`,pointerEvents:"none"}}/>
             <div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(196,162,78,0.05),transparent)",animation:"shimmer 7s ease-in-out infinite",pointerEvents:"none"}}/>
             <div style={{position:"relative",padding:"18px 20px",display:"flex",alignItems:"center",gap:16}}>
               <div style={{width:52,height:52,borderRadius:16,background:"rgba(196,162,78,0.11)",border:"1px solid rgba(196,162,78,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -1287,7 +1297,7 @@ const Nearby = ({oT, oF, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Saved = ({oT, oF, temples, isDark, onToggleTheme}) => {
+const Saved = ({oT, oF, temples, isDark, onToggleTheme, onBrowse}) => {
   const sv = temples.filter(t => t.isFavorite);
   return (
     <div className="fi" style={{paddingBottom:24}}>
@@ -1295,7 +1305,7 @@ const Saved = ({oT, oF, temples, isDark, onToggleTheme}) => {
         <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temple{sv.length!==1?"s":""}</p></div>
         <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
-      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it here."/>}
+      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it here." action={{label:"Browse Temples", onPress: onBrowse}}/>}
     </div>
   );
 };
@@ -1913,7 +1923,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
 
   const [msgs, setMsgs] = useState([{role:'assistant', text: greeting}]);
   const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
+
   const endRef = useRef(null);
   const taRef = useRef(null);
 
@@ -1926,56 +1936,17 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
 
   const hasUserMsg = msgs.some(m => m.role === 'user');
 
-  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs, busy]);
+  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs]);
 
   const autoResize = (el) => { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; };
 
-  const send = async (text) => {
+  const send = (text) => {
     const q = (text || input).trim();
-    if (!q || busy) return;
+    if (!q) return;
     setMsgs(prev => [...prev, {role:'user', text: q}]);
     setInput('');
     if (taRef.current) { taRef.current.style.height = 'auto'; }
-    setBusy(true);
-    try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey || apiKey.startsWith('your-')) {
-        setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Sarathi needs a valid Gemini API key. Go to Cloudflare Pages → Settings → Environment variables → set VITE_GEMINI_API_KEY with a real key from https://aistudio.google.com/app/apikey (free).'}]);
-        setBusy(false);
-        return;
-      }
-      let systemPrompt = SARATHI_SYSTEM_PROMPT;
-      if (temple) {
-        systemPrompt += `\n\nCurrent temple the user is viewing:\nName: ${temple.templeName}\nLocation: ${[temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ')}\nPrimary Deity: ${temple.deityPrimary}${temple.deitySecondary ? '\nSecondary Deity: ' + temple.deitySecondary : ''}\nArchitecture: ${temple.architectureStyle || 'N/A'}\nDarshan Timings: ${temple.darshanTimings || 'N/A'}\nMajor Festivals: ${temple.majorFestivals || 'N/A'}\nNearest City: ${temple.nearestCity || 'N/A'}\nNearest Railway: ${temple.nearestRailwayStation || 'N/A'}\nNearest Airport: ${temple.nearestAirport || 'N/A'}\nTravel Route: ${temple.routeSummary || 'N/A'}\nHistorical Significance: ${temple.historicalSignificance || 'N/A'}\nSpecial Notes: ${temple.specialNotes || 'N/A'}`;
-      }
-      // Build Gemini contents array (skip the greeting at index 0)
-      const contents = [];
-      for (let i = 1; i < msgs.length; i++) {
-        contents.push({ role: msgs[i].role === 'assistant' ? 'model' : 'user', parts: [{ text: msgs[i].text }] });
-      }
-      contents.push({ role: 'user', parts: [{ text: q }] });
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents,
-            generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
-          })
-        }
-      );
-      const data = await res.json();
-      const isAuthError = data?.error?.code === 401 || data?.error?.status === 'UNAUTHENTICATED' || (data?.error?.message || '').toLowerCase().includes('auth');
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
-        || (isAuthError ? '⚠ Invalid Gemini API key. Please update VITE_GEMINI_API_KEY in Cloudflare Pages with a valid key from https://aistudio.google.com/app/apikey'
-          : data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
-      setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
-    } catch(e) {
-      setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Could not connect. Please check your internet and try again.'}]);
-    }
-    setBusy(false);
+    setMsgs(prev => [...prev, {role:'assistant', text:'🙏 Sarathi AI is coming soon. Please check back later!'}]);
   };
 
   const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
@@ -2034,16 +2005,6 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             </div>
           </div>
         ))}
-        {busy && (
-          <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
-            <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={17}/></div>
-            <div style={{padding:'12px 16px',borderRadius:'4px 18px 18px 18px',background:C.card,border:`1px solid ${C.div}`,display:'flex',gap:4,alignItems:'center'}}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{width:6,height:6,borderRadius:'50%',background:C.saffron,opacity:0.7,animation:`soundWave 1.1s ease-in-out infinite ${i*0.18}s`}}/>
-              ))}
-            </div>
-          </div>
-        )}
         <div ref={endRef}/>
       </div>
 
@@ -2073,13 +2034,13 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
           <button
             className="t"
             onClick={() => send()}
-            disabled={!input.trim() || busy}
-            style={{width:38,height:38,borderRadius:12,background:input.trim()&&!busy?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.bg2}`,border:'none',cursor:input.trim()&&!busy?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .2s',boxShadow:input.trim()&&!busy?`0 3px 14px rgba(212,133,60,0.35)`:'none'}}
+            disabled={!input.trim()}
+            style={{width:38,height:38,borderRadius:12,background:input.trim()?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.bg2}`,border:'none',cursor:input.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .2s',boxShadow:input.trim()?`0 3px 14px rgba(212,133,60,0.35)`:'none'}}
           >
-            <svg width="15" height="15" fill="none" stroke={input.trim()&&!busy?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            <svg width="15" height="15" fill="none" stroke={input.trim()?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
         </div>
-        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by Google Gemini · Sarathi may make mistakes</div>
+        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Sarathi AI · Coming soon</div>
       </div>
     </div>
   );
@@ -2100,7 +2061,7 @@ export default function App() {
   C = isDark ? CDark : CLight;
 
   useEffect(() => {
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#0E0A07' : '#FAFAF8');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#1A1109' : '#FAFAF8');
   }, [isDark]);
 
   const toggleTheme = useCallback(() => {
@@ -2182,7 +2143,7 @@ export default function App() {
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
   else if (scr === "nearby") page = <Nearby oT={oT} oF={oF} temples={temples} {...th}/>;
-  else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} {...th}/>;
+  else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} onBrowse={() => nav("explore")} {...th}/>;
   else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
