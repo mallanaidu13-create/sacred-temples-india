@@ -450,7 +450,7 @@ const Chip = ({label, active, onClick}) => (
 );
 
 // ── Featured Card ──
-const FCard = ({t, onClick, d=0}) => {
+const FCard = ({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/featured/400x600/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
   return (
@@ -472,7 +472,7 @@ const FCard = ({t, onClick, d=0}) => {
       </div>
       {/* Fav — top right */}
       <div style={{position:"absolute",top:18,right:18,zIndex:3}}>
-        <div className="t" style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s"}}>
+        <div className="t" onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s",cursor:"pointer"}}>
           {t.isFavorite ? "♥" : "♡"}
         </div>
       </div>
@@ -489,7 +489,7 @@ const FCard = ({t, onClick, d=0}) => {
 };
 
 // ── List Card ──
-const LCard = ({t, onClick, d=0}) => {
+const LCard = ({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/featured/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
@@ -512,7 +512,7 @@ const LCard = ({t, onClick, d=0}) => {
           </span>
         </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD}}>{t.isFavorite?"♥":"♡"}</div>
+      <div onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
     </div>
   );
 };
@@ -601,7 +601,7 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
-const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
+const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
   const { playing, toggle } = useOmChant();
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
@@ -700,7 +700,7 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
     <div style={{marginTop:40}}>
       <SH title="Featured Temples" sub="Handpicked sacred destinations" act="See all" onAct={() => nav("explore")} d={.25}/>
       <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
-        {temples.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.3+i*.1}/>)}
+        {temples.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.3+i*.1}/>)}
       </div>
     </div>
 
@@ -795,7 +795,7 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
     {/* NEARBY */}
     <div style={{marginTop:42}}>
       <SH title="Near You" act="Map" onAct={() => nav("nearby")} d={.55}/>
-      {temples.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.6+i*.08}/>)}
+      {temples.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={.6+i*.08}/>)}
     </div>
 
     {/* SAVED — only show when non-empty */}
@@ -803,7 +803,7 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
       <div style={{marginTop:32,marginBottom:16}}>
         <SH title="Saved" act="All" onAct={() => nav("saved")} d={.7}/>
         <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px"}}>
-          {temples.filter(x => x.isFavorite).map((t,i) => <FCard key={t.id} t={t} onClick={oT} d={.75+i*.08}/>)}
+          {temples.filter(x => x.isFavorite).map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.75+i*.08}/>)}
         </div>
       </div>
     )}
@@ -821,7 +821,7 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Explore = ({nav, oT, temples, isDark, onToggleTheme}) => {
+const Explore = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
   const [v, setV] = useState("list");
   const [fl, setFl] = useState([]);
   const [sortBy, setSortBy] = useState("default");
@@ -869,7 +869,7 @@ const Explore = ({nav, oT, temples, isDark, onToggleTheme}) => {
       </div>
       <div style={{paddingTop:16}}>
         {sorted.length === 0 ? <Empty emoji="🏛" title="No Temples Found" sub="Try removing a filter or changing your sort order."/> :
-        v === "list" ? sorted.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.04}/>) : (
+        v === "list" ? sorted.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.04}/>) : (
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
             {sorted.map((t,i) => (
               <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`}}>
@@ -890,7 +890,7 @@ const Explore = ({nav, oT, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Detail = ({temple: t, onBack, isDark, onToggleTheme}) => {
+const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF}) => {
   const [sv, setSv] = useState(t.isFavorite);
   const [tab, setTab] = useState("overview");
   const [shared, setShared] = useState(false);
@@ -925,7 +925,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme}) => {
               }
             </button>
             <button className="t" onClick={doShare} title="Share temple" style={{width:46,height:46,borderRadius:15,background:shared?"rgba(60,160,60,0.7)":"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:`1px solid ${shared?"rgba(60,200,60,0.35)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:shared?"#fff":"rgba(255,255,255,0.7)",transition:"all .3s"}}>{shared?"✓":"↗"}</button>
-            <button className="t" onClick={() => setSv(!sv)} style={{width:46,height:46,borderRadius:15,background:sv?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:`1px solid ${sv?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,color:"#fff",boxShadow:sv?"0 4px 20px rgba(196,64,64,0.3)":"none",transition:"all .3s"}}>{sv?"♥":"♡"}</button>
+            <button className="t" onClick={() => { setSv(v => { oF?.(t.id, v); return !v; }); }} style={{width:46,height:46,borderRadius:15,background:sv?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:`1px solid ${sv?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,color:"#fff",boxShadow:sv?"0 4px 20px rgba(196,64,64,0.3)":"none",transition:"all .3s"}}>{sv?"♥":"♡"}</button>
           </div>
         </div>
         <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"130px 24px 26px",background:`linear-gradient(transparent,rgba(0,0,0,0.6) 30%,${b3} 100%)`}}>
@@ -1050,7 +1050,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme}) => {
   );
 };
 
-const Search = ({oT, onBack, temples}) => {
+const Search = ({oT, oF, onBack, temples}) => {
   const [q, setQ] = useState("");
   const rec = ["Jyotirlinga temples","Temples near Chennai","Devi temples Kerala","UNESCO heritage"];
   const res = temples.filter(t => [t.templeName,t.deityPrimary,t.townOrCity,t.district,t.stateOrUnionTerritory].some(f => f.toLowerCase().includes(q.toLowerCase())));
@@ -1074,7 +1074,7 @@ const Search = ({oT, onBack, temples}) => {
         ))}
       </div> : res.length > 0 ? <div style={{paddingTop:10}}>
         <div style={{padding:"0 24px 12px",fontSize:12,color:C.textD}}>{res.length} result{res.length !== 1 ? "s" : ""}</div>
-        {res.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.04}/>)}
+        {res.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.04}/>)}
       </div> : <Empty emoji="⌕" title="No Results" sub={`Nothing for "${q}". Try another search.`}/>}
     </div>
   );
@@ -1109,7 +1109,7 @@ const DISTRICT_MAP = {
   "Kerala": [{n:"Thiruvananthapuram",c:67},{n:"Thrissur",c:72},{n:"Palakkad",c:55},{n:"Kozhikode",c:44},{n:"Malappuram",c:38},{n:"Idukki",c:29}],
 };
 
-const DistrictBrowse = ({onBack, oT, temples, isDark, onToggleTheme, state}) => {
+const DistrictBrowse = ({onBack, oT, oF, temples, isDark, onToggleTheme, state}) => {
   const sName = state?.name || "Tamil Nadu";
   const sCount = state?.n;
   const ds = DISTRICT_MAP[sName] || [];
@@ -1141,7 +1141,7 @@ const DistrictBrowse = ({onBack, oT, temples, isDark, onToggleTheme, state}) => 
       <div style={{marginTop:28}}>
         <SH title={`Temples in ${sName}`} d={.2}/>
         {stateTemples.length > 0
-          ? stateTemples.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={.25+i*.06}/>)
+          ? stateTemples.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={.25+i*.06}/>)
           : <Empty emoji="🏛" title="No Temples Yet" sub={`We're adding more temples from ${sName} soon.`}/>}
       </div>
     </div>
@@ -1154,7 +1154,7 @@ const distKm = (lat1, lon1, lat2, lon2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 };
 
-const Nearby = ({oT, temples, isDark, onToggleTheme}) => {
+const Nearby = ({oT, oF, temples, isDark, onToggleTheme}) => {
   const [geo, setGeo] = useState(null);
   const [geoErr, setGeoErr] = useState(null);
   const [locating, setLocating] = useState(false);
@@ -1222,7 +1222,7 @@ const Nearby = ({oT, temples, isDark, onToggleTheme}) => {
       {geo && (nearby.length > 0
         ? nearby.map((t,i) => (
             <div key={t.id}>
-              <LCard t={t} onClick={oT} d={i*.06}/>
+              <LCard t={t} onClick={oT} onFav={oF} d={i*.06}/>
               <div style={{fontSize:11,color:C.textD,fontWeight:600,padding:"0 24px 6px",marginTop:-8,display:"flex",alignItems:"center",gap:4}}>
                 <svg width="10" height="10" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                 {t._dist < 1 ? `${(t._dist*1000).toFixed(0)} m away` : `${t._dist.toFixed(1)} km away`}
@@ -1235,15 +1235,15 @@ const Nearby = ({oT, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Saved = ({oT, temples, isDark, onToggleTheme}) => {
+const Saved = ({oT, oF, temples, isDark, onToggleTheme}) => {
   const sv = temples.filter(t => t.isFavorite);
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"22px 24px",display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
-        <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temples</p></div>
+        <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temple{sv.length!==1?"s":""}</p></div>
         <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
-      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it."/>}
+      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it here."/>}
     </div>
   );
 };
@@ -1855,6 +1855,17 @@ export default function App() {
   const oT = useCallback(t => { setTmp(t); nav("detail"); }, [nav]);
   const onTab = useCallback(t => { setStk([t]); setScr(t); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
 
+  // Favorites: optimistic update → Supabase persist → rollback on error
+  const oF = useCallback(async (id, current) => {
+    const next = !current;
+    setTemples(prev => prev.map(t => t.id === id ? {...t, isFavorite: next} : t));
+    const { error } = await supabase.from("temples").update({ isFavorite: next }).eq("id", id);
+    if (error) {
+      console.error("Favorite update failed:", error.message);
+      setTemples(prev => prev.map(t => t.id === id ? {...t, isFavorite: current} : t));
+    }
+  }, []);
+
   const tabs = ["home","explore","nearby","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
   const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about"].includes(scr);
@@ -1891,18 +1902,18 @@ export default function App() {
   const th = {isDark, onToggleTheme: toggleTheme};
 
   let page = null;
-  if (scr === "home") page = <Home nav={nav} oT={oT} temples={temples} {...th}/>;
+  if (scr === "home") page = <Home nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
   else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
-  else if (scr === "explore") page = <Explore nav={nav} oT={oT} temples={temples} {...th}/>;
-  else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} {...th}/>;
-  else if (scr === "search") page = <Search oT={oT} onBack={back} temples={temples}/>;
+  else if (scr === "explore") page = <Explore nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
+  else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} oF={oF} {...th}/>;
+  else if (scr === "search") page = <Search oT={oT} oF={oF} onBack={back} temples={temples}/>;
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
-  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} temples={temples} state={tmp} {...th}/>;
-  else if (scr === "nearby") page = <Nearby oT={oT} temples={temples} {...th}/>;
-  else if (scr === "saved") page = <Saved oT={oT} temples={temples} {...th}/>;
+  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
+  else if (scr === "nearby") page = <Nearby oT={oT} oF={oF} temples={temples} {...th}/>;
+  else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} {...th}/>;
   else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
-  else page = <Home nav={nav} oT={oT} temples={temples} {...th}/>;
+  else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
 
   return (
     <div>
