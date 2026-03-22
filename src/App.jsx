@@ -106,9 +106,11 @@ const deityQuery = (deity = '') => {
   return 'ancient+hindu+temple+india';
 };
 
-const TempleImage = ({src, hue, style, omSize=48}) => {
+// px/py are parallax offsets in range [-1, 1] — drives the image position within its oversized wrapper
+const TempleImage = ({src, hue, style, omSize=48, px=0, py=0}) => {
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState(false);
+  const PAD = 20; // extra px on each side for parallax room
   return (
     <div style={{position:'relative',overflow:'hidden',...style}}>
       <div style={{position:'absolute',inset:0,background:`linear-gradient(165deg,${hsl(hue,40,16)},${hsl(hue,50,4)})`}}/>
@@ -116,17 +118,76 @@ const TempleImage = ({src, hue, style, omSize=48}) => {
         <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:omSize,color:'rgba(212,133,60,0.15)'}}>ॐ</div>
       )}
       {!err && (
-        <img
-          src={src}
-          onLoad={() => setLoaded(true)}
-          onError={() => setErr(true)}
-          style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',
-            opacity:loaded?1:0,transition:'opacity 1s ease',
-            animation:loaded?'kenBurns 20s ease-in-out infinite alternate':'none'}}
-        />
+        // Wrapper handles kenBurns zoom; img handles parallax translate — separate elements to avoid CSS animation/transform conflict
+        <div style={{position:'absolute',inset:0,animation:loaded?'kenBurns 20s ease-in-out infinite alternate':'none'}}>
+          <img
+            src={src}
+            onLoad={() => setLoaded(true)}
+            onError={() => setErr(true)}
+            style={{
+              position:'absolute',
+              left:`${-PAD + px*PAD}px`,
+              top:`${-PAD*0.65 + py*PAD*0.65}px`,
+              width:`calc(100% + ${PAD*2}px)`,
+              height:`calc(100% + ${PAD*1.3}px)`,
+              objectFit:'cover',
+              opacity:loaded?1:0,
+              transition:`opacity ${loaded?'0':'1'}s ease, left 0.1s linear, top 0.1s linear`,
+            }}
+          />
+        </div>
       )}
     </div>
   );
+};
+
+// ── Gyroscope Parallax Singleton ──
+// Single RAF loop + single event listener shared across all subscribers
+const _parSubs = new Set();
+const _par = {x:0, y:0, tx:0, ty:0};
+let _parRaf = null;
+const _lerpN = (a,b,t) => a+(b-a)*t;
+
+function _tickPar() {
+  _par.x = _lerpN(_par.x, _par.tx, 0.075);
+  _par.y = _lerpN(_par.y, _par.ty, 0.075);
+  _parSubs.forEach(fn => fn(_par.x, _par.y));
+  _parRaf = requestAnimationFrame(_tickPar);
+}
+
+function initParallax() {
+  if (_parRaf) return;
+  _parRaf = requestAnimationFrame(_tickPar);
+  // Desktop: mouse parallax
+  window.addEventListener('mousemove', e => {
+    _par.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+    _par.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+  }, {passive:true});
+  // Mobile: gyroscope parallax
+  const onOrientation = e => {
+    _par.tx = Math.max(-1, Math.min(1, (e.gamma||0) / 22));
+    _par.ty = Math.max(-1, Math.min(1, ((e.beta||0) - 45) / 22));
+  };
+  window.addEventListener('deviceorientation', onOrientation, {passive:true});
+  // iOS 13+ requires permission via user gesture — hook onto first touch
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    document.addEventListener('touchstart', async () => {
+      try { await DeviceOrientationEvent.requestPermission(); } catch(_) {}
+    }, {once:true, passive:true});
+  }
+}
+
+const useParallax = () => {
+  const [xy, setXY] = useState([0,0]);
+  useEffect(() => {
+    const fn = (x, y) => setXY(prev => {
+      if (Math.abs(prev[0]-x) < 0.008 && Math.abs(prev[1]-y) < 0.008) return prev;
+      return [x, y];
+    });
+    _parSubs.add(fn);
+    return () => _parSubs.delete(fn);
+  }, []);
+  return xy;
 };
 
 // ── Om Chant Hook (MP3 + Web Audio API fallback) ──
@@ -353,6 +414,7 @@ const Chip = ({label, active, onClick}) => (
 // ── Featured Card ──
 const FCard = ({t, onClick, d=0}) => {
   const imgSrc = `https://source.unsplash.com/featured/400x600/?${deityQuery(t.deityPrimary)}`;
+  const [px, py] = useParallax();
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
       width:268,minWidth:268,height:360,borderRadius:26,overflow:"hidden",
@@ -360,8 +422,8 @@ const FCard = ({t, onClick, d=0}) => {
       boxShadow:`0 16px 56px ${hsl(t.hue,30,5,0.6)}, 0 0 0 1px ${hsl(t.hue,30,20,0.12)}`,
       animationDelay:`${d}s`,
     }}>
-      {/* Full-bleed cinematic photo with Ken Burns */}
-      <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={68}/>
+      {/* Full-bleed cinematic photo with Ken Burns + gyroscope parallax */}
+      <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={68} px={px} py={py}/>
       {/* Shimmer sweep */}
       <div style={{position:"absolute",top:0,left:"-120%",width:"60%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)",animation:"shimmer 6s ease-in-out infinite",pointerEvents:"none"}}/>
       {/* Deity badge — top left */}
@@ -551,6 +613,24 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
       </div>
     </div>
 
+    {/* DISCOVER MODE ENTRY */}
+    <div className="rv t" onClick={() => nav("discover")} style={{margin:"32px 24px 0",borderRadius:26,overflow:"hidden",position:"relative",height:158,cursor:"pointer",animationDelay:".35s",boxShadow:`0 12px 48px rgba(0,0,0,0.18)`}}>
+      <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${hsl(28,55,11)},${hsl(350,45,7)})`}}/>
+      <div style={{position:"absolute",top:"-15%",right:"-8%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.08),transparent 60%)",filter:"blur(40px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Animated card deck hint */}
+      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-58%)",display:"flex",alignItems:"center",gap:14}}>
+        {[{deg:-14,opacity:.3},{deg:-6,opacity:.55},{deg:0,opacity:1}].map((c,i) => (
+          <div key={i} style={{position:"absolute",left:"50%",width:44,height:60,borderRadius:10,border:"1px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.04)",transform:`translateX(-50%) rotate(${c.deg}deg)`,opacity:c.opacity,animation:i===2?"drift 4s ease-in-out infinite":"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(212,133,60,0.4)"}}>ॐ</div>
+        ))}
+      </div>
+      <div style={{position:"absolute",inset:0,padding:"0 22px 22px",display:"flex",flexDirection:"column",justifyContent:"flex-end",background:"linear-gradient(transparent 25%,rgba(0,0,0,0.6))"}}>
+        <div style={{fontSize:9,color:"rgba(212,133,60,0.6)",fontWeight:800,letterSpacing:3,textTransform:"uppercase",marginBottom:7}}>New Mode</div>
+        <h3 style={{fontFamily:FD,fontSize:23,fontWeight:500,color:"#fff",lineHeight:1.1,marginBottom:4}}>Discover Temples</h3>
+        <p style={{fontSize:12,color:"rgba(255,255,255,0.35)",lineHeight:1.5}}>Swipe through sacred temples — save what calls to you</p>
+      </div>
+      <div style={{position:"absolute",top:20,right:20,width:38,height:38,borderRadius:12,background:"rgba(212,133,60,0.12)",border:"1px solid rgba(212,133,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,color:C.saffron}}>→</div>
+    </div>
+
     {/* BY STATE */}
     <div style={{marginTop:42}}>
       <SH title="By State" sub="Region by region" act="All" onAct={() => nav("stateBrowse")} d={.4}/>
@@ -648,11 +728,12 @@ const Detail = ({temple: t, onBack}) => {
   const [tab, setTab] = useState("overview");
   const b3 = hsl(t.hue,50,3);
   const imgSrc = `https://source.unsplash.com/featured/860x520/?${deityQuery(t.deityPrimary)}`;
+  const [px, py] = useParallax();
   return (
     <div className="fi" style={{paddingBottom:44}}>
       <div style={{height:390,position:"relative",overflow:"hidden"}}>
-        {/* Cinematic hero image */}
-        <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={80}/>
+        {/* Cinematic hero image with gyroscope parallax depth */}
+        <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={80} px={px} py={py}/>
         {/* Gradient overlays: top dim for buttons, bottom for text legibility */}
         <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,rgba(0,0,0,0.35) 0%,transparent 35%,rgba(0,0,0,0.1) 55%,${b3} 100%)`}}/>
         <div style={{position:"absolute",top:18,left:18,right:18,display:"flex",justifyContent:"space-between",zIndex:5}}>
@@ -866,6 +947,151 @@ const Profile = () => (
   </div>
 );
 
+// ━━━━━━━━━━━━━━━━━━━ DISCOVER (SWIPE MODE) ━━━━━━━━━━━━━━━━━━━
+
+const Discover = ({temples, oT, onBack}) => {
+  const [idx, setIdx] = useState(0);
+  const [drag, setDrag] = useState({x:0, y:0, active:false});
+  const [flyDir, setFlyDir] = useState(null); // 'right' | 'left' | null
+  const startRef = useRef({x:0, y:0});
+  const [px, py] = useParallax();
+
+  const progress = Math.min(1, Math.abs(drag.x) / 120);
+  const top = temples[idx];
+  const second = temples[idx+1];
+  const third = temples[idx+2];
+
+  const onStart = (cx, cy) => {
+    startRef.current = {x:cx, y:cy};
+    setDrag({x:0, y:0, active:true});
+  };
+  const onMove = (cx, cy) => {
+    if (!drag.active) return;
+    setDrag(d => ({...d, x:cx-startRef.current.x, y:cy-startRef.current.y}));
+  };
+  const onEnd = () => {
+    if (!drag.active) return;
+    if (drag.x > 110) setFlyDir('right');
+    else if (drag.x < -110) setFlyDir('left');
+    else if (drag.y < -90) { oT(top); setDrag({x:0,y:0,active:false}); }
+    else setDrag({x:0,y:0,active:false});
+  };
+  const afterFly = () => {
+    setFlyDir(null);
+    setDrag({x:0,y:0,active:false});
+    setIdx(i => i+1);
+  };
+
+  if (!top) return (
+    <div className="fi" style={{height:'100vh',background:C.bg,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,padding:'40px 32px'}}>
+      <div style={{fontFamily:FD,fontSize:72,color:'rgba(212,133,60,0.12)',animation:'omPulse 4s ease-in-out infinite'}}>ॐ</div>
+      <h2 style={{fontFamily:FD,fontSize:26,color:C.cream,textAlign:'center',lineHeight:1.2}}>Sacred journey complete</h2>
+      <p style={{fontSize:13,color:C.textD,textAlign:'center',lineHeight:1.8,maxWidth:280}}>You've swept through {temples.length} sacred temples. A truly blessed discovery.</p>
+      <button className="t" onClick={onBack} style={{marginTop:8,padding:'14px 36px',borderRadius:18,background:C.saffron,color:'#fff',border:'none',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:FB,boxShadow:'0 6px 28px rgba(212,133,60,0.35)'}}>Return Home</button>
+    </div>
+  );
+
+  const tx = flyDir==='right'?650 : flyDir==='left'?-650 : drag.x;
+  const ty = flyDir ? -40 : drag.y * 0.22;
+  const rot = flyDir==='right'?14 : flyDir==='left'?-14 : drag.x * 0.055;
+  const saving = !flyDir && drag.x > 70;
+  const skipping = !flyDir && drag.x < -70;
+
+  const cardBase = {
+    position:'absolute', left:20, right:20, top:0, bottom:0,
+    borderRadius:28, overflow:'hidden',
+  };
+
+  return (
+    <div style={{height:'100vh',background:C.bg,display:'flex',flexDirection:'column',overflow:'hidden',userSelect:'none'}}>
+      {/* Header */}
+      <div style={{padding:'20px 24px 12px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+        <button className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:'rgba(255,255,255,0.05)',border:`1px solid ${C.div}`,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,color:C.cream}}>←</button>
+        <div style={{textAlign:'center'}}>
+          <h1 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream}}>Discover</h1>
+          <div style={{fontSize:10,color:C.textD,marginTop:2,letterSpacing:.5}}>{idx+1} of {temples.length}</div>
+        </div>
+        {/* Progress arc */}
+        <div style={{width:46,height:46,borderRadius:'50%',background:C.saffronDim,border:`1px solid rgba(212,133,60,0.15)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:C.saffron}}>{Math.round(idx/temples.length*100)}%</div>
+      </div>
+
+      {/* Card stack */}
+      <div style={{flex:1,position:'relative',margin:'0 0 8px'}}>
+        {/* 3rd card — simple gradient peek */}
+        {third && (
+          <div style={{...cardBase,background:`linear-gradient(165deg,${hsl(third.hue,40,16)},${hsl(third.hue,50,4)})`,transform:`translateY(${20-progress*10}px) scale(${0.88+progress*0.06})`,transition:flyDir?'transform 0.45s cubic-bezier(.16,1,.3,1)':'transform 0.18s',zIndex:1,opacity:0.65}}>
+            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:52,color:'rgba(212,133,60,0.07)'}}>ॐ</div>
+          </div>
+        )}
+        {/* 2nd card — loads photo */}
+        {second && (
+          <div style={{...cardBase,transform:`translateY(${10-progress*10}px) scale(${0.94+progress*0.06})`,transition:flyDir?'transform 0.45s cubic-bezier(.16,1,.3,1)':'transform 0.18s',zIndex:2}}>
+            <TempleImage src={`https://source.unsplash.com/featured/400x700/?${deityQuery(second.deityPrimary)}`} hue={second.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={60}/>
+            <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'100px 22px 22px',background:'linear-gradient(transparent,rgba(0,0,0,0.88))'}}>
+              <h3 style={{fontFamily:FD,fontSize:20,fontWeight:500,color:'#fff',lineHeight:1.1}}>{second.templeName}</h3>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:5}}>{second.townOrCity}</div>
+            </div>
+          </div>
+        )}
+        {/* Top card — draggable with parallax */}
+        <div
+          style={{
+            ...cardBase, zIndex:3,
+            transform:`translateX(${tx}px) translateY(${ty}px) rotate(${rot}deg)`,
+            transition: flyDir ? 'transform 0.48s cubic-bezier(.16,1,.3,1)' : (drag.active ? 'none' : 'transform 0.32s cubic-bezier(.16,1,.3,1)'),
+            boxShadow:'0 28px 90px rgba(0,0,0,0.55)',
+            cursor: drag.active ? 'grabbing' : 'grab',
+          }}
+          onTouchStart={e => onStart(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchMove={e => onMove(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchEnd={onEnd}
+          onMouseDown={e => onStart(e.clientX, e.clientY)}
+          onMouseMove={e => drag.active && onMove(e.clientX, e.clientY)}
+          onMouseUp={onEnd}
+          onMouseLeave={() => drag.active && onEnd()}
+          onTransitionEnd={e => { if (flyDir && e.propertyName === 'transform') afterFly(); }}
+        >
+          <TempleImage src={`https://source.unsplash.com/featured/400x700/?${deityQuery(top.deityPrimary)}`} hue={top.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={72} px={px} py={py}/>
+          {/* SAVED badge */}
+          <div style={{position:'absolute',top:32,left:20,padding:'9px 22px',borderRadius:14,background:'rgba(34,197,94,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:'rotate(-10deg)',opacity:saving||flyDir==='right'?1:0,transition:'opacity 0.18s',pointerEvents:'none'}}>
+            SAVED ♥
+          </div>
+          {/* SKIP badge */}
+          <div style={{position:'absolute',top:32,right:20,padding:'9px 22px',borderRadius:14,background:'rgba(239,68,68,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:'rotate(10deg)',opacity:skipping||flyDir==='left'?1:0,transition:'opacity 0.18s',pointerEvents:'none'}}>
+            SKIP ✕
+          </div>
+          {/* Deity badge — top center */}
+          <div style={{position:'absolute',top:18,left:'50%',transform:'translateX(-50%)',zIndex:5,pointerEvents:'none'}}>
+            <div style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 14px',borderRadius:100,background:'rgba(0,0,0,0.5)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.14)',fontSize:10,color:'rgba(255,255,255,0.92)',fontWeight:700,letterSpacing:.7,whiteSpace:'nowrap'}}>
+              <div style={{width:5,height:5,borderRadius:'50%',background:'#E69A52',boxShadow:'0 0 8px rgba(212,133,60,0.8)'}}/>{top.deityPrimary}
+            </div>
+          </div>
+          {/* Info overlay */}
+          <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'140px 24px 30px',background:'linear-gradient(transparent,rgba(0,0,0,0.45) 25%,rgba(0,0,0,0.92) 100%)',pointerEvents:'none'}}>
+            <h2 style={{fontFamily:FD,fontSize:30,fontWeight:500,color:'#fff',lineHeight:1.1,marginBottom:8,textShadow:'0 2px 20px rgba(0,0,0,0.5)'}}>{top.templeName}</h2>
+            <div style={{fontSize:12.5,color:'rgba(255,255,255,0.45)',display:'flex',alignItems:'center',gap:5,marginBottom:6}}>
+              <div style={{width:3,height:3,borderRadius:'50%',background:'rgba(255,255,255,0.3)'}}/>{top.townOrCity}, {top.stateOrUnionTerritory}
+            </div>
+            {top.architectureStyle && <div style={{fontSize:11.5,color:'rgba(255,255,255,0.22)',fontFamily:FD,fontStyle:'italic'}}>{top.architectureStyle}</div>}
+            <div style={{marginTop:16,display:'flex',justifyContent:'center',alignItems:'center',gap:8}}>
+              <div style={{width:24,height:1.5,borderRadius:1,background:'rgba(255,255,255,0.15)'}}/>
+              <span style={{fontSize:10,color:'rgba(255,255,255,0.22)',letterSpacing:.6}}>swipe up to explore</span>
+              <div style={{width:24,height:1.5,borderRadius:1,background:'rgba(255,255,255,0.15)'}}/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:22,padding:'6px 24px 38px',flexShrink:0}}>
+        <button className="t" onClick={() => { if (!flyDir) setFlyDir('left'); }} style={{width:64,height:64,borderRadius:'50%',background:C.card,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,cursor:'pointer',boxShadow:'0 4px 24px rgba(0,0,0,0.15)',color:'#ef4444'}}>✕</button>
+        <button className="t" onClick={() => oT(top)} style={{width:50,height:50,borderRadius:'50%',background:C.bg3,border:`1px solid ${C.divL}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,cursor:'pointer',color:C.textM}}>↑</button>
+        <button className="t" onClick={() => { if (!flyDir) setFlyDir('right'); }} style={{width:64,height:64,borderRadius:'50%',background:'rgba(212,133,60,0.1)',border:`1.5px solid rgba(212,133,60,0.3)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,cursor:'pointer',color:C.saffron,boxShadow:`0 4px 28px rgba(212,133,60,0.18)`}}>♥</button>
+      </div>
+    </div>
+  );
+};
+
 // ━━━━━━━━━━━━━━━━━━━ APP SHELL ━━━━━━━━━━━━━━━━━━━
 
 export default function App() {
@@ -897,6 +1123,7 @@ export default function App() {
       if (!error && data) setTemples(data);
       setLoading(false);
     });
+    initParallax();
   }, []);
 
   const nav = useCallback(t => { setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
@@ -906,7 +1133,7 @@ export default function App() {
 
   const tabs = ["home","explore","nearby","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
-  const showNav = !["detail","search","stateBrowse","districtBrowse"].includes(scr);
+  const showNav = !["detail","search","stateBrowse","districtBrowse","discover"].includes(scr);
 
   if (loading) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
@@ -918,6 +1145,7 @@ export default function App() {
 
   let page = null;
   if (scr === "home") page = <Home nav={nav} oT={oT} temples={temples} isDark={isDark} onToggleTheme={toggleTheme}/>;
+  else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
   else if (scr === "explore") page = <Explore nav={nav} oT={oT} temples={temples}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back}/>;
   else if (scr === "search") page = <Search oT={oT} onBack={back} temples={temples}/>;
