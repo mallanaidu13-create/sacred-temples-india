@@ -1913,7 +1913,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
 
   const [msgs, setMsgs] = useState([{role:'assistant', text: greeting}]);
   const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
+
   const endRef = useRef(null);
   const taRef = useRef(null);
 
@@ -1926,56 +1926,17 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
 
   const hasUserMsg = msgs.some(m => m.role === 'user');
 
-  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs, busy]);
+  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs]);
 
   const autoResize = (el) => { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; };
 
-  const send = async (text) => {
+  const send = (text) => {
     const q = (text || input).trim();
-    if (!q || busy) return;
+    if (!q) return;
     setMsgs(prev => [...prev, {role:'user', text: q}]);
     setInput('');
     if (taRef.current) { taRef.current.style.height = 'auto'; }
-    setBusy(true);
-    try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey || apiKey.startsWith('your-')) {
-        setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Sarathi needs a valid Gemini API key. Go to Cloudflare Pages → Settings → Environment variables → set VITE_GEMINI_API_KEY with a real key from https://aistudio.google.com/app/apikey (free).'}]);
-        setBusy(false);
-        return;
-      }
-      let systemPrompt = SARATHI_SYSTEM_PROMPT;
-      if (temple) {
-        systemPrompt += `\n\nCurrent temple the user is viewing:\nName: ${temple.templeName}\nLocation: ${[temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ')}\nPrimary Deity: ${temple.deityPrimary}${temple.deitySecondary ? '\nSecondary Deity: ' + temple.deitySecondary : ''}\nArchitecture: ${temple.architectureStyle || 'N/A'}\nDarshan Timings: ${temple.darshanTimings || 'N/A'}\nMajor Festivals: ${temple.majorFestivals || 'N/A'}\nNearest City: ${temple.nearestCity || 'N/A'}\nNearest Railway: ${temple.nearestRailwayStation || 'N/A'}\nNearest Airport: ${temple.nearestAirport || 'N/A'}\nTravel Route: ${temple.routeSummary || 'N/A'}\nHistorical Significance: ${temple.historicalSignificance || 'N/A'}\nSpecial Notes: ${temple.specialNotes || 'N/A'}`;
-      }
-      // Build Gemini contents array (skip the greeting at index 0)
-      const contents = [];
-      for (let i = 1; i < msgs.length; i++) {
-        contents.push({ role: msgs[i].role === 'assistant' ? 'model' : 'user', parts: [{ text: msgs[i].text }] });
-      }
-      contents.push({ role: 'user', parts: [{ text: q }] });
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents,
-            generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
-          })
-        }
-      );
-      const data = await res.json();
-      const isAuthError = data?.error?.code === 401 || data?.error?.status === 'UNAUTHENTICATED' || (data?.error?.message || '').toLowerCase().includes('auth');
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
-        || (isAuthError ? '⚠ Invalid Gemini API key. Please update VITE_GEMINI_API_KEY in Cloudflare Pages with a valid key from https://aistudio.google.com/app/apikey'
-          : data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
-      setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
-    } catch(e) {
-      setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Could not connect. Please check your internet and try again.'}]);
-    }
-    setBusy(false);
+    setMsgs(prev => [...prev, {role:'assistant', text:'🙏 Sarathi AI is coming soon. Please check back later!'}]);
   };
 
   const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
@@ -2034,16 +1995,6 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             </div>
           </div>
         ))}
-        {busy && (
-          <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
-            <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={17}/></div>
-            <div style={{padding:'12px 16px',borderRadius:'4px 18px 18px 18px',background:C.card,border:`1px solid ${C.div}`,display:'flex',gap:4,alignItems:'center'}}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{width:6,height:6,borderRadius:'50%',background:C.saffron,opacity:0.7,animation:`soundWave 1.1s ease-in-out infinite ${i*0.18}s`}}/>
-              ))}
-            </div>
-          </div>
-        )}
         <div ref={endRef}/>
       </div>
 
@@ -2073,13 +2024,13 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
           <button
             className="t"
             onClick={() => send()}
-            disabled={!input.trim() || busy}
-            style={{width:38,height:38,borderRadius:12,background:input.trim()&&!busy?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.bg2}`,border:'none',cursor:input.trim()&&!busy?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .2s',boxShadow:input.trim()&&!busy?`0 3px 14px rgba(212,133,60,0.35)`:'none'}}
+            disabled={!input.trim()}
+            style={{width:38,height:38,borderRadius:12,background:input.trim()?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.bg2}`,border:'none',cursor:input.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .2s',boxShadow:input.trim()?`0 3px 14px rgba(212,133,60,0.35)`:'none'}}
           >
-            <svg width="15" height="15" fill="none" stroke={input.trim()&&!busy?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            <svg width="15" height="15" fill="none" stroke={input.trim()?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
         </div>
-        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by Google Gemini · Sarathi may make mistakes</div>
+        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Sarathi AI · Coming soon</div>
       </div>
     </div>
   );
