@@ -1040,7 +1040,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           </div>
           {/* ── Ask Sarathi ── */}
           <button className="t" onClick={() => nav?.("chat")} style={{width:"100%",marginTop:14,marginBottom:4,padding:"15px 20px",borderRadius:22,background:`linear-gradient(135deg,rgba(212,133,60,0.13),rgba(212,133,60,0.06))`,border:`1.5px solid rgba(212,133,60,0.28)`,cursor:"pointer",display:"flex",alignItems:"center",gap:14,textAlign:"left",position:"relative",overflow:"hidden"}}>
-            <div style={{width:44,height:44,borderRadius:14,background:"rgba(212,133,60,0.14)",border:"1px solid rgba(212,133,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FD,fontSize:22,color:C.saffron,flexShrink:0}}>ॐ</div>
+            <div style={{width:44,height:44,borderRadius:14,background:"rgba(212,133,60,0.14)",border:"1px solid rgba(212,133,60,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><OmSvg size={26}/></div>
             <div style={{flex:1}}>
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                 <span style={{fontSize:13.5,fontWeight:700,color:C.saffron,fontFamily:FD}}>Ask Sarathi</span>
@@ -1954,24 +1954,34 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
     if (taRef.current) { taRef.current.style.height = 'auto'; }
     setBusy(true);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
       let systemPrompt = SARATHI_SYSTEM_PROMPT;
       if (temple) {
         systemPrompt += `\n\nCurrent temple the user is viewing:\nName: ${temple.templeName}\nLocation: ${[temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ')}\nPrimary Deity: ${temple.deityPrimary}${temple.deitySecondary ? '\nSecondary Deity: ' + temple.deitySecondary : ''}\nArchitecture: ${temple.architectureStyle || 'N/A'}\nDarshan Timings: ${temple.darshanTimings || 'N/A'}\nMajor Festivals: ${temple.majorFestivals || 'N/A'}\nNearest City: ${temple.nearestCity || 'N/A'}\nNearest Railway: ${temple.nearestRailwayStation || 'N/A'}\nNearest Airport: ${temple.nearestAirport || 'N/A'}\nTravel Route: ${temple.routeSummary || 'N/A'}\nHistorical Significance: ${temple.historicalSignificance || 'N/A'}\nSpecial Notes: ${temple.specialNotes || 'N/A'}`;
       }
-      // Build history: skip the initial assistant greeting (index 0), include all user/assistant after
-      const history = [];
+      // Build OpenAI-compatible messages array
+      const messages = [{role:'system', content: systemPrompt}];
       for (let i = 1; i < msgs.length; i++) {
-        history.push({role: msgs[i].role === 'assistant' ? 'model' : 'user', parts:[{text: msgs[i].text}]});
+        messages.push({role: msgs[i].role, content: msgs[i].text});
       }
-      history.push({role:'user', parts:[{text: q}]});
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({system_instruction:{parts:[{text:systemPrompt}]}, contents:history, generationConfig:{temperature:0.7,maxOutputTokens:600}})}
-      );
+      messages.push({role:'user', content: q});
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':`Bearer ${apiKey}`,
+          'HTTP-Referer':'https://sacred-temples-india.pages.dev',
+          'X-Title':'Sacred Temples India - Sarathi'
+        },
+        body: JSON.stringify({
+          model:'google/gemma-2-9b-it:free',
+          messages,
+          temperature:0.7,
+          max_tokens:600
+        })
+      });
       const data = await res.json();
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+      const reply = data?.choices?.[0]?.message?.content
         || (data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
       setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
     } catch(e) {
@@ -1987,14 +1997,14 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
       {/* Header */}
       <div style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px 12px',background:C.glass,backdropFilter:'blur(20px)',borderBottom:`1px solid ${C.divL}`,flexShrink:0,position:'sticky',top:0,zIndex:60}}>
         <button className="t" onClick={onBack} style={{width:40,height:40,borderRadius:13,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'pointer',color:C.text,flexShrink:0}}>←</button>
-        <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.25)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:22,flexShrink:0}}>ॐ</div>
+        <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.25)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={26}/></div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:7}}>
             <span style={{fontSize:15.5,fontWeight:700,color:C.text,fontFamily:FD}}>Sarathi</span>
             <span style={{fontSize:9,color:C.textDD,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',fontFamily:FB}}>सारथी</span>
             <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 6px rgba(74,222,128,0.6)',flexShrink:0}}/>
           </div>
-          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by Gemini</div>
+          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by OpenRouter</div>
         </div>
         <button className="t" onClick={onToggleTheme} style={{width:36,height:36,borderRadius:11,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           {isDark
@@ -2020,7 +2030,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
         {msgs.map((m, i) => (
           <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start',alignItems:'flex-end',gap:8}}>
             {m.role === 'assistant' && (
-              <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:14,flexShrink:0,marginBottom:2}}>ॐ</div>
+              <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginBottom:2}}><OmSvg size={17}/></div>
             )}
             <div style={{
               maxWidth:'78%',
@@ -2038,7 +2048,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
         ))}
         {busy && (
           <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
-            <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:14,flexShrink:0}}>ॐ</div>
+            <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={17}/></div>
             <div style={{padding:'12px 16px',borderRadius:'4px 18px 18px 18px',background:C.card,border:`1px solid ${C.div}`,display:'flex',gap:4,alignItems:'center'}}>
               {[0,1,2].map(i => (
                 <div key={i} style={{width:6,height:6,borderRadius:'50%',background:C.saffron,opacity:0.7,animation:`soundWave 1.1s ease-in-out infinite ${i*0.18}s`}}/>
@@ -2198,7 +2208,7 @@ export default function App() {
         </div>
         {/* Sarathi FAB — floats above BNav */}
         {showNav && (
-          <button className="t" onClick={() => nav("chat")} title="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,boxShadow:`0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)`,fontFamily:FD,fontSize:24,color:"#fff",lineHeight:1}}>ॐ</button>
+          <button className="t" onClick={() => nav("chat")} title="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,boxShadow:`0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)`}}><OmSvg size={28} color="#fff"/></button>
         )}
         {showNav && <BNav a={aTab} on={onTab} savedCount={temples.filter(t=>t.isFavorite).length}/>}
       </div>
