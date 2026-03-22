@@ -1954,24 +1954,24 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
         messages.push({role: msgs[i].role, content: msgs[i].text});
       }
       messages.push({role:'user', content: q});
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':`Bearer ${apiKey}`,
-          'HTTP-Referer':'https://sacred-temples-india.pages.dev',
-          'X-Title':'Sacred Temples India - Sarathi'
-        },
-        body: JSON.stringify({
-          model:'google/gemma-2-9b-it:free',
-          messages,
-          temperature:0.7,
-          max_tokens:600
-        })
-      });
-      const data = await res.json();
-      const reply = data?.choices?.[0]?.message?.content
-        || (data?.error ? `⚠ Error: ${data.error.message || JSON.stringify(data.error)}` : 'I could not retrieve a response. Please try again.');
+      // Try primary model, fallback to secondary if it fails or returns an error
+      const orHeaders = {
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${apiKey}`,
+        'HTTP-Referer':'https://sacred-temples-india.pages.dev',
+        'X-Title':'Sacred Temples India - Sarathi'
+      };
+      const orBody = (model) => JSON.stringify({ model, messages, temperature:0.7, max_tokens:600 });
+
+      let reply = null;
+      for (const model of ['mistralai/mistral-7b-instruct:free','meta-llama/llama-3.1-8b-instruct:free']) {
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:orHeaders, body:orBody(model) });
+        const data = await res.json();
+        reply = data?.choices?.[0]?.message?.content || null;
+        if (reply) break;
+        if (data?.error) reply = `⚠ Error: ${data.error.message || JSON.stringify(data.error)}`;
+      }
+      if (!reply) reply = 'I could not retrieve a response. Please try again.';
       setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
     } catch(e) {
       setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Could not connect. Please check your internet and try again.'}]);
