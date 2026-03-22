@@ -1939,8 +1939,8 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
     setBusy(true);
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Sarathi is not configured. Add VITE_GEMINI_API_KEY to Cloudflare Pages environment variables (free key from https://aistudio.google.com/app/apikey).'}]);
+      if (!apiKey || apiKey.startsWith('your-')) {
+        setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Sarathi needs a valid Gemini API key. Go to Cloudflare Pages → Settings → Environment variables → set VITE_GEMINI_API_KEY with a real key from https://aistudio.google.com/app/apikey (free).'}]);
         setBusy(false);
         return;
       }
@@ -1967,8 +1967,10 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
         }
       );
       const data = await res.json();
+      const isAuthError = data?.error?.code === 401 || data?.error?.status === 'UNAUTHENTICATED' || (data?.error?.message || '').toLowerCase().includes('auth');
       const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
-        || (data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
+        || (isAuthError ? '⚠ Invalid Gemini API key. Please update VITE_GEMINI_API_KEY in Cloudflare Pages with a valid key from https://aistudio.google.com/app/apikey'
+          : data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
       setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
     } catch(e) {
       setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Could not connect. Please check your internet and try again.'}]);
