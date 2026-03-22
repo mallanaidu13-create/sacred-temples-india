@@ -67,48 +67,32 @@ const PANCHANG = {
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
 
-/* Traditional iconic Om SVG — two lobes, tail, virama, bindu */
-const OmSvg = ({ size = 160, color }) => {
+/* Small Om icon SVG — used in FAB button and chat header */
+const OmSvg = ({ size = 28, color }) => {
   const c = color || C.saffron;
-  const sw = Math.max(6, size * 0.075); // stroke scales with size
   return (
-    <svg width={size} height={Math.round(size * 1.08)} viewBox="0 0 112 122" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="omGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#F0C060"/>
-          <stop offset="50%" stopColor={c}/>
-          <stop offset="100%" stopColor="#C06820"/>
-        </linearGradient>
-      </defs>
-      <g stroke="url(#omGrad)" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
-        {/* Upper lobe — C-curve opening to the left */}
-        <path d="M40,52 C40,36 56,28 70,32 C84,36 92,50 90,66 C88,80 74,84 62,82 C50,80 40,72 40,66"/>
-        {/* Lower lobe — larger C-curve opening to the left */}
-        <path d="M36,78 C60,68 90,80 92,100 C94,118 80,126 64,124 C48,122 33,110 30,100"/>
-        {/* Sweeping tail — curves from bottom of lower lobe to lower-left */}
-        <path d="M30,100 C20,110 10,116 4,124"/>
-        {/* Upper arm — rises from top of upper lobe, curves right into virama */}
-        <path d="M44,46 C42,28 50,12 62,6 C74,0 88,6 88,22"/>
-        {/* Virama arc — the curved hook at top-right */}
-        <path d="M94,14 C102,18 106,32 102,44 C98,56 86,58 80,48"/>
-      </g>
-      {/* Bindu — small filled diamond at very top of virama */}
-      <polygon points="94,2 103,11 94,20 85,11" fill="url(#omGrad)"/>
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle"
+        fontFamily="'Noto Serif Devanagari', serif" fontSize="72" fill={c}>ॐ</text>
     </svg>
   );
 };
 
+/* Large Om symbol — uses actual ॐ Unicode glyph with Noto Serif Devanagari */
 const OmSymbol = ({ size = 160, style = {} }) => (
   <span style={{
     display: "inline-block",
     position: "relative",
     zIndex: 2,
+    fontFamily: "'Noto Serif Devanagari', serif",
+    fontSize: size,
+    lineHeight: 1,
+    color: C.saffron,
     animation: "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
     userSelect: "none",
-    lineHeight: 0,
     ...style,
   }}>
-    <OmSvg size={size}/>
+    ॐ
   </span>
 );
 
@@ -1955,6 +1939,11 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
     setBusy(true);
     try {
       const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+      if (!apiKey) {
+        setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Sarathi is not yet configured. The site admin needs to add VITE_OPENROUTER_API_KEY to the Cloudflare Pages environment variables.'}]);
+        setBusy(false);
+        return;
+      }
       let systemPrompt = SARATHI_SYSTEM_PROMPT;
       if (temple) {
         systemPrompt += `\n\nCurrent temple the user is viewing:\nName: ${temple.templeName}\nLocation: ${[temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ')}\nPrimary Deity: ${temple.deityPrimary}${temple.deitySecondary ? '\nSecondary Deity: ' + temple.deitySecondary : ''}\nArchitecture: ${temple.architectureStyle || 'N/A'}\nDarshan Timings: ${temple.darshanTimings || 'N/A'}\nMajor Festivals: ${temple.majorFestivals || 'N/A'}\nNearest City: ${temple.nearestCity || 'N/A'}\nNearest Railway: ${temple.nearestRailwayStation || 'N/A'}\nNearest Airport: ${temple.nearestAirport || 'N/A'}\nTravel Route: ${temple.routeSummary || 'N/A'}\nHistorical Significance: ${temple.historicalSignificance || 'N/A'}\nSpecial Notes: ${temple.specialNotes || 'N/A'}`;
@@ -1982,7 +1971,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
       });
       const data = await res.json();
       const reply = data?.choices?.[0]?.message?.content
-        || (data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
+        || (data?.error ? `⚠ Error: ${data.error.message || JSON.stringify(data.error)}` : 'I could not retrieve a response. Please try again.');
       setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
     } catch(e) {
       setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Could not connect. Please check your internet and try again.'}]);
@@ -2091,7 +2080,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             <svg width="15" height="15" fill="none" stroke={input.trim()&&!busy?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
         </div>
-        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by Google Gemini · Sarathi may make mistakes</div>
+        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by OpenRouter · Sarathi may make mistakes</div>
       </div>
     </div>
   );
