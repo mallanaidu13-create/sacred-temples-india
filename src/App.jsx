@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase.js";
 
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  SACRED TEMPLES OF BHĀRATA
 //  Aesthetic: Dark Sanctum — gold on obsidian
@@ -117,6 +119,7 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes kenBurns{0%{transform:scale(1)}100%{transform:scale(1.08)}}
 @keyframes premiumPulse{0%,100%{box-shadow:0 0 0 1px rgba(196,162,78,0.1)}50%{box-shadow:0 0 0 1px rgba(196,162,78,0.26),0 0 40px rgba(196,162,78,0.07)}}
 @keyframes badgePop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
+@keyframes skeletonShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 .rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
 .fi{animation:fi .35s ease both}
 .t{transition:transform .12s cubic-bezier(.16,1,.3,1)}.t:active{transform:scale(.96)}
@@ -147,7 +150,10 @@ const TempleImage = ({src, hue, style, omSize=48, px=0, py=0}) => {
   return (
     <div style={{position:'relative',overflow:'hidden',...style}}>
       <div style={{position:'absolute',inset:0,background:`linear-gradient(165deg,${hsl(hue,40,16)},${hsl(hue,50,4)})`}}/>
-      {(!loaded || err) && (
+      {!loaded && !err && (
+        <div style={{position:'absolute',inset:0,background:`linear-gradient(90deg,${hsl(30,25,14,1)} 25%,${hsl(30,30,18,1)} 50%,${hsl(30,25,14,1)} 75%)`,backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite'}}/>
+      )}
+      {err && (
         <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:omSize,color:'rgba(212,133,60,0.15)'}}>ॐ</div>
       )}
       {!err && (
@@ -484,7 +490,7 @@ const Chip = ({label, active, onClick}) => (
 
 // ── Featured Card ──
 const FCard = ({t, onClick, onFav, d=0}) => {
-  const imgSrc = `https://source.unsplash.com/featured/400x600/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const imgSrc = `https://source.unsplash.com/400x600/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
@@ -523,7 +529,7 @@ const FCard = ({t, onClick, onFav, d=0}) => {
 
 // ── List Card ──
 const LCard = ({t, onClick, onFav, d=0}) => {
-  const imgSrc = `https://source.unsplash.com/featured/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const imgSrc = `https://source.unsplash.com/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
       display:"flex",gap:0,padding:0,margin:"0 24px 12px",borderRadius:20,
@@ -594,6 +600,45 @@ const Empty = ({emoji, title, sub, action}) => (
   </div>
 );
 
+// ── Skeleton shimmer helper ──
+const skelBg = (isDark) => isDark
+  ? `linear-gradient(90deg,rgba(42,30,20,1) 25%,rgba(58,42,28,1) 50%,rgba(42,30,20,1) 75%)`
+  : `linear-gradient(90deg,rgba(230,224,214,1) 25%,rgba(245,240,232,1) 50%,rgba(230,224,214,1) 75%)`;
+
+const SkeletonCard = () => (
+  <div style={{width:268,minWidth:268,height:360,borderRadius:26,overflow:"hidden",flexShrink:0,scrollSnapAlign:"start",background:C.card,border:`1px solid ${C.div}`}}>
+    <div style={{height:260,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite'}}/>
+    <div style={{padding:"16px 18px",display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{height:14,width:"55%",borderRadius:7,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite .1s'}}/>
+      <div style={{height:20,width:"80%",borderRadius:7,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite .2s'}}/>
+      <div style={{height:12,width:"50%",borderRadius:6,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite .3s'}}/>
+    </div>
+  </div>
+);
+
+const SkeletonListCard = () => (
+  <div style={{display:"flex",gap:0,padding:0,margin:"0 24px 12px",borderRadius:20,background:C.card,border:`1px solid ${C.div}`,overflow:"hidden"}}>
+    <div style={{width:3,flexShrink:0,background:`linear-gradient(180deg,${C.saffronDim},${C.goldDim})`}}/>
+    <div style={{display:"flex",gap:14,padding:14,flex:1}}>
+      <div style={{width:96,height:96,minWidth:96,borderRadius:16,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite'}}/>
+      <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
+        <div style={{height:18,width:"70%",borderRadius:7,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite .1s'}}/>
+        <div style={{height:12,width:"50%",borderRadius:6,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite .2s'}}/>
+        <div style={{height:22,width:90,borderRadius:99,background:skelBg(true),backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite .3s'}}/>
+      </div>
+    </div>
+  </div>
+);
+
+const TypingDots = () => (
+  <div style={{display:'flex',justifyContent:'flex-start',alignItems:'flex-end',gap:8}}>
+    <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={17}/></div>
+    <div style={{padding:'12px 16px',borderRadius:'4px 18px 18px 18px',background:C.card,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',gap:5}}>
+      {[0,1,2].map(i => <div key={i} style={{width:7,height:7,borderRadius:'50%',background:C.saffron,opacity:.5,animation:`soundWave 1.2s ease-in-out infinite ${i*.18}s`}}/>)}
+    </div>
+  </div>
+);
+
 const NavSvg = ({name, col}) => {
   const s = {width:22,height:22,display:"block"};
   if (name === "home") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10L12 3l9 7v10h-5v-6h-8v6H3z"/></svg>;
@@ -642,7 +687,7 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
-const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
+const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const { playing, toggle } = useOmChant();
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
@@ -734,7 +779,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
         {DEITIES.map((d,i) => (
           <div key={d.name} className="t rv" onClick={() => nav("explore")} style={{minWidth:102,textAlign:"center",cursor:"pointer",animationDelay:`${.15+i*.08}s`,scrollSnapAlign:"start"}}>
             <div style={{width:82,height:82,borderRadius:26,margin:"0 auto 12px",position:"relative",overflow:"hidden",boxShadow:`0 8px 28px ${hsl(d.h,30,8,0.6)}, 0 0 0 1px ${hsl(d.h,30,20,0.18)}`}}>
-              <TempleImage src={`https://source.unsplash.com/featured/160x160/?${deityQuery(d.name)}&sig=${d.name}`} hue={d.h} style={{width:82,height:82}} omSize={22}/>
+              <TempleImage src={`https://source.unsplash.com/160x160/?${deityQuery(d.name)}&sig=${d.name}`} hue={d.h} style={{width:82,height:82}} omSize={22}/>
               {/* gradient + sanskrit overlay */}
               <div style={{position:"absolute",inset:0,background:`linear-gradient(transparent 35%,rgba(0,0,0,0.72))`}}/>
               <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontFamily:FD,fontSize:13,color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:.3}}>{d.sk}</div>
@@ -750,7 +795,9 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
     <div style={{marginTop:40}}>
       <SH title="Featured Temples" sub="Handpicked sacred destinations" act="See all" onAct={() => nav("explore")} d={.25}/>
       <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
-        {temples.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.3+i*.1}/>)}
+        {loading
+          ? [0,1,2].map(i => <SkeletonCard key={i}/>)
+          : temples.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.3+i*.1}/>)}
       </div>
     </div>
 
@@ -844,7 +891,9 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
     {/* NEARBY */}
     <div style={{marginTop:42}}>
       <SH title="Near You" act="Map" onAct={() => nav("nearby")} d={.55}/>
-      {temples.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={.6+i*.08}/>)}
+      {loading
+        ? [0,1].map(i => <SkeletonListCard key={i}/>)
+        : temples.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={.6+i*.08}/>)}
     </div>
 
     {/* SAVED — only show when non-empty */}
@@ -871,7 +920,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Explore = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
+const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const [v, setV] = useState("list");
   const [fl, setFl] = useState([]);
   const [sortBy, setSortBy] = useState("default");
@@ -918,12 +967,18 @@ const Explore = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
         </div>
       </div>
       <div style={{paddingTop:16}}>
-        {sorted.length === 0 ? <Empty emoji="🏛" title="No Temples Found" sub="Try removing a filter or changing your sort order."/> :
+        {loading ? (
+          v === "list"
+            ? [0,1,2,3,4,5].map(i => <SkeletonListCard key={i}/>)
+            : <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
+                {[0,1,2,3,4,5].map(i => <div key={i} style={{borderRadius:20,height:250,background:C.card,border:`1px solid ${C.div}`,overflow:"hidden"}}><div style={{height:"100%",background:skelBg(true),backgroundSize:'800px 100%',animation:`skeletonShimmer 1.6s ease-in-out infinite ${i*.1}s`}}/></div>)}
+              </div>
+        ) : sorted.length === 0 ? <Empty emoji="🏛" title="No Temples Found" sub="Try removing a filter or changing your sort order."/> :
         v === "list" ? sorted.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.04}/>) : (
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
             {sorted.map((t,i) => (
               <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`}}>
-                <TempleImage src={`https://source.unsplash.com/featured/500x350/?${deityQuery(t.deityPrimary)}&sig=${t.id}`} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={44}/>
+                <TempleImage src={`https://source.unsplash.com/500x350/?${deityQuery(t.deityPrimary)}&sig=${t.id}`} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={44}/>
                 <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"70px 14px 16px",background:"linear-gradient(transparent,rgba(0,0,0,0.88))"}}>
                   <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontWeight:700,marginBottom:5,letterSpacing:.5}}>{t.deityPrimary}</div>
                   <h3 style={{fontFamily:FD,fontSize:15.5,fontWeight:500,color:"#fff",lineHeight:1.2}}>{t.templeName}</h3>
@@ -955,7 +1010,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
     setTimeout(() => setShared(false), 2200);
   };
   const b3 = hsl(t.hue,50,3);
-  const imgSrc = `https://source.unsplash.com/featured/860x520/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const imgSrc = `https://source.unsplash.com/860x520/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
   return (
     <div className="fi" style={{paddingBottom:44}}>
@@ -1091,19 +1146,19 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           <div className="fi" style={{paddingTop:8}}>
             {/* Large hero shot */}
             <div style={{borderRadius:20,overflow:"hidden",height:240,position:"relative",marginBottom:8}}>
-              <TempleImage src={`https://source.unsplash.com/featured/800x480/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g0`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
+              <TempleImage src={`https://source.unsplash.com/800x480/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g0`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
             </div>
             {/* 2-col grid */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
               {[1,2,3,4].map(i => (
                 <div key={i} style={{borderRadius:16,overflow:"hidden",height:150,position:"relative"}}>
-                  <TempleImage src={`https://source.unsplash.com/featured/${380+i*10}x${300+i*12}/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g${i}`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={32}/>
+                  <TempleImage src={`https://source.unsplash.com/${380+i*10}x${300+i*12}/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g${i}`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={32}/>
                 </div>
               ))}
             </div>
             {/* Last wide shot */}
             <div style={{borderRadius:20,overflow:"hidden",height:180,position:"relative",marginTop:8}}>
-              <TempleImage src={`https://source.unsplash.com/featured/800x360/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g5`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={44}/>
+              <TempleImage src={`https://source.unsplash.com/800x360/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g5`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={44}/>
             </div>
           </div>
         )}
@@ -1216,7 +1271,7 @@ const distKm = (lat1, lon1, lat2, lon2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 };
 
-const Nearby = ({oT, oF, temples, isDark, onToggleTheme}) => {
+const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const [geo, setGeo] = useState(null);
   const [geoErr, setGeoErr] = useState(null);
   const [locating, setLocating] = useState(false);
@@ -1281,6 +1336,7 @@ const Nearby = ({oT, oF, temples, isDark, onToggleTheme}) => {
       )}
 
       {/* Results */}
+      {loading && !geo && [0,1].map(i => <SkeletonListCard key={i}/>)}
       {geo && (nearby.length > 0
         ? nearby.map((t,i) => (
             <div key={t.id}>
@@ -1812,7 +1868,7 @@ const Discover = ({temples, oT, onBack}) => {
         {/* 2nd card — loads photo */}
         {second && (
           <div style={{...cardBase,transform:`translateY(${10-progress*10}px) scale(${0.94+progress*0.06})`,transition:flyDir?'transform 0.45s cubic-bezier(.16,1,.3,1)':'transform 0.18s',zIndex:2}}>
-            <TempleImage src={`https://source.unsplash.com/featured/400x700/?${deityQuery(second.deityPrimary)}&sig=${second.id}`} hue={second.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={60}/>
+            <TempleImage src={`https://source.unsplash.com/400x700/?${deityQuery(second.deityPrimary)}&sig=${second.id}`} hue={second.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={60}/>
             <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'100px 22px 22px',background:'linear-gradient(transparent,rgba(0,0,0,0.88))'}}>
               <h3 style={{fontFamily:FD,fontSize:20,fontWeight:500,color:'#fff',lineHeight:1.1}}>{second.templeName}</h3>
               <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:5}}>{second.townOrCity}</div>
@@ -1837,7 +1893,7 @@ const Discover = ({temples, oT, onBack}) => {
           onMouseLeave={() => drag.active && onEnd()}
           onTransitionEnd={e => { if (flyDir && e.propertyName === 'transform') afterFly(); }}
         >
-          <TempleImage src={`https://source.unsplash.com/featured/400x700/?${deityQuery(top.deityPrimary)}`} hue={top.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={72} px={px} py={py}/>
+          <TempleImage src={`https://source.unsplash.com/400x700/?${deityQuery(top.deityPrimary)}`} hue={top.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={72} px={px} py={py}/>
           {/* SAVED badge */}
           <div style={{position:'absolute',top:32,left:20,padding:'9px 22px',borderRadius:14,background:'rgba(34,197,94,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:'rotate(-10deg)',opacity:saving||flyDir==='right'?1:0,transition:'opacity 0.18s',pointerEvents:'none'}}>
             SAVED ♥
@@ -1923,6 +1979,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
 
   const [msgs, setMsgs] = useState([{role:'assistant', text: greeting}]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const endRef = useRef(null);
   const taRef = useRef(null);
@@ -1936,17 +1993,41 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
 
   const hasUserMsg = msgs.some(m => m.role === 'user');
 
-  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs]);
+  useEffect(() => { endRef.current?.scrollIntoView({behavior:'smooth'}); }, [msgs, isLoading]);
 
   const autoResize = (el) => { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; };
 
-  const send = (text) => {
+  const send = async (text) => {
     const q = (text || input).trim();
-    if (!q) return;
-    setMsgs(prev => [...prev, {role:'user', text: q}]);
+    if (!q || isLoading) return;
+    const nextMsgs = [...msgs, {role:'user', text: q}];
+    setMsgs(nextMsgs);
     setInput('');
     if (taRef.current) { taRef.current.style.height = 'auto'; }
-    setMsgs(prev => [...prev, {role:'assistant', text:'🙏 Sarathi AI is coming soon. Please check back later!'}]);
+    setIsLoading(true);
+    try {
+      const contents = nextMsgs.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{text: m.text}],
+      }));
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            system_instruction: {parts: [{text: SARATHI_SYSTEM_PROMPT}]},
+            contents,
+          }),
+        }
+      );
+      const data = await res.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      setMsgs(prev => [...prev, {role:'assistant', text: reply || '🙏 Sarathi could not respond. Please try again.'}]);
+    } catch (e) {
+      setMsgs(prev => [...prev, {role:'assistant', text:'🙏 Unable to reach Sarathi right now. Please check your connection and try again.'}]);
+    }
+    setIsLoading(false);
   };
 
   const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
@@ -1963,7 +2044,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             <span style={{fontSize:9,color:C.textDD,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',fontFamily:FB}}>सारथी</span>
             <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 6px rgba(74,222,128,0.6)',flexShrink:0}}/>
           </div>
-          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by Google Gemini</div>
+          <div style={{fontSize:11,color:C.textD,marginTop:1}}>{GEMINI_KEY ? 'Divine guide · powered by Google Gemini' : 'Divine guide · AI key not configured'}</div>
         </div>
         <button className="t" onClick={onToggleTheme} style={{width:36,height:36,borderRadius:11,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           {isDark
@@ -2005,6 +2086,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             </div>
           </div>
         ))}
+        {isLoading && <TypingDots/>}
         <div ref={endRef}/>
       </div>
 
@@ -2034,13 +2116,13 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
           <button
             className="t"
             onClick={() => send()}
-            disabled={!input.trim()}
-            style={{width:38,height:38,borderRadius:12,background:input.trim()?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.bg2}`,border:'none',cursor:input.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .2s',boxShadow:input.trim()?`0 3px 14px rgba(212,133,60,0.35)`:'none'}}
+            disabled={!input.trim() || isLoading}
+            style={{width:38,height:38,borderRadius:12,background:(input.trim()&&!isLoading)?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.bg2}`,border:'none',cursor:(input.trim()&&!isLoading)?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .2s',boxShadow:(input.trim()&&!isLoading)?`0 3px 14px rgba(212,133,60,0.35)`:'none'}}
           >
-            <svg width="15" height="15" fill="none" stroke={input.trim()?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            <svg width="15" height="15" fill="none" stroke={(input.trim()&&!isLoading)?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
         </div>
-        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Sarathi AI · Coming soon</div>
+        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by Google Gemini</div>
       </div>
     </div>
   );
@@ -2054,6 +2136,7 @@ export default function App() {
   const [stk, setStk] = useState(["home"]);
   const [temples, setTemples] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') !== 'light');
   const ref = useRef(null);
 
@@ -2072,13 +2155,22 @@ export default function App() {
     });
   }, []);
 
-  useEffect(() => {
-    supabase.from("temples").select("*").then(({ data, error }) => {
-      if (!error && data) setTemples(data);
-      setLoading(false);
-    });
-    initParallax();
+  const fetchTemples = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
+    const { data, error } = await supabase.from("temples").select("*");
+    if (error) {
+      setFetchError(error.message || "Could not load temples. Please check your connection.");
+    } else if (data) {
+      setTemples(data);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchTemples();
+    initParallax();
+  }, [fetchTemples]);
 
   const nav = useCallback(t => { setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
   const back = useCallback(() => { setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
@@ -2102,51 +2194,33 @@ export default function App() {
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
   const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat"].includes(scr);
 
-  if (loading) return (
-    <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+  if (fetchError) return (
+    <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>
       <style>{getCss(C)}</style>
-      {/* Deep ambient glow */}
-      <div style={{position:"absolute",top:"50%",left:"50%",width:360,height:360,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",transform:"translate(-50%,-50%)",filter:"blur(55px)",animation:"breathe 5s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Static concentric rings */}
-      {[220,162,110].map((r,i) => (
-        <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.05+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${7+i*2}s ease-in-out infinite ${i*.7}s`,pointerEvents:"none"}}/>
-      ))}
-      {/* Pulsing rings */}
-      {[0,1,2].map(i => (
-        <div key={`rp${i}`} style={{position:"absolute",top:"50%",left:"50%",width:160,height:160,borderRadius:"50%",border:"1.5px solid rgba(212,133,60,0.14)",transform:"translate(-50%,-50%)",animation:`ringExpand 3.4s ease-out infinite ${i*1.13}s`,pointerEvents:"none"}}/>
-      ))}
-      {/* OM */}
-      <OmSymbol size={130} />
-      {/* Brand */}
-      <div style={{marginTop:38,display:"flex",flexDirection:"column",alignItems:"center",gap:8,position:"relative",zIndex:2}}>
-        <div style={{fontSize:11,color:C.textDD,fontWeight:700,letterSpacing:4,textTransform:"uppercase"}}>Sacred Temples</div>
-        <div style={{fontFamily:FD,fontSize:14,color:"rgba(212,133,60,0.28)",fontStyle:"italic"}}>of Bhārata</div>
-      </div>
-      {/* Loading dots */}
-      <div style={{display:"flex",gap:7,marginTop:48,position:"relative",zIndex:2}}>
-        {[0,1,2].map(i => (
-          <div key={i} style={{width:5,height:5,borderRadius:"50%",background:C.saffron,opacity:.22,animation:`breathe 1.6s ease-in-out infinite ${i*.22}s`}}/>
-        ))}
-      </div>
+      <div style={{position:"absolute",top:"50%",left:"50%",width:360,height:360,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.05),transparent 60%)",transform:"translate(-50%,-50%)",filter:"blur(55px)",pointerEvents:"none"}}/>
+      <OmSymbol size={100}/>
+      <h2 style={{fontFamily:FD,fontSize:26,color:C.cream,marginTop:32,marginBottom:12,fontWeight:500}}>Connection Lost</h2>
+      <p style={{fontSize:13,color:C.textD,lineHeight:1.75,maxWidth:260,marginBottom:32}}>{fetchError}</p>
+      <button className="t" onClick={fetchTemples} style={{padding:"13px 40px",borderRadius:16,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,boxShadow:`0 6px 28px rgba(212,133,60,0.35)`}}>Retry</button>
     </div>
   );
 
   const th = {isDark, onToggleTheme: toggleTheme};
 
   let page = null;
-  if (scr === "home") page = <Home nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
+  if (scr === "home") page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
-  else if (scr === "explore") page = <Explore nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
+  else if (scr === "explore") page = <Explore nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} oF={oF} nav={nav} {...th}/>;
   else if (scr === "chat") page = <Chat onBack={backNoTmpReset} temple={tmp} {...th}/>;
   else if (scr === "search") page = <Search oT={oT} oF={oF} onBack={back} temples={temples}/>;
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
-  else if (scr === "nearby") page = <Nearby oT={oT} oF={oF} temples={temples} {...th}/>;
+  else if (scr === "nearby") page = <Nearby oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} onBrowse={() => nav("explore")} {...th}/>;
   else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
-  else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
+  else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
 
   return (
     <div>
