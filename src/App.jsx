@@ -1135,7 +1135,87 @@ const Saved = ({oT, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Profile = ({isDark, onToggleTheme, temples}) => {
+// ━━━━━━━━━━━━━━━━━━━━━━━━ ABOUT PAGE ━━━━━━━━━━━━━━━━━━━━━━━━
+
+const ABOUT_TEXT = `I am Malla, and this app was born from something far deeper than an idea — it grew from a feeling I have carried with me for a long time. India is not simply a country to me; it is a living memory that breathes through its temples, where every stone, every carving, and every hushed corner holds a story that has travelled across generations without losing its meaning. Temples in India are not merely places of worship. They are expressions of faith and art, of science and devotion, of time itself — built by hands that believed in something far greater than themselves. While a handful of temples are known to the world and visited by millions, there are thousands more that remain quietly hidden: resting in forests, standing on lonely hills, tucked away in villages, or existing in places that most of us will never think to look. These temples are not lesser in any way. They are simply waiting to be seen, to be understood, and to be experienced with the attention they have always deserved. Many of them carry powerful local stories, a depth of spiritual energy, and an architectural beauty that has never been fully explored or shared. Over time, as life moved faster and attention drifted elsewhere, many such sacred places were left behind — not because they lost their importance, but because their stories were never brought forward. This app is my honest attempt to change that, to bring these temples closer to people who seek something more than just travel, something more than just a destination. It is built for those who want to explore, to feel, to understand, and to connect with a deeper side of India that no image can fully capture. It is also a small but sincere step towards encouraging thoughtful, respectful temple tourism — where visiting such places can support local communities, help preserve living traditions, and give these sacred spaces the care and attention they truly deserve. I believe that at least once in a lifetime, every person should stand inside a temple where time quietly slows, where silence speaks louder than any noise, and where you feel a sense of peace and belonging that words can only gesture towards. Not every temple in this app is famous. Not every place is crowded. But every place carries a meaning worth discovering, and a story worth carrying home. If this journey helps you find even one such place, feel even one such moment, or reconnect with something within yourself that you had almost forgotten, then this app has done everything it was meant to do. This is not just about temples. It is about stories, about roots, and about experiences that stay with you long after you have left. Sacred Temples India is simply a guide — but the journey, in every way that matters, is yours to take.`;
+
+const About = ({onBack, isDark, onToggleTheme, temples}) => (
+  <div className="fi" style={{minHeight:"100vh",background:C.bg,paddingBottom:48}}>
+    {/* Header */}
+    <div style={{padding:"20px 24px 0",display:"flex",alignItems:"center",gap:14,position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(24px)",borderBottom:`1px solid ${C.divL}`}}>
+      <button className="t" onClick={onBack} style={{width:44,height:44,borderRadius:14,background:"none",border:`1px solid ${C.div}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:C.cream,flexShrink:0}}>←</button>
+      <h1 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,flex:1}}>About</h1>
+      <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+    </div>
+
+    {/* Hero block */}
+    <div style={{padding:"44px 28px 36px",textAlign:"center",position:"relative",overflow:"hidden"}}>
+      {/* Ambient glow behind OM */}
+      <div style={{position:"absolute",top:"30%",left:"50%",width:260,height:260,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",transform:"translate(-50%,-50%)",filter:"blur(50px)",animation:"breathe 6s ease-in-out infinite",pointerEvents:"none"}}/>
+      {[160,118,80].map((r,i) => (
+        <div key={i} style={{position:"absolute",top:"36%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.05+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${8+i*2}s ease-in-out infinite ${i*.8}s`,pointerEvents:"none"}}/>
+      ))}
+      <span style={{fontFamily:FD,fontSize:72,color:C.saffron,lineHeight:1,display:"inline-block",position:"relative",zIndex:2,animation:"omPulse 4s ease-in-out infinite, omGlow 4s ease-in-out infinite",userSelect:"none"}}>ॐ</span>
+      <div style={{marginTop:24,position:"relative",zIndex:2}}>
+        <h2 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,letterSpacing:-.2,lineHeight:1.15}}>Sacred Temples<br/>of India</h2>
+        <p style={{fontFamily:FD,fontSize:14,color:"rgba(212,133,60,0.45)",fontStyle:"italic",marginTop:10,letterSpacing:.3}}>A personal journey by Malla</p>
+      </div>
+    </div>
+
+    {/* Divider */}
+    <div style={{display:"flex",alignItems:"center",gap:14,padding:"0 28px",marginBottom:32}}>
+      <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,rgba(196,162,78,0.18))`}}/>
+      <span style={{fontFamily:FD,fontSize:16,color:"rgba(196,162,78,0.3)"}}>✦</span>
+      <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,rgba(196,162,78,0.18))`}}/>
+    </div>
+
+    {/* The story */}
+    <div style={{padding:"0 28px"}}>
+      <p style={{
+        fontFamily:FD,fontSize:17.5,color:C.creamM,lineHeight:2.05,
+        letterSpacing:.18,
+        borderLeft:`2px solid rgba(196,162,78,0.18)`,
+        paddingLeft:20,
+      }}>
+        {ABOUT_TEXT}
+      </p>
+    </div>
+
+    {/* Divider */}
+    <div style={{display:"flex",alignItems:"center",gap:14,padding:"40px 28px 0",marginBottom:28}}>
+      <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,rgba(196,162,78,0.12))`}}/>
+      <span style={{fontFamily:FD,fontSize:14,color:"rgba(196,162,78,0.2)"}}>✦</span>
+      <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,rgba(196,162,78,0.12))`}}/>
+    </div>
+
+    {/* Footer meta */}
+    <div style={{padding:"0 28px",display:"flex",flexDirection:"column",gap:10}}>
+      {[
+        {l:"App", v:"Sacred Temples India"},
+        {l:"Version", v:"1.0"},
+        {l:"Temples", v:`${temples.length} sacred places`},
+        {l:"Creator", v:"Malla Naidu"},
+      ].map(r => (
+        <div key={r.l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${C.divL}`}}>
+          <span style={{fontSize:11,fontWeight:700,color:C.textDD,letterSpacing:1.2,textTransform:"uppercase"}}>{r.l}</span>
+          <span style={{fontSize:13,color:C.creamD,fontFamily:FD}}>{r.v}</span>
+        </div>
+      ))}
+    </div>
+
+    {/* Closing line */}
+    <div style={{padding:"36px 28px 0",textAlign:"center"}}>
+      <div style={{fontFamily:FD,fontSize:15,color:C.textD,fontStyle:"italic",lineHeight:1.8}}>
+        "The journey is yours to take."
+      </div>
+      <div style={{width:24,height:1,background:"rgba(196,162,78,0.15)",margin:"18px auto 0"}}/>
+    </div>
+  </div>
+);
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const Profile = ({isDark, onToggleTheme, temples, nav}) => {
   const LS_KEY = "sti_profile";
   const load = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } };
 
@@ -1428,14 +1508,15 @@ const Profile = ({isDark, onToggleTheme, temples}) => {
         </div>
 
         {/* About row */}
-        <div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px"}}>
+        <div className="t" onClick={() => nav("about")} style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",cursor:"pointer"}}>
           <div style={{width:42,height:42,borderRadius:13,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <svg width="17" height="17" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
           <div style={{flex:1}}>
             <div style={{fontSize:14,fontWeight:600,color:C.creamM}}>About Sacred Temples</div>
-            <div style={{fontSize:11,color:C.textD,marginTop:2}}>Version 1.0 · {temples.length} temples in database</div>
+            <div style={{fontSize:11,color:C.textD,marginTop:2}}>Our story · Version 1.0</div>
           </div>
+          <span style={{color:C.textDD,fontSize:16}}>→</span>
         </div>
       </div>
 
@@ -1663,7 +1744,7 @@ export default function App() {
 
   const tabs = ["home","explore","nearby","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
-  const showNav = !["detail","search","stateBrowse","districtBrowse","discover"].includes(scr);
+  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about"].includes(scr);
 
   if (loading) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
@@ -1706,7 +1787,8 @@ export default function App() {
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} temples={temples} {...th}/>;
   else if (scr === "nearby") page = <Nearby oT={oT} temples={temples} {...th}/>;
   else if (scr === "saved") page = <Saved oT={oT} temples={temples} {...th}/>;
-  else if (scr === "profile") page = <Profile temples={temples} {...th}/>;
+  else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
+  else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
   else page = <Home nav={nav} oT={oT} temples={temples} {...th}/>;
 
   return (
