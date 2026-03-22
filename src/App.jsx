@@ -417,26 +417,29 @@ const ShlokaWidget = () => {
 };
 
 const PanchangWidget = () => (
-  <div style={{margin:"28px 24px 0",borderRadius:22,padding:"20px 20px 18px",background:C.card,border:`1px solid ${C.div}`}}>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-      <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:3,textTransform:"uppercase"}}>Today's Panchang</div>
-      <div style={{fontSize:10,color:C.saffron,fontWeight:700,padding:"4px 10px",borderRadius:8,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`}}>{PANCHANG.vara}</div>
-    </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-      {[
-        {l:"Tithi",v:PANCHANG.tithi,e:"🌙"},
-        {l:"Nakshatra",v:PANCHANG.nakshatra,e:"✦"},
-        {l:"Yoga",v:PANCHANG.yoga,e:"◎"},
-        {l:"Muhurta",v:PANCHANG.muhurta,e:"⊙"},
-      ].map(p => (
-        <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.bg3,border:`1px solid ${C.divL}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-            <span style={{fontSize:12}}>{p.e}</span>
-            <span style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{p.l}</span>
+  <div style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
+    <div style={{height:3,background:`linear-gradient(90deg,${C.saffron},${C.gold},transparent)`}}/>
+    <div style={{padding:"16px 20px 18px"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <div style={{fontFamily:FE,fontSize:13,color:C.textM,fontWeight:500,letterSpacing:.3}}>Today's Panchang</div>
+        <div style={{fontSize:11,color:C.saffron,fontWeight:700,padding:"4px 12px",borderRadius:8,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`,fontFamily:FD}}>{PANCHANG.vara}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {[
+          {l:"Tithi",v:PANCHANG.tithi,e:"🌙"},
+          {l:"Nakshatra",v:PANCHANG.nakshatra,e:"✦"},
+          {l:"Yoga",v:PANCHANG.yoga,e:"◎"},
+          {l:"Muhurta",v:PANCHANG.muhurta,e:"⊙"},
+        ].map(p => (
+          <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.saffronPale,border:`1px solid rgba(212,133,60,0.08)`}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+              <span style={{fontSize:16}}>{p.e}</span>
+              <span style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{p.l}</span>
+            </div>
+            <div style={{fontFamily:FE,fontSize:14,color:C.creamM,fontWeight:500,lineHeight:1.3}}>{p.v}</div>
           </div>
-          <div style={{fontSize:13,color:C.creamM,fontWeight:600,lineHeight:1.3}}>{p.v}</div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -523,26 +526,30 @@ const LCard = ({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/featured/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
-      display:"flex",gap:16,padding:14,margin:"0 24px 12px",borderRadius:20,
+      display:"flex",gap:0,padding:0,margin:"0 24px 12px",borderRadius:20,
       background:C.card,cursor:"pointer",animationDelay:`${d}s`,
-      border:`1px solid ${C.div}`,
+      border:`1px solid ${C.div}`,overflow:"hidden",
+      boxShadow:`0 2px 12px rgba(0,0,0,0.18)`,
     }}>
-      <div style={{width:88,height:88,minWidth:88,borderRadius:16,overflow:"hidden",position:"relative"}}>
-        <TempleImage src={imgSrc} hue={t.hue} style={{width:88,height:88}} omSize={24}/>
-        <div style={{position:"absolute",bottom:5,left:5,padding:"3px 7px",borderRadius:6,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",fontSize:8.5,color:"rgba(255,255,255,0.9)",fontWeight:700,letterSpacing:.3}}>{t.deityPrimary}</div>
-      </div>
-      <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
-        <h3 style={{fontFamily:FD,fontSize:17,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
-        <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
-          <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}, {t.district}
+      <div style={{width:3,flexShrink:0,background:`linear-gradient(180deg,${C.saffron},${C.gold})`}}/>
+      <div style={{display:"flex",gap:14,padding:14,flex:1,minWidth:0}}>
+        <div style={{width:96,height:96,minWidth:96,borderRadius:16,overflow:"hidden",position:"relative"}}>
+          <TempleImage src={imgSrc} hue={t.hue} style={{width:96,height:96}} omSize={24}/>
+          <div style={{position:"absolute",bottom:5,left:5,padding:"3px 7px",borderRadius:6,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",fontSize:8.5,color:"rgba(255,255,255,0.9)",fontWeight:700,letterSpacing:.3}}>{t.deityPrimary}</div>
         </div>
-        <div style={{marginTop:2}}>
-          <span style={{fontSize:10,padding:"3px 9px",borderRadius:99,background:C.saffronDim,color:C.saffron,fontWeight:700,letterSpacing:.3,border:`1px solid rgba(212,133,60,0.1)`}}>
-            {(t.architectureStyle || t.deityPrimary).split("·")[0].trim()}
-          </span>
+        <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
+          <h3 style={{fontFamily:FE,fontSize:18,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
+          <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
+            <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}{t.stateOrUnionTerritory ? `, ${t.stateOrUnionTerritory}` : ""}
+          </div>
+          <div style={{marginTop:2}}>
+            <span style={{fontSize:10.5,padding:"3px 9px",borderRadius:99,background:C.saffronDim,color:C.saffron,fontWeight:700,letterSpacing:.3,border:`1px solid rgba(212,133,60,0.1)`}}>
+              {(t.architectureStyle || t.deityPrimary).split("·")[0].trim()}
+            </span>
+          </div>
         </div>
+        <div onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
       </div>
-      <div onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
     </div>
   );
 };
@@ -575,11 +582,15 @@ const ThemeBtn = ({isDark, onToggle}) => (
   </button>
 );
 
-const Empty = ({emoji, title, sub}) => (
+const Empty = ({emoji, title, sub, action}) => (
   <div className="fi" style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 40px",textAlign:"center"}}>
-    <div style={{width:96,height:96,borderRadius:32,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:40}}>{emoji}</div>
-    <h3 style={{fontFamily:FD,fontSize:22,color:C.cream,marginBottom:10}}>{title}</h3>
-    <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260}}>{sub}</p>
+    <div style={{width:96,height:96,borderRadius:"50%",background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,boxShadow:`0 0 32px rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:38,position:"relative"}}>
+      <span style={{position:"absolute",fontSize:72,fontFamily:FE,color:C.saffron,opacity:.07,userSelect:"none",lineHeight:1}}>ॐ</span>
+      <span style={{position:"relative"}}>{emoji}</span>
+    </div>
+    <h3 style={{fontFamily:FE,fontSize:24,color:C.cream,marginBottom:10}}>{title}</h3>
+    <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260,marginBottom:action?24:0}}>{sub}</p>
+    {action && <button className="t" onClick={action.onPress} style={{padding:"11px 28px",borderRadius:99,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 18px rgba(212,133,60,0.3)`}}>{action.label}</button>}
   </div>
 );
 
@@ -766,11 +777,10 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
       <SH title="By State" sub="Region by region" act="All" onAct={() => nav("stateBrowse")} d={.4}/>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"0 24px"}}>
         {STATES.slice(0,6).map((s,i) => (
-          <div key={s.name} className="t rv" onClick={() => nav("stateBrowse")} style={{padding:"20px 16px",borderRadius:18,cursor:"pointer",background:C.card,border:`1px solid ${C.div}`,position:"relative",overflow:"hidden",animationDelay:`${.45+i*.06}s`}}>
-            <div style={{position:"absolute",top:-18,right:-18,width:55,height:55,borderRadius:"50%",background:hsl(s.h,40,40),opacity:.04}}/>
-            <div style={{width:8,height:8,borderRadius:4,background:hsl(s.h,40,45),opacity:.35,marginBottom:14}}/>
-            <div style={{fontFamily:FD,fontSize:16,fontWeight:500,color:C.creamM,lineHeight:1.2}}>{s.name}</div>
-            <div style={{fontSize:11,color:C.textD,marginTop:5}}>{s.n} temples</div>
+          <div key={s.name} className="t rv" onClick={() => nav("stateBrowse")} style={{padding:"20px 16px",borderRadius:18,cursor:"pointer",background:`linear-gradient(135deg,${hsl(s.h,35,isDark?13:90)},${C.card})`,border:`1px solid ${C.div}`,borderTop:`2px solid ${hsl(s.h,40,isDark?35:60,0.35)}`,position:"relative",overflow:"hidden",animationDelay:`${.45+i*.06}s`}}>
+            <div style={{width:10,height:10,borderRadius:5,background:hsl(s.h,50,50),opacity:.6,marginBottom:12}}/>
+            <div style={{fontFamily:FE,fontSize:17,fontWeight:500,color:C.creamM,lineHeight:1.2}}>{s.name}</div>
+            <div style={{fontSize:12,color:C.textM,marginTop:5}}>{s.n} temples</div>
           </div>
         ))}
       </div>
@@ -1287,7 +1297,7 @@ const Nearby = ({oT, oF, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Saved = ({oT, oF, temples, isDark, onToggleTheme}) => {
+const Saved = ({oT, oF, temples, isDark, onToggleTheme, onBrowse}) => {
   const sv = temples.filter(t => t.isFavorite);
   return (
     <div className="fi" style={{paddingBottom:24}}>
@@ -1295,7 +1305,7 @@ const Saved = ({oT, oF, temples, isDark, onToggleTheme}) => {
         <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temple{sv.length!==1?"s":""}</p></div>
         <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
-      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it here."/>}
+      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it here." action={{label:"Browse Temples", onPress: onBrowse}}/>}
     </div>
   );
 };
@@ -2133,7 +2143,7 @@ export default function App() {
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
   else if (scr === "nearby") page = <Nearby oT={oT} oF={oF} temples={temples} {...th}/>;
-  else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} {...th}/>;
+  else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} onBrowse={() => nav("explore")} {...th}/>;
   else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} {...th}/>;
