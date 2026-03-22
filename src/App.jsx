@@ -79,14 +79,15 @@ body{font-family:${FB};background:${C.bg};color:${C.text};-webkit-font-smoothing
 input::placeholder{color:${C.textD}}
 `;
 
-// ── Om Chant Hook (Web Audio API) ──
+// ── Om Chant Hook (MP3 + Web Audio API fallback) ──
 const useOmChant = () => {
   const [playing, setPlaying] = useState(false);
+  const audioRef = useRef(null);
   const ctx = useRef(null);
   const masterRef = useRef(null);
   const nodes = useRef([]);
 
-  const stop = useCallback(() => {
+  const stopSynth = useCallback(() => {
     try {
       if (ctx.current && masterRef.current) {
         const now = ctx.current.currentTime;
@@ -99,119 +100,109 @@ const useOmChant = () => {
     nodes.current = [];
     masterRef.current = null;
     setTimeout(() => { if (ctx.current) { ctx.current.close(); ctx.current = null; } }, 2800);
+  }, []);
+
+  const stop = useCallback(() => {
+    // Stop MP3
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      // Fade out volume smoothly
+      const fadeOut = setInterval(() => {
+        if (audio.volume > 0.05) { audio.volume = Math.max(0, audio.volume - 0.05); }
+        else { audio.pause(); audio.currentTime = 0; audio.volume = 1; clearInterval(fadeOut); }
+      }, 80);
+    }
+    stopSynth();
     setPlaying(false);
+  }, [stopSynth]);
+
+  const playSynth = useCallback((ac) => {
+    const t = ac.currentTime;
+    const root = 110;
+    const master = ac.createGain();
+    masterRef.current = master;
+    master.gain.setValueAtTime(0, t);
+    master.gain.linearRampToValueAtTime(0.72, t + 3.5);
+    master.connect(ac.destination);
+    const reverbOut = ac.createGain();
+    reverbOut.gain.setValueAtTime(0.38, t);
+    reverbOut.connect(master);
+    [[0.031, 0.18], [0.071, 0.14], [0.127, 0.10], [0.213, 0.07]].forEach(([dt, g]) => {
+      const dl = ac.createDelay(0.5); dl.delayTime.setValueAtTime(dt, t);
+      const dg = ac.createGain(); dg.gain.setValueAtTime(g, t);
+      dl.connect(dg); dg.connect(reverbOut);
+      nodes.current.push(dl);
+    });
+    const dry = ac.createGain();
+    dry.gain.setValueAtTime(0.62, t);
+    dry.connect(master);
+    const vib = ac.createOscillator();
+    const vibG = ac.createGain();
+    vib.frequency.setValueAtTime(5.2, t);
+    vibG.gain.setValueAtTime(root * 0.0035, t);
+    vib.connect(vibG); vib.start(t);
+    nodes.current.push(vib);
+    const saw = ac.createOscillator();
+    saw.type = 'sawtooth'; saw.frequency.setValueAtTime(root, t);
+    vibG.connect(saw.frequency);
+    const sawG = ac.createGain(); sawG.gain.setValueAtTime(0.55, t);
+    saw.connect(sawG);
+    const sub = ac.createOscillator();
+    sub.type = 'sine'; sub.frequency.setValueAtTime(root, t);
+    vibG.connect(sub.frequency);
+    const subG = ac.createGain(); subG.gain.setValueAtTime(0.42, t);
+    sub.connect(subG); subG.connect(dry); subG.connect(reverbOut);
+    const f1 = ac.createBiquadFilter(); f1.type = 'bandpass'; f1.Q.setValueAtTime(4, t);
+    f1.frequency.setValueAtTime(750, t); f1.frequency.linearRampToValueAtTime(500, t+5); f1.frequency.linearRampToValueAtTime(280, t+10);
+    const f2 = ac.createBiquadFilter(); f2.type = 'bandpass'; f2.Q.setValueAtTime(6, t);
+    f2.frequency.setValueAtTime(1100, t); f2.frequency.linearRampToValueAtTime(800, t+5); f2.frequency.linearRampToValueAtTime(450, t+10);
+    const f3 = ac.createBiquadFilter(); f3.type = 'bandpass'; f3.Q.setValueAtTime(5, t);
+    f3.frequency.setValueAtTime(260, t);
+    const f3G = ac.createGain(); f3G.gain.setValueAtTime(0.15, t); f3G.gain.linearRampToValueAtTime(0.85, t+9);
+    f3.connect(f3G);
+    sawG.connect(f1); sawG.connect(f2); sawG.connect(f3);
+    f1.connect(dry); f1.connect(reverbOut);
+    f2.connect(dry); f2.connect(reverbOut);
+    f3G.connect(dry); f3G.connect(reverbOut);
+    const harm = ac.createOscillator(); harm.type = 'sine'; harm.frequency.setValueAtTime(root*2, t);
+    const harmG = ac.createGain(); harmG.gain.setValueAtTime(0.07, t); harmG.gain.linearRampToValueAtTime(0.03, t+6);
+    harm.connect(harmG); harmG.connect(dry); harm.start(t);
+    nodes.current.push(harm, saw, sub);
+    saw.start(t); sub.start(t);
   }, []);
 
   const play = useCallback(() => {
     try {
-      const ac = new (window.AudioContext || window.webkitAudioContext)();
-      ctx.current = ac;
-      const t = ac.currentTime;
-
-      // ── Deep sacred root: 110 Hz (A2) — true deep chanting pitch
-      const root = 110;
-
-      // ── Master gain with slow sacred fade-in
-      const master = ac.createGain();
-      masterRef.current = master;
-      master.gain.setValueAtTime(0, t);
-      master.gain.linearRampToValueAtTime(0.72, t + 3.5);
-      master.connect(ac.destination);
-
-      // ── Reverb via parallel delay network (room ambience)
-      const reverbOut = ac.createGain();
-      reverbOut.gain.setValueAtTime(0.38, t);
-      reverbOut.connect(master);
-      [[0.031, 0.18], [0.071, 0.14], [0.127, 0.10], [0.213, 0.07]].forEach(([dt, g]) => {
-        const dl = ac.createDelay(0.5); dl.delayTime.setValueAtTime(dt, t);
-        const dg = ac.createGain(); dg.gain.setValueAtTime(g, t);
-        dl.connect(dg); dg.connect(reverbOut);
-        nodes.current.push(dl);
+      // Try MP3 first
+      const audio = new Audio('/om-chant.mp3');
+      audio.loop = true;
+      audio.volume = 0;
+      audioRef.current = audio;
+      audio.play().then(() => {
+        // Fade in smoothly
+        let vol = 0;
+        const fadeIn = setInterval(() => {
+          vol = Math.min(1, vol + 0.04);
+          audio.volume = vol;
+          if (vol >= 1) clearInterval(fadeIn);
+        }, 80);
+        setPlaying(true);
+      }).catch(() => {
+        // Fallback to synthesis if MP3 fails
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        ctx.current = ac;
+        playSynth(ac);
+        setPlaying(true);
       });
-
-      // ── Dry path
-      const dry = ac.createGain();
-      dry.gain.setValueAtTime(0.62, t);
-      dry.connect(master);
-
-      // ── Vibrato LFO — slow human-voice-like (5.2 Hz, very subtle)
-      const vib = ac.createOscillator();
-      const vibG = ac.createGain();
-      vib.frequency.setValueAtTime(5.2, t);
-      vibG.gain.setValueAtTime(root * 0.0035, t);
-      vib.connect(vibG);
-      vib.start(t);
-      nodes.current.push(vib);
-
-      // ── Main voice oscillator: sawtooth = rich natural harmonics (voice-like)
-      const saw = ac.createOscillator();
-      saw.type = 'sawtooth';
-      saw.frequency.setValueAtTime(root, t);
-      vibG.connect(saw.frequency); // vibrato
-      const sawG = ac.createGain();
-      sawG.gain.setValueAtTime(0.55, t);
-      saw.connect(sawG);
-
-      // ── Sub sine for deep body warmth
-      const sub = ac.createOscillator();
-      sub.type = 'sine';
-      sub.frequency.setValueAtTime(root, t);
-      vibG.connect(sub.frequency);
-      const subG = ac.createGain();
-      subG.gain.setValueAtTime(0.42, t);
-      sub.connect(subG);
-      subG.connect(dry);
-      subG.connect(reverbOut);
-
-      // ── Vocal formant filters — simulate A→U→M mouth shape over time
-      // Formant F1: "AA" open vowel at start → closes to "MM" nasal
-      const f1 = ac.createBiquadFilter();
-      f1.type = 'bandpass'; f1.Q.setValueAtTime(4, t);
-      f1.frequency.setValueAtTime(750, t);          // "AA" open
-      f1.frequency.linearRampToValueAtTime(500, t + 5);  // → "OO"
-      f1.frequency.linearRampToValueAtTime(280, t + 10); // → "MM" nasal
-
-      // Formant F2: upper harmonic shaper
-      const f2 = ac.createBiquadFilter();
-      f2.type = 'bandpass'; f2.Q.setValueAtTime(6, t);
-      f2.frequency.setValueAtTime(1100, t);
-      f2.frequency.linearRampToValueAtTime(800, t + 5);
-      f2.frequency.linearRampToValueAtTime(450, t + 10);
-
-      // Formant F3: nasal "MM" hum — grows stronger as vowel closes
-      const f3 = ac.createBiquadFilter();
-      f3.type = 'bandpass'; f3.Q.setValueAtTime(5, t);
-      f3.frequency.setValueAtTime(260, t);
-      const f3G = ac.createGain();
-      f3G.gain.setValueAtTime(0.15, t);
-      f3G.gain.linearRampToValueAtTime(0.85, t + 9); // nasal hum swells
-      f3.connect(f3G);
-
-      // Route saw through all formants
-      sawG.connect(f1); sawG.connect(f2); sawG.connect(f3);
-      f1.connect(dry); f1.connect(reverbOut);
-      f2.connect(dry); f2.connect(reverbOut);
-      f3G.connect(dry); f3G.connect(reverbOut);
-
-      // ── Subtle 2nd harmonic (musical overtone shimmer)
-      const harm = ac.createOscillator();
-      harm.type = 'sine';
-      harm.frequency.setValueAtTime(root * 2, t);
-      const harmG = ac.createGain();
-      harmG.gain.setValueAtTime(0.07, t);
-      harmG.gain.linearRampToValueAtTime(0.03, t + 6);
-      harm.connect(harmG); harmG.connect(dry);
-      harm.start(t);
-      nodes.current.push(harm);
-
-      saw.start(t); sub.start(t);
-      nodes.current.push(saw, sub);
-      setPlaying(true);
     } catch(e) { console.error('Audio error:', e); }
-  }, []);
+  }, [playSynth]);
 
   const toggle = useCallback(() => { playing ? stop() : play(); }, [playing, stop, play]);
-  useEffect(() => () => { nodes.current.forEach(n => { try { n.stop(); } catch(e) {} }); if (ctx.current) ctx.current.close(); }, []);
+  useEffect(() => () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    nodes.current.forEach(n => { try { n.stop(); } catch(e) {} });
+    if (ctx.current) ctx.current.close();
+  }, []);
   return { playing, toggle };
 };
 
