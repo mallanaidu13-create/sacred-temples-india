@@ -1964,7 +1964,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
       const orBody = (model) => JSON.stringify({ model, messages, temperature:0.7, max_tokens:600 });
 
       let reply = null;
-      for (const model of ['mistralai/mistral-7b-instruct:free','meta-llama/llama-3.1-8b-instruct:free']) {
+      for (const model of ['google/gemini-2.0-flash-exp:free','qwen/qwen-2.5-7b-instruct:free','microsoft/phi-3-mini-128k-instruct:free']) {
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:orHeaders, body:orBody(model) });
         const data = await res.json();
         reply = data?.choices?.[0]?.message?.content || null;
