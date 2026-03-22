@@ -525,6 +525,23 @@ const IR = ({emoji, label, value, action}) => (
   </div>
 );
 
+// Persistent theme toggle — used in every page header
+const ThemeBtn = ({isDark, onToggle}) => (
+  <button className="t" onClick={onToggle} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{
+    width:42,height:42,borderRadius:13,flexShrink:0,
+    background:isDark?"rgba(255,255,255,0.05)":C.saffronDim,
+    border:`1px solid ${isDark?C.div:C.saffronPale}`,
+    display:"flex",alignItems:"center",justifyContent:"center",
+    cursor:"pointer",transition:"all .3s cubic-bezier(.16,1,.3,1)",
+    boxShadow:isDark?"none":`0 2px 12px ${C.saffronPale}`,
+  }}>
+    {isDark
+      ? <svg width="18" height="18" fill="none" stroke="rgba(255,220,100,0.85)" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      : <svg width="18" height="18" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    }
+  </button>
+);
+
 const Empty = ({emoji, title, sub}) => (
   <div className="fi" style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 40px",textAlign:"center"}}>
     <div style={{width:96,height:96,borderRadius:32,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:40}}>{emoji}</div>
@@ -724,21 +741,22 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
   );
 };
 
-const Explore = ({nav, oT, temples}) => {
+const Explore = ({nav, oT, temples, isDark, onToggleTheme}) => {
   const [v, setV] = useState("list");
   const [fl, setFl] = useState([]);
   const opts = ["All","Shiva","Vishnu","Devi","Ganesha","Jyotirlinga","Heritage"];
   const tg = f => { if (f === "All") { setFl([]); return; } setFl(p => p.includes(f) ? p.filter(x => x !== f) : [...p, f]); };
   return (
     <div className="fi" style={{paddingBottom:24}}>
-      <div style={{padding:"22px 24px 16px",display:"flex",alignItems:"center"}}>
+      <div style={{padding:"22px 24px 16px",display:"flex",alignItems:"center",gap:10}}>
         <h1 style={{fontFamily:FD,fontSize:30,fontWeight:500,flex:1,color:C.cream}}>Explore</h1>
-        <div style={{display:"flex",gap:6}}>
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
           {["grid","list"].map(m => (
             <button key={m} className="t" onClick={() => setV(m)} style={{width:40,height:40,borderRadius:12,border:v===m?`2px solid ${C.saffron}`:`1px solid ${C.div}`,background:v===m?C.saffronDim:C.card,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:v===m?C.saffron:C.textD}}>
               {m === "grid" ? "▦" : "☰"}
             </button>
           ))}
+          <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
         </div>
       </div>
       <div className="t" onClick={() => nav("search")} style={{margin:"0 24px",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
@@ -773,7 +791,7 @@ const Explore = ({nav, oT, temples}) => {
   );
 };
 
-const Detail = ({temple: t, onBack}) => {
+const Detail = ({temple: t, onBack, isDark, onToggleTheme}) => {
   const [sv, setSv] = useState(t.isFavorite);
   const [tab, setTab] = useState("overview");
   const b3 = hsl(t.hue,50,3);
@@ -789,6 +807,13 @@ const Detail = ({temple: t, onBack}) => {
         <div style={{position:"absolute",top:18,left:18,right:18,display:"flex",justifyContent:"space-between",zIndex:5}}>
           <button className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff"}}>←</button>
           <div style={{display:"flex",gap:8}}>
+            {/* Theme toggle — glass style to match photo overlay */}
+            <button className="t" onClick={onToggleTheme} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {isDark
+                ? <svg width="17" height="17" fill="none" stroke="rgba(255,220,100,0.85)" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                : <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              }
+            </button>
             <button className="t" style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(255,255,255,0.7)"}}>↗</button>
             <button className="t" onClick={() => setSv(!sv)} style={{width:46,height:46,borderRadius:15,background:sv?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:`1px solid ${sv?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,color:"#fff",boxShadow:sv?"0 4px 20px rgba(196,64,64,0.3)":"none",transition:"all .3s"}}>{sv?"♥":"♡"}</button>
           </div>
@@ -922,11 +947,12 @@ const Search = ({oT, onBack, temples}) => {
   );
 };
 
-const StateBrowse = ({nav, onBack}) => (
+const StateBrowse = ({nav, onBack, isDark, onToggleTheme}) => (
   <div className="fi" style={{paddingBottom:24}}>
     <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
       <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
-      <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream}}>States</h1>
+      <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,flex:1}}>States</h1>
+      <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
     </div>
     <div style={{padding:"0 24px"}}>{STATES.map((s,i) => (
       <div key={s.name} className="t rv" onClick={() => nav("districtBrowse")} style={{display:"flex",alignItems:"center",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.03}s`}}>
@@ -943,13 +969,14 @@ const StateBrowse = ({nav, onBack}) => (
   </div>
 );
 
-const DistrictBrowse = ({onBack, oT, temples}) => {
+const DistrictBrowse = ({onBack, oT, temples, isDark, onToggleTheme}) => {
   const ds = [{n:"Thanjavur",c:89},{n:"Madurai",c:72},{n:"Kanchipuram",c:65},{n:"Ramanathapuram",c:48},{n:"Tiruchirappalli",c:56},{n:"Chidambaram",c:34}];
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
         <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
-        <div><h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream}}>Tamil Nadu</h1><div style={{fontSize:12,color:C.textD,marginTop:3}}>847 temples</div></div>
+        <div style={{flex:1}}><h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream}}>Tamil Nadu</h1><div style={{fontSize:12,color:C.textD,marginTop:3}}>847 temples</div></div>
+        <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"12px 24px"}}>
         {ds.map((d,i) => (
@@ -964,9 +991,12 @@ const DistrictBrowse = ({onBack, oT, temples}) => {
   );
 };
 
-const Nearby = ({oT, temples}) => (
+const Nearby = ({oT, temples, isDark, onToggleTheme}) => (
   <div className="fi" style={{paddingBottom:24}}>
-    <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Nearby</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>Temples around your location</p></div>
+    <div style={{padding:"22px 24px",display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
+      <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Nearby</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>Temples around your location</p></div>
+      <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+    </div>
     <div style={{margin:"0 24px",height:230,borderRadius:24,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}>
       <div style={{width:72,height:72,borderRadius:22,background:C.card,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>🗺</div>
       <span style={{fontSize:13,color:C.textD,fontWeight:600}}>Enable location for map</span>
@@ -976,19 +1006,25 @@ const Nearby = ({oT, temples}) => (
   </div>
 );
 
-const Saved = ({oT, temples}) => {
+const Saved = ({oT, temples, isDark, onToggleTheme}) => {
   const sv = temples.filter(t => t.isFavorite);
   return (
     <div className="fi" style={{paddingBottom:24}}>
-      <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temples</p></div>
+      <div style={{padding:"22px 24px",display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
+        <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temples</p></div>
+        <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+      </div>
       {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it."/>}
     </div>
   );
 };
 
-const Profile = () => (
+const Profile = ({isDark, onToggleTheme}) => (
   <div className="fi" style={{paddingBottom:24}}>
-    <div style={{padding:"22px 24px"}}><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Profile</h1></div>
+    <div style={{padding:"22px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Profile</h1>
+      <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+    </div>
     <div style={{margin:"0 24px",padding:30,borderRadius:26,background:C.card,border:`1px solid ${C.div}`,textAlign:"center"}}>
       <div style={{width:84,height:84,borderRadius:"50%",margin:"0 auto 18px",background:`linear-gradient(140deg,${C.saffron},${C.saffronH})`,boxShadow:"0 6px 28px rgba(212,133,60,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,color:"#fff",animation:"glow 4s ease-in-out infinite"}}>☸</div>
       <h2 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream}}>Devotee</h2>
@@ -1212,18 +1248,20 @@ export default function App() {
     </div>
   );
 
+  const th = {isDark, onToggleTheme: toggleTheme};
+
   let page = null;
-  if (scr === "home") page = <Home nav={nav} oT={oT} temples={temples} isDark={isDark} onToggleTheme={toggleTheme}/>;
+  if (scr === "home") page = <Home nav={nav} oT={oT} temples={temples} {...th}/>;
   else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
-  else if (scr === "explore") page = <Explore nav={nav} oT={oT} temples={temples}/>;
-  else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back}/>;
+  else if (scr === "explore") page = <Explore nav={nav} oT={oT} temples={temples} {...th}/>;
+  else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} {...th}/>;
   else if (scr === "search") page = <Search oT={oT} onBack={back} temples={temples}/>;
-  else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back}/>;
-  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} temples={temples}/>;
-  else if (scr === "nearby") page = <Nearby oT={oT} temples={temples}/>;
-  else if (scr === "saved") page = <Saved oT={oT} temples={temples}/>;
-  else if (scr === "profile") page = <Profile/>;
-  else page = <Home nav={nav} oT={oT} temples={temples}/>;
+  else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} {...th}/>;
+  else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} temples={temples} {...th}/>;
+  else if (scr === "nearby") page = <Nearby oT={oT} temples={temples} {...th}/>;
+  else if (scr === "saved") page = <Saved oT={oT} temples={temples} {...th}/>;
+  else if (scr === "profile") page = <Profile {...th}/>;
+  else page = <Home nav={nav} oT={oT} temples={temples} {...th}/>;
 
   return (
     <div>
