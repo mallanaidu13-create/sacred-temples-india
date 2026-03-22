@@ -194,6 +194,7 @@ const useParallax = () => {
 const useOmChant = () => {
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef(null);
+  const fadeRef = useRef(null);
   const ctx = useRef(null);
   const masterRef = useRef(null);
   const nodes = useRef([]);
@@ -206,22 +207,24 @@ const useOmChant = () => {
         masterRef.current.gain.setValueAtTime(masterRef.current.gain.value, now);
         masterRef.current.gain.linearRampToValueAtTime(0, now + 2.5);
       }
-      nodes.current.forEach(n => { try { n.stop(ctx.current.currentTime + 2.6); } catch(e) {} });
+      nodes.current.forEach(n => { try { n.stop(ctx.current ? ctx.current.currentTime + 2.6 : 0); } catch(e) {} });
     } catch(e) {}
     nodes.current = [];
     masterRef.current = null;
-    setTimeout(() => { if (ctx.current) { ctx.current.close(); ctx.current = null; } }, 2800);
+    setTimeout(() => { try { if (ctx.current) { ctx.current.close(); ctx.current = null; } } catch(e) {} }, 2800);
   }, []);
 
   const stop = useCallback(() => {
-    // Stop MP3
+    if (fadeRef.current) { clearInterval(fadeRef.current); fadeRef.current = null; }
     if (audioRef.current) {
       const audio = audioRef.current;
-      // Fade out volume smoothly
+      audioRef.current = null;
+      let vol = audio.volume;
       const fadeOut = setInterval(() => {
-        if (audio.volume > 0.05) { audio.volume = Math.max(0, audio.volume - 0.05); }
-        else { audio.pause(); audio.currentTime = 0; audio.volume = 1; clearInterval(fadeOut); }
-      }, 80);
+        vol = Math.max(0, vol - 0.06);
+        try { audio.volume = vol; } catch(e) {}
+        if (vol <= 0) { try { audio.pause(); audio.currentTime = 0; } catch(e) {} clearInterval(fadeOut); }
+      }, 60);
     }
     stopSynth();
     setPlaying(false);
@@ -282,37 +285,69 @@ const useOmChant = () => {
     saw.start(t); sub.start(t);
   }, []);
 
-  const play = useCallback(() => {
+  const startSynth = useCallback(() => {
     try {
-      // Try MP3 first
-      const audio = new Audio('/om-chant.mp3');
-      audio.loop = true;
-      audio.volume = 0;
-      audioRef.current = audio;
-      audio.play().then(() => {
-        // Fade in smoothly
-        let vol = 0;
-        const fadeIn = setInterval(() => {
-          vol = Math.min(1, vol + 0.04);
-          audio.volume = vol;
-          if (vol >= 1) clearInterval(fadeIn);
-        }, 80);
-        setPlaying(true);
-      }).catch(() => {
-        // Fallback to synthesis if MP3 fails
-        const ac = new (window.AudioContext || window.webkitAudioContext)();
-        ctx.current = ac;
-        playSynth(ac);
-        setPlaying(true);
-      });
-    } catch(e) { console.error('Audio error:', e); }
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      ctx.current = ac;
+      playSynth(ac);
+      setPlaying(true);
+    } catch(e) { console.error('Synth fallback failed:', e); }
   }, [playSynth]);
+
+  const play = useCallback(() => {
+    // Cleanup any previous audio
+    if (audioRef.current) { try { audioRef.current.pause(); } catch(e) {} audioRef.current = null; }
+    if (fadeRef.current) { clearInterval(fadeRef.current); fadeRef.current = null; }
+
+    const audio = new Audio();
+    audio.loop = true;
+    audio.preload = 'auto';
+    audioRef.current = audio;
+
+    // Error handler — go straight to synth
+    audio.onerror = () => {
+      if (audioRef.current === audio) { audioRef.current = null; startSynth(); }
+    };
+
+    // Once enough data is loaded, play and fade in
+    const tryPlay = () => {
+      audio.volume = 0.001;
+      const p = audio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          // Audio is playing — fade in
+          let vol = 0.001;
+          fadeRef.current = setInterval(() => {
+            vol = Math.min(1, vol + 0.035);
+            if (audioRef.current === audio) audio.volume = vol;
+            if (vol >= 1) { clearInterval(fadeRef.current); fadeRef.current = null; }
+          }, 60);
+          setPlaying(true);
+        }).catch(err => {
+          console.warn('MP3 play() rejected:', err.name, err.message);
+          if (audioRef.current === audio) { audioRef.current = null; }
+          startSynth();
+        });
+      } else {
+        // Old browser — no promise
+        setPlaying(true);
+      }
+    };
+
+    // Set src after handlers are attached
+    audio.src = '/om-chant.mp3';
+    audio.load();
+    // Attempt play immediately (works in most browsers post-load())
+    tryPlay();
+  }, [startSynth]);
 
   const toggle = useCallback(() => { playing ? stop() : play(); }, [playing, stop, play]);
   useEffect(() => () => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (fadeRef.current) clearInterval(fadeRef.current);
+    if (audioRef.current) { try { audioRef.current.pause(); } catch(e) {} audioRef.current = null; }
     nodes.current.forEach(n => { try { n.stop(); } catch(e) {} });
-    if (ctx.current) ctx.current.close();
+    try { if (ctx.current) ctx.current.close(); } catch(e) {}
   }, []);
   return { playing, toggle };
 };
