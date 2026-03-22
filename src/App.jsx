@@ -413,7 +413,7 @@ const Chip = ({label, active, onClick}) => (
 
 // ── Featured Card ──
 const FCard = ({t, onClick, d=0}) => {
-  const imgSrc = `https://source.unsplash.com/featured/400x600/?${deityQuery(t.deityPrimary)}`;
+  const imgSrc = `https://source.unsplash.com/featured/400x600/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
@@ -452,7 +452,7 @@ const FCard = ({t, onClick, d=0}) => {
 
 // ── List Card ──
 const LCard = ({t, onClick, d=0}) => {
-  const imgSrc = `https://source.unsplash.com/featured/180x180/?${deityQuery(t.deityPrimary)}`;
+  const imgSrc = `https://source.unsplash.com/featured/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
       display:"flex",gap:16,padding:14,margin:"0 24px 12px",borderRadius:20,
@@ -498,17 +498,32 @@ const Empty = ({emoji, title, sub}) => (
   </div>
 );
 
+const NavSvg = ({name, col}) => {
+  const s = {width:22,height:22,display:"block"};
+  if (name === "home") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10L12 3l9 7v10h-5v-6h-8v6H3z"/></svg>;
+  if (name === "explore") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" fill={col} stroke="none"/></svg>;
+  if (name === "nearby") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>;
+  if (name === "saved") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+  return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>;
+};
+
 const BNav = ({a, on}) => {
-  const items = [{k:"home",e:"◈",l:"Home"},{k:"explore",e:"◎",l:"Explore"},{k:"nearby",e:"◉",l:"Nearby"},{k:"saved",e:"♥",l:"Saved"},{k:"profile",e:"◇",l:"Profile"}];
+  const items = [{k:"home",l:"Home"},{k:"explore",l:"Explore"},{k:"nearby",l:"Nearby"},{k:"saved",l:"Saved"},{k:"profile",l:"Profile"}];
   return (
     <div style={{position:"sticky",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(24px) saturate(150%)",borderTop:`1px solid ${C.div}`,display:"flex",justifyContent:"space-around",padding:"6px 0 18px"}}>
-      {items.map(t => (
-        <button key={t.k} className="t" onClick={() => on(t.k)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
-          {a === t.k && <div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:20,height:3,borderRadius:2,background:C.saffron,boxShadow:`0 0 12px ${C.saffron}88`}}/>}
-          <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:a===t.k?C.saffronDim:"transparent",transition:"all .2s",fontSize:a===t.k?18:16,color:a===t.k?C.saffron:C.textDD}}>{t.e}</div>
-          <span style={{fontSize:9.5,fontWeight:a===t.k?700:500,color:a===t.k?C.saffron:C.textDD,letterSpacing:.6}}>{t.l}</span>
-        </button>
-      ))}
+      {items.map(t => {
+        const active = a === t.k;
+        const col = active ? C.saffron : C.textDD;
+        return (
+          <button key={t.k} className="t" onClick={() => on(t.k)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
+            {active && <div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:20,height:3,borderRadius:2,background:C.saffron,boxShadow:`0 0 12px ${C.saffron}88`}}/>}
+            <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:active?C.saffronDim:"transparent",transition:"all .2s"}}>
+              <NavSvg name={t.k} col={col}/>
+            </div>
+            <span style={{fontSize:9.5,fontWeight:active?700:500,color:col,letterSpacing:.6}}>{t.l}</span>
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -520,7 +535,7 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* HERO */}
-    <div style={{background:`linear-gradient(175deg,${hsl(30,45,10)},${hsl(350,40,7)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:`0 24px 80px ${hsl(350,30,5,0.6)}`}}>
+    <div style={{background:isDark?`linear-gradient(175deg,${hsl(30,45,10)},${hsl(350,40,7)} 55%,${C.bg})`:`linear-gradient(175deg,${hsl(30,60,94)},${hsl(350,50,97)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:isDark?`0 24px 80px ${hsl(350,30,5,0.6)}`:`0 24px 80px ${hsl(30,40,80,0.18)}`}}>
       {/* Ambient glows */}
       <div style={{position:"absolute",top:"-8%",right:"-12%",width:320,height:320,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",filter:"blur(60px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
       <div style={{position:"absolute",bottom:"5%",left:"-18%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(160,80,180,0.04),transparent 60%)",filter:"blur(45px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none"}}/>
@@ -592,11 +607,11 @@ const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
       <div style={{display:"flex",gap:14,overflowX:"auto",padding:"0 24px 8px",scrollSnapType:"x mandatory"}}>
         {DEITIES.map((d,i) => (
           <div key={d.name} className="t rv" onClick={() => nav("explore")} style={{minWidth:102,textAlign:"center",cursor:"pointer",animationDelay:`${.15+i*.08}s`,scrollSnapAlign:"start"}}>
-            <div style={{width:82,height:82,borderRadius:26,margin:"0 auto 12px",position:"relative",overflow:"hidden",background:`linear-gradient(155deg,${hsl(d.h,38,18)},${hsl(d.h,48,7)})`,boxShadow:`0 8px 28px ${hsl(d.h,30,8,0.6)}, 0 0 0 1px ${hsl(d.h,30,20,0.12)}`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:2}}>
-              <span style={{fontFamily:FD,fontSize:22,color:hsl(d.h,40,70,0.9),userSelect:"none",lineHeight:1}}>{d.sk}</span>
-              <span style={{fontSize:18,color:hsl(d.h,50,75,0.35),lineHeight:1}}>{d.icon}</span>
-              <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 25% 18%,rgba(255,255,255,0.12),transparent 55%)"}}/>
-              <div style={{position:"absolute",bottom:0,left:0,right:0,height:28,background:`linear-gradient(transparent,${hsl(d.h,50,5,0.6)})`}}/>
+            <div style={{width:82,height:82,borderRadius:26,margin:"0 auto 12px",position:"relative",overflow:"hidden",boxShadow:`0 8px 28px ${hsl(d.h,30,8,0.6)}, 0 0 0 1px ${hsl(d.h,30,20,0.18)}`}}>
+              <TempleImage src={`https://source.unsplash.com/featured/160x160/?${deityQuery(d.name)}&sig=${d.name}`} hue={d.h} style={{width:82,height:82}} omSize={22}/>
+              {/* gradient + sanskrit overlay */}
+              <div style={{position:"absolute",inset:0,background:`linear-gradient(transparent 35%,rgba(0,0,0,0.72))`}}/>
+              <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontFamily:FD,fontSize:13,color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:.3}}>{d.sk}</div>
             </div>
             <div style={{fontSize:12.5,fontWeight:700,color:C.creamM,letterSpacing:.2}}>{d.name}</div>
             <div style={{fontSize:10,color:C.textD,marginTop:3}}>{d.n.toLocaleString()} temples</div>
@@ -706,7 +721,7 @@ const Explore = ({nav, oT, temples}) => {
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
             {temples.map((t,i) => (
               <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`}}>
-                <TempleImage src={`https://source.unsplash.com/featured/500x350/?${deityQuery(t.deityPrimary)}`} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={44}/>
+                <TempleImage src={`https://source.unsplash.com/featured/500x350/?${deityQuery(t.deityPrimary)}&sig=${t.id}`} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={44}/>
                 <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"70px 14px 16px",background:"linear-gradient(transparent,rgba(0,0,0,0.88))"}}>
                   <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontWeight:700,marginBottom:5,letterSpacing:.5}}>{t.deityPrimary}</div>
                   <h3 style={{fontFamily:FD,fontSize:15.5,fontWeight:500,color:"#fff",lineHeight:1.2}}>{t.templeName}</h3>
@@ -727,7 +742,7 @@ const Detail = ({temple: t, onBack}) => {
   const [sv, setSv] = useState(t.isFavorite);
   const [tab, setTab] = useState("overview");
   const b3 = hsl(t.hue,50,3);
-  const imgSrc = `https://source.unsplash.com/featured/860x520/?${deityQuery(t.deityPrimary)}`;
+  const imgSrc = `https://source.unsplash.com/featured/860x520/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
   return (
     <div className="fi" style={{paddingBottom:44}}>
@@ -818,7 +833,26 @@ const Detail = ({temple: t, onBack}) => {
             Best season: Oct – Feb · Avoid: Amavasya crowds
           </div>
         </div>}
-        {tab === "gallery" && <Empty emoji="🖼" title="Gallery Coming Soon" sub="Photos will appear here as the collection grows."/>}
+        {tab === "gallery" && (
+          <div className="fi" style={{paddingTop:8}}>
+            {/* Large hero shot */}
+            <div style={{borderRadius:20,overflow:"hidden",height:240,position:"relative",marginBottom:8}}>
+              <TempleImage src={`https://source.unsplash.com/featured/800x480/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g0`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
+            </div>
+            {/* 2-col grid */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              {[1,2,3,4].map(i => (
+                <div key={i} style={{borderRadius:16,overflow:"hidden",height:150,position:"relative"}}>
+                  <TempleImage src={`https://source.unsplash.com/featured/${380+i*10}x${300+i*12}/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g${i}`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={32}/>
+                </div>
+              ))}
+            </div>
+            {/* Last wide shot */}
+            <div style={{borderRadius:20,overflow:"hidden",height:180,position:"relative",marginTop:8}}>
+              <TempleImage src={`https://source.unsplash.com/featured/800x360/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g5`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={44}/>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1026,7 +1060,7 @@ const Discover = ({temples, oT, onBack}) => {
         {/* 2nd card — loads photo */}
         {second && (
           <div style={{...cardBase,transform:`translateY(${10-progress*10}px) scale(${0.94+progress*0.06})`,transition:flyDir?'transform 0.45s cubic-bezier(.16,1,.3,1)':'transform 0.18s',zIndex:2}}>
-            <TempleImage src={`https://source.unsplash.com/featured/400x700/?${deityQuery(second.deityPrimary)}`} hue={second.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={60}/>
+            <TempleImage src={`https://source.unsplash.com/featured/400x700/?${deityQuery(second.deityPrimary)}&sig=${second.id}`} hue={second.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={60}/>
             <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'100px 22px 22px',background:'linear-gradient(transparent,rgba(0,0,0,0.88))'}}>
               <h3 style={{fontFamily:FD,fontSize:20,fontWeight:500,color:'#fff',lineHeight:1.1}}>{second.templeName}</h3>
               <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:5}}>{second.townOrCity}</div>
