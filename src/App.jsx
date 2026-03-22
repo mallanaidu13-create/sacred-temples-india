@@ -815,6 +815,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
         "Where the temple bell resonates,<br/>the divine presence abides."
       </div>
       <div style={{marginTop:20,fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:3,textTransform:"uppercase"}}>Sacred Temples of Bhārata</div>
+      <button className="t" onClick={() => nav("about")} style={{marginTop:16,padding:"8px 22px",borderRadius:99,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.18)`,cursor:"pointer",fontSize:11,fontWeight:700,color:C.saffron,letterSpacing:.8,textTransform:"uppercase",fontFamily:FB}}>About this App</button>
       <div style={{width:28,height:1,background:`rgba(196,162,78,0.18)`,margin:"20px auto 0"}}/>
     </div>
   </div>
