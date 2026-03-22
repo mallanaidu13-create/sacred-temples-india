@@ -1938,9 +1938,9 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
     if (taRef.current) { taRef.current.style.height = 'auto'; }
     setBusy(true);
     try {
-      const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       if (!apiKey) {
-        setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Sarathi is not yet configured. The site admin needs to add VITE_OPENROUTER_API_KEY to the Cloudflare Pages environment variables.'}]);
+        setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Sarathi is not configured. Add VITE_GEMINI_API_KEY to Cloudflare Pages environment variables (free key from https://aistudio.google.com/app/apikey).'}]);
         setBusy(false);
         return;
       }
@@ -1948,30 +1948,27 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
       if (temple) {
         systemPrompt += `\n\nCurrent temple the user is viewing:\nName: ${temple.templeName}\nLocation: ${[temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ')}\nPrimary Deity: ${temple.deityPrimary}${temple.deitySecondary ? '\nSecondary Deity: ' + temple.deitySecondary : ''}\nArchitecture: ${temple.architectureStyle || 'N/A'}\nDarshan Timings: ${temple.darshanTimings || 'N/A'}\nMajor Festivals: ${temple.majorFestivals || 'N/A'}\nNearest City: ${temple.nearestCity || 'N/A'}\nNearest Railway: ${temple.nearestRailwayStation || 'N/A'}\nNearest Airport: ${temple.nearestAirport || 'N/A'}\nTravel Route: ${temple.routeSummary || 'N/A'}\nHistorical Significance: ${temple.historicalSignificance || 'N/A'}\nSpecial Notes: ${temple.specialNotes || 'N/A'}`;
       }
-      // Build OpenAI-compatible messages array
-      const messages = [{role:'system', content: systemPrompt}];
+      // Build Gemini contents array (skip the greeting at index 0)
+      const contents = [];
       for (let i = 1; i < msgs.length; i++) {
-        messages.push({role: msgs[i].role, content: msgs[i].text});
+        contents.push({ role: msgs[i].role === 'assistant' ? 'model' : 'user', parts: [{ text: msgs[i].text }] });
       }
-      messages.push({role:'user', content: q});
-      // Try primary model, fallback to secondary if it fails or returns an error
-      const orHeaders = {
-        'Content-Type':'application/json',
-        'Authorization':`Bearer ${apiKey}`,
-        'HTTP-Referer':'https://sacred-temples-india.pages.dev',
-        'X-Title':'Sacred Temples India - Sarathi'
-      };
-      const orBody = (model) => JSON.stringify({ model, messages, temperature:0.7, max_tokens:600 });
-
-      let reply = null;
-      for (const model of ['google/gemini-2.0-flash-exp:free','qwen/qwen-2.5-7b-instruct:free','microsoft/phi-3-mini-128k-instruct:free']) {
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', { method:'POST', headers:orHeaders, body:orBody(model) });
-        const data = await res.json();
-        reply = data?.choices?.[0]?.message?.content || null;
-        if (reply) break;
-        if (data?.error) reply = `⚠ Error: ${data.error.message || JSON.stringify(data.error)}`;
-      }
-      if (!reply) reply = 'I could not retrieve a response. Please try again.';
+      contents.push({ role: 'user', parts: [{ text: q }] });
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents,
+            generationConfig: { temperature: 0.7, maxOutputTokens: 600 }
+          })
+        }
+      );
+      const data = await res.json();
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+        || (data?.error ? `⚠ ${data.error.message}` : 'I could not retrieve a response. Please try again.');
       setMsgs(prev => [...prev, {role:'assistant', text: reply}]);
     } catch(e) {
       setMsgs(prev => [...prev, {role:'assistant', text:'⚠ Could not connect. Please check your internet and try again.'}]);
@@ -1993,7 +1990,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             <span style={{fontSize:9,color:C.textDD,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',fontFamily:FB}}>सारथी</span>
             <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 6px rgba(74,222,128,0.6)',flexShrink:0}}/>
           </div>
-          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by OpenRouter</div>
+          <div style={{fontSize:11,color:C.textD,marginTop:1}}>Divine guide · powered by Google Gemini</div>
         </div>
         <button className="t" onClick={onToggleTheme} style={{width:36,height:36,borderRadius:11,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           {isDark
@@ -2080,7 +2077,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             <svg width="15" height="15" fill="none" stroke={input.trim()&&!busy?'#fff':C.textDD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
         </div>
-        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by OpenRouter · Sarathi may make mistakes</div>
+        <div style={{textAlign:'center',marginTop:7,fontSize:10,color:C.textDD,letterSpacing:.5}}>Powered by Google Gemini · Sarathi may make mistakes</div>
       </div>
     </div>
   );
