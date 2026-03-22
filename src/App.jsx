@@ -6,7 +6,7 @@ import { supabase } from "./supabase.js";
 //  Aesthetic: Dark Sanctum — gold on obsidian
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const C = {
+const CDark = {
   bg: "#0E0A07", bg2: "#161210", bg3: "#1E1814",
   card: "#1C1712", cardH: "#241E18", cardB: "rgba(255,255,255,0.04)",
   saffron: "#D4853C", saffronH: "#E69A52", saffronDim: "rgba(212,133,60,0.12)",
@@ -17,6 +17,18 @@ const C = {
   red: "#C44040", div: "rgba(255,255,255,0.06)", divL: "rgba(255,255,255,0.03)",
   glass: "rgba(20,16,12,0.75)", glassL: "rgba(20,16,12,0.6)",
 };
+const CLight = {
+  bg: "#FAFAF8", bg2: "#F4F0EA", bg3: "#EDE8DF",
+  card: "#FFFFFF", cardH: "#FBF8F3", cardB: "rgba(0,0,0,0.03)",
+  saffron: "#C4721A", saffronH: "#D4853C", saffronDim: "rgba(196,114,26,0.12)",
+  saffronPale: "rgba(196,114,26,0.07)",
+  gold: "#9E7A28", goldDim: "rgba(158,122,40,0.08)",
+  cream: "#1A1208", creamM: "#4A3010", creamD: "#7A5820",
+  text: "#1A1208", textM: "#5A3A10", textD: "#8A6030", textDD: "#B89060",
+  red: "#C44040", div: "rgba(0,0,0,0.08)", divL: "rgba(0,0,0,0.04)",
+  glass: "rgba(250,250,248,0.88)", glassL: "rgba(250,250,248,0.72)",
+};
+let C = CDark;
 
 const hsl = (h, s, l, a) => a != null ? `hsla(${h},${s}%,${l}%,${a})` : `hsl(${h},${s}%,${l}%)`;
 
@@ -55,11 +67,11 @@ const PANCHANG = {
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
 
-const CSS = `
+const getCss = (theme) => `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:${C.bg}}
-body{font-family:${FB};background:${C.bg};color:${C.text};-webkit-font-smoothing:antialiased}
+html{background:${theme.bg};transition:background-color 0.35s ease}
+body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-smoothing:antialiased;transition:background-color 0.35s ease,color 0.25s ease}
 @keyframes rv{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fi{from{opacity:0}to{opacity:1}}
 @keyframes breathe{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.5;transform:scale(1.04)}}
@@ -72,12 +84,50 @@ body{font-family:${FB};background:${C.bg};color:${C.text};-webkit-font-smoothing
 @keyframes soundWave{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:1}}
 @keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
 @keyframes panchangGlow{0%,100%{box-shadow:0 0 0 1px rgba(196,162,78,0.08)}50%{box-shadow:0 0 0 1px rgba(196,162,78,0.18),0 0 32px rgba(196,162,78,0.06)}}
+@keyframes kenBurns{0%{transform:scale(1)}100%{transform:scale(1.08)}}
 .rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
 .fi{animation:fi .35s ease both}
 .t{transition:transform .1s cubic-bezier(.16,1,.3,1)}.t:active{transform:scale(.965)}
 ::-webkit-scrollbar{width:0;height:0}
-input::placeholder{color:${C.textD}}
+input::placeholder{color:${theme.textD}}
 `;
+
+// ── Temple Image Helpers ──
+const deityQuery = (deity = '') => {
+  const d = deity.toLowerCase();
+  if (d.match(/shiv|mahadev|shankar|rudra/)) return 'shiva+temple+india';
+  if (d.match(/vishnu|venkat|narayan|balaji|tirupati/)) return 'vishnu+temple+india';
+  if (d.match(/rama|krishna|govinda/)) return 'krishna+temple+india';
+  if (d.match(/ganesh|ganesha|vinayak|ganapati/)) return 'ganesha+temple+india';
+  if (d.match(/devi|shakti|durga|kali|amman|amma|mata|parvati|lakshmi/)) return 'goddess+temple+india';
+  if (d.match(/hanuman|bajrang|anjaneya|maruti/)) return 'hanuman+temple+india';
+  if (d.match(/murugan|subramania|kartikeya|skanda/)) return 'murugan+temple+india';
+  if (d.match(/brahma|saraswati/)) return 'brahma+temple+india';
+  return 'ancient+hindu+temple+india';
+};
+
+const TempleImage = ({src, hue, style, omSize=48}) => {
+  const [loaded, setLoaded] = useState(false);
+  const [err, setErr] = useState(false);
+  return (
+    <div style={{position:'relative',overflow:'hidden',...style}}>
+      <div style={{position:'absolute',inset:0,background:`linear-gradient(165deg,${hsl(hue,40,16)},${hsl(hue,50,4)})`}}/>
+      {(!loaded || err) && (
+        <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:FD,fontSize:omSize,color:'rgba(212,133,60,0.15)'}}>ॐ</div>
+      )}
+      {!err && (
+        <img
+          src={src}
+          onLoad={() => setLoaded(true)}
+          onError={() => setErr(true)}
+          style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',
+            opacity:loaded?1:0,transition:'opacity 1s ease',
+            animation:loaded?'kenBurns 20s ease-in-out infinite alternate':'none'}}
+        />
+      )}
+    </div>
+  );
+};
 
 // ── Om Chant Hook (MP3 + Web Audio API fallback) ──
 const useOmChant = () => {
@@ -302,73 +352,70 @@ const Chip = ({label, active, onClick}) => (
 
 // ── Featured Card ──
 const FCard = ({t, onClick, d=0}) => {
-  const b1 = hsl(t.hue,40,16), b2 = hsl(t.hue,45,8), b3 = hsl(t.hue,50,4);
-  const glow = hsl(t.hue,50,40,0.08);
+  const imgSrc = `https://source.unsplash.com/featured/400x600/?${deityQuery(t.deityPrimary)}`;
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
       width:268,minWidth:268,height:360,borderRadius:26,overflow:"hidden",
       position:"relative",cursor:"pointer",flexShrink:0,scrollSnapAlign:"start",
-      boxShadow:`0 12px 48px ${hsl(t.hue,30,5,0.5)}, 0 0 0 1px ${hsl(t.hue,30,20,0.1)}`,
+      boxShadow:`0 16px 56px ${hsl(t.hue,30,5,0.6)}, 0 0 0 1px ${hsl(t.hue,30,20,0.12)}`,
       animationDelay:`${d}s`,
     }}>
-      <div style={{position:"absolute",inset:0,background:`linear-gradient(168deg,${b1},${b2} 55%,${b3})`}}/>
-      <div style={{position:"absolute",top:"10%",right:"5%",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${glow},transparent 65%)`,filter:"blur(35px)",animation:"breathe 8s ease-in-out infinite",pointerEvents:"none"}}/>
-      {[88,58,32].map((r,i) => (
-        <div key={i} style={{position:"absolute",top:"32%",left:"50%",width:r*2,height:r*2,borderRadius:"50%",border:`1px solid ${hsl(t.hue,30,50,0.04)}`,transform:"translate(-50%,-50%)",animation:`breathe ${7+i*3}s ease-in-out infinite ${i*.6}s`,pointerEvents:"none"}}/>
-      ))}
-      <div style={{position:"absolute",top:"26%",left:"50%",animation:"drift 10s ease-in-out infinite",pointerEvents:"none"}}>
-        <span style={{fontFamily:FD,fontSize:68,color:hsl(t.hue,30,60,0.03),userSelect:"none"}}>ॐ</span>
+      {/* Full-bleed cinematic photo with Ken Burns */}
+      <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={68}/>
+      {/* Shimmer sweep */}
+      <div style={{position:"absolute",top:0,left:"-120%",width:"60%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)",animation:"shimmer 6s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Deity badge — top left */}
+      <div style={{position:"absolute",top:18,left:18,zIndex:3}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 13px",borderRadius:100,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.12)",fontSize:10,color:"rgba(255,255,255,0.92)",fontWeight:700,letterSpacing:.7}}>
+          <div style={{width:5,height:5,borderRadius:"50%",background:"#E69A52",boxShadow:"0 0 8px rgba(212,133,60,0.8)"}}/>{t.deityPrimary}
+        </div>
       </div>
-      {/* Shimmer */}
-      <div style={{position:"absolute",top:0,left:"-120%",width:"60%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent)",animation:"shimmer 5s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Fav */}
+      {/* Fav — top right */}
       <div style={{position:"absolute",top:18,right:18,zIndex:3}}>
-        <div className="t" style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(255,255,255,0.05)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.3)":"rgba(255,255,255,0.04)"}`,fontSize:14,color:"#fff",transition:"all .3s"}}>
+        <div className="t" style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s"}}>
           {t.isFavorite ? "♥" : "♡"}
         </div>
       </div>
-      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"100px 22px 24px",background:`linear-gradient(transparent,${b3}cc 30%,${b3} 100%)`}}>
-        <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 14px",borderRadius:100,background:"rgba(255,255,255,0.05)",backdropFilter:"blur(8px)",marginBottom:12,border:"1px solid rgba(255,255,255,0.04)",fontSize:10.5,color:"rgba(255,255,255,0.75)",fontWeight:700,letterSpacing:.7}}>
-          <div style={{width:5,height:5,borderRadius:"50%",background:C.saffronH,boxShadow:`0 0 8px ${C.saffron}`}}/>{t.deityPrimary}
+      {/* Cinematic bottom glass overlay */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"110px 22px 24px",background:"linear-gradient(transparent,rgba(0,0,0,0.45) 25%,rgba(0,0,0,0.88) 100%)"}}>
+        <h3 style={{fontFamily:FD,fontSize:23,fontWeight:500,color:"#fff",lineHeight:1.15,marginBottom:8,textShadow:"0 2px 12px rgba(0,0,0,0.4)"}}>{t.templeName}</h3>
+        <div style={{fontSize:11.5,color:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:5}}>
+          <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.3)"}}/>{t.townOrCity}, {t.stateOrUnionTerritory}
         </div>
-        <h3 style={{fontFamily:FD,fontSize:23,fontWeight:500,color:"#fff",lineHeight:1.15,marginBottom:8}}>{t.templeName}</h3>
-        <div style={{fontSize:11.5,color:"rgba(255,255,255,0.35)",display:"flex",alignItems:"center",gap:5}}>
-          <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>{t.townOrCity}, {t.stateOrUnionTerritory}
-        </div>
-        {t.architectureStyle && <div style={{marginTop:10,fontSize:11,color:"rgba(255,255,255,0.18)",fontFamily:FD,fontStyle:"italic"}}>{t.architectureStyle}</div>}
+        {t.architectureStyle && <div style={{marginTop:10,fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:FD,fontStyle:"italic"}}>{t.architectureStyle}</div>}
       </div>
     </div>
   );
 };
 
 // ── List Card ──
-const LCard = ({t, onClick, d=0}) => (
-  <div className="t rv" onClick={() => onClick(t)} style={{
-    display:"flex",gap:16,padding:14,margin:"0 24px 12px",borderRadius:20,
-    background:C.card,cursor:"pointer",animationDelay:`${d}s`,
-    border:`1px solid ${C.div}`,
-  }}>
-    <div style={{width:88,height:88,minWidth:88,borderRadius:16,position:"relative",overflow:"hidden",background:`linear-gradient(155deg,${hsl(t.hue,40,16)},${hsl(t.hue,50,5)})`}}>
-      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <span style={{fontFamily:FD,fontSize:28,color:"rgba(255,255,255,0.04)"}}>ॐ</span>
+const LCard = ({t, onClick, d=0}) => {
+  const imgSrc = `https://source.unsplash.com/featured/180x180/?${deityQuery(t.deityPrimary)}`;
+  return (
+    <div className="t rv" onClick={() => onClick(t)} style={{
+      display:"flex",gap:16,padding:14,margin:"0 24px 12px",borderRadius:20,
+      background:C.card,cursor:"pointer",animationDelay:`${d}s`,
+      border:`1px solid ${C.div}`,
+    }}>
+      <div style={{width:88,height:88,minWidth:88,borderRadius:16,overflow:"hidden",position:"relative"}}>
+        <TempleImage src={imgSrc} hue={t.hue} style={{width:88,height:88}} omSize={24}/>
+        <div style={{position:"absolute",bottom:5,left:5,padding:"3px 7px",borderRadius:6,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",fontSize:8.5,color:"rgba(255,255,255,0.9)",fontWeight:700,letterSpacing:.3}}>{t.deityPrimary}</div>
       </div>
-      <div style={{position:"absolute",top:"5%",right:"0",width:50,height:50,borderRadius:"50%",background:`radial-gradient(circle,${hsl(t.hue,50,40,0.1)},transparent)`,filter:"blur(10px)"}}/>
-      <div style={{position:"absolute",bottom:6,left:6,padding:"3px 9px",borderRadius:7,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(6px)",fontSize:9,color:"rgba(255,255,255,0.85)",fontWeight:700,letterSpacing:.5}}>{t.deityPrimary}</div>
+      <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
+        <h3 style={{fontFamily:FD,fontSize:17,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
+        <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
+          <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}, {t.district}
+        </div>
+        <div style={{marginTop:2}}>
+          <span style={{fontSize:10,padding:"3px 9px",borderRadius:99,background:C.saffronDim,color:C.saffron,fontWeight:700,letterSpacing:.3,border:`1px solid rgba(212,133,60,0.1)`}}>
+            {(t.architectureStyle || t.deityPrimary).split("·")[0].trim()}
+          </span>
+        </div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD}}>{t.isFavorite?"♥":"♡"}</div>
     </div>
-    <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
-      <h3 style={{fontFamily:FD,fontSize:17,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
-      <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
-        <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}, {t.district}
-      </div>
-      <div style={{marginTop:2}}>
-        <span style={{fontSize:10,padding:"3px 9px",borderRadius:99,background:C.saffronDim,color:C.saffron,fontWeight:700,letterSpacing:.3,border:`1px solid rgba(212,133,60,0.1)`}}>
-          {(t.architectureStyle || t.deityPrimary).split("·")[0].trim()}
-        </span>
-      </div>
-    </div>
-    <div style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD}}>{t.isFavorite?"♥":"♡"}</div>
-  </div>
-);
+  );
+};
 
 const IR = ({emoji, label, value, action}) => (
   <div className="t" onClick={action} style={{display:"flex",alignItems:"flex-start",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:action?"pointer":"default"}}>
@@ -406,7 +453,7 @@ const BNav = ({a, on}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
-const Home = ({nav, oT, temples}) => {
+const Home = ({nav, oT, temples, isDark, onToggleTheme}) => {
   const { playing, toggle } = useOmChant();
   return (
   <div className="fi" style={{paddingBottom:28}}>
@@ -423,7 +470,9 @@ const Home = ({nav, oT, temples}) => {
           <h1 style={{fontFamily:FD,fontSize:36,color:C.cream,fontWeight:500,lineHeight:.96,letterSpacing:-.5}}>Sacred<br/>Temples</h1>
           <p style={{fontFamily:FD,fontSize:15,color:C.textDD,marginTop:8,fontStyle:"italic"}}>of Bhārata</p>
         </div>
-        <button className="t" style={{width:46,height:46,borderRadius:15,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:17,color:C.textD}}>⊙</button>
+        <button className="t" onClick={onToggleTheme} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{width:46,height:46,borderRadius:15,background:isDark?"rgba(255,255,255,0.05)":C.saffronDim,border:`1px solid ${isDark?C.div:C.saffronPale}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:19,color:isDark?"rgba(255,220,100,0.85)":C.saffron,transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:isDark?"none":`0 4px 16px ${C.saffronDim}`}}>
+          {isDark ? "☀" : "☽"}
+        </button>
       </div>
 
       {/* OM SYMBOL — Central sacred focal point */}
@@ -576,13 +625,13 @@ const Explore = ({nav, oT, temples}) => {
         {v === "list" ? temples.map((t,i) => <LCard key={t.id} t={t} onClick={oT} d={i*.05}/>) : (
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,padding:"0 24px"}}>
             {temples.map((t,i) => (
-              <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`,background:`linear-gradient(165deg,${hsl(t.hue,40,16)},${hsl(t.hue,50,4)})`}}>
-                <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontFamily:FD,fontSize:44,color:"rgba(255,255,255,0.02)"}}>ॐ</span></div>
-                <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"70px 14px 16px",background:`linear-gradient(transparent,${hsl(t.hue,50,3,0.9)})`}}>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,0.55)",fontWeight:700,marginBottom:5,letterSpacing:.5}}>{t.deityPrimary}</div>
+              <div key={t.id} className="t rv" onClick={() => oT(t)} style={{borderRadius:20,overflow:"hidden",height:250,position:"relative",cursor:"pointer",boxShadow:`0 8px 32px ${hsl(t.hue,30,5,0.4)}`,animationDelay:`${i*.05}s`}}>
+                <TempleImage src={`https://source.unsplash.com/featured/500x350/?${deityQuery(t.deityPrimary)}`} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={44}/>
+                <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"70px 14px 16px",background:"linear-gradient(transparent,rgba(0,0,0,0.88))"}}>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",fontWeight:700,marginBottom:5,letterSpacing:.5}}>{t.deityPrimary}</div>
                   <h3 style={{fontFamily:FD,fontSize:15.5,fontWeight:500,color:"#fff",lineHeight:1.2}}>{t.templeName}</h3>
-                  <div style={{marginTop:5,fontSize:11,color:"rgba(255,255,255,0.28)",display:"flex",alignItems:"center",gap:4}}>
-                    <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.15)"}}/>{t.townOrCity}
+                  <div style={{marginTop:5,fontSize:11,color:"rgba(255,255,255,0.32)",display:"flex",alignItems:"center",gap:4}}>
+                    <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>{t.townOrCity}
                   </div>
                 </div>
               </div>
@@ -597,30 +646,32 @@ const Explore = ({nav, oT, temples}) => {
 const Detail = ({temple: t, onBack}) => {
   const [sv, setSv] = useState(t.isFavorite);
   const [tab, setTab] = useState("overview");
-  const b1 = hsl(t.hue,40,16), b2 = hsl(t.hue,45,8), b3 = hsl(t.hue,50,3);
+  const b3 = hsl(t.hue,50,3);
+  const imgSrc = `https://source.unsplash.com/featured/860x520/?${deityQuery(t.deityPrimary)}`;
   return (
     <div className="fi" style={{paddingBottom:44}}>
-      <div style={{height:390,position:"relative",overflow:"hidden",background:`linear-gradient(178deg,${b1},${b2} 50%,${b3})`}}>
-        <div style={{position:"absolute",top:"12%",right:"0",width:300,height:300,borderRadius:"50%",background:`radial-gradient(circle,${hsl(t.hue,50,40,0.06)},transparent 55%)`,filter:"blur(50px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
-        {[100,68,40].map((r,i) => <div key={i} style={{position:"absolute",top:"38%",left:"50%",width:r*2,height:r*2,borderRadius:"50%",border:`1px solid ${hsl(t.hue,30,50,0.035)}`,transform:"translate(-50%,-50%)",animation:`breathe ${7+i*3}s ease-in-out infinite ${i*.5}s`,pointerEvents:"none"}}/>)}
-        <div style={{position:"absolute",top:"28%",left:"50%",animation:"drift 9s ease-in-out infinite",pointerEvents:"none"}}><span style={{fontFamily:FD,fontSize:80,color:hsl(t.hue,30,50,0.02)}}>{"\u0950"}</span></div>
+      <div style={{height:390,position:"relative",overflow:"hidden"}}>
+        {/* Cinematic hero image */}
+        <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={80}/>
+        {/* Gradient overlays: top dim for buttons, bottom for text legibility */}
+        <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,rgba(0,0,0,0.35) 0%,transparent 35%,rgba(0,0,0,0.1) 55%,${b3} 100%)`}}/>
         <div style={{position:"absolute",top:18,left:18,right:18,display:"flex",justifyContent:"space-between",zIndex:5}}>
-          <button className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.25)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.05)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff"}}>←</button>
+          <button className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff"}}>←</button>
           <div style={{display:"flex",gap:8}}>
-            <button className="t" style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.25)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.05)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(255,255,255,0.6)"}}>↗</button>
-            <button className="t" onClick={() => setSv(!sv)} style={{width:46,height:46,borderRadius:15,background:sv?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.25)",backdropFilter:"blur(14px)",border:`1px solid ${sv?"rgba(196,64,64,0.3)":"rgba(255,255,255,0.05)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,color:"#fff",boxShadow:sv?"0 4px 20px rgba(196,64,64,0.3)":"none",transition:"all .3s"}}>{sv?"♥":"♡"}</button>
+            <button className="t" style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"rgba(255,255,255,0.7)"}}>↗</button>
+            <button className="t" onClick={() => setSv(!sv)} style={{width:46,height:46,borderRadius:15,background:sv?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:`1px solid ${sv?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.12)"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,color:"#fff",boxShadow:sv?"0 4px 20px rgba(196,64,64,0.3)":"none",transition:"all .3s"}}>{sv?"♥":"♡"}</button>
           </div>
         </div>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"130px 24px 26px",background:`linear-gradient(transparent,${b3}bb 30%,${b3} 100%)`}}>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"130px 24px 26px",background:`linear-gradient(transparent,rgba(0,0,0,0.6) 30%,${b3} 100%)`}}>
           <div style={{display:"flex",gap:8,marginBottom:14}}>
-            <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 15px",borderRadius:100,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.04)"}}>
-              <div style={{width:5,height:5,borderRadius:"50%",background:C.saffronH,boxShadow:`0 0 8px ${C.saffron}`}}/><span style={{fontSize:11,color:"rgba(255,255,255,0.85)",fontWeight:700,letterSpacing:.6}}>{t.deityPrimary}</span>
+            <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 15px",borderRadius:100,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.1)"}}>
+              <div style={{width:5,height:5,borderRadius:"50%",background:"#E69A52",boxShadow:"0 0 8px rgba(212,133,60,0.8)"}}/><span style={{fontSize:11,color:"rgba(255,255,255,0.9)",fontWeight:700,letterSpacing:.6}}>{t.deityPrimary}</span>
             </div>
-            {t.deitySecondary && <div style={{padding:"5px 13px",borderRadius:100,background:"rgba(255,255,255,0.03)",fontSize:11,color:"rgba(255,255,255,0.35)"}}>{t.deitySecondary}</div>}
+            {t.deitySecondary && <div style={{padding:"5px 13px",borderRadius:100,background:"rgba(0,0,0,0.3)",backdropFilter:"blur(6px)",fontSize:11,color:"rgba(255,255,255,0.45)"}}>{t.deitySecondary}</div>}
           </div>
-          <h1 style={{fontFamily:FD,fontSize:32,fontWeight:500,color:"#fff",lineHeight:1.1}}>{t.templeName}</h1>
-          <div style={{marginTop:10,fontSize:12.5,color:"rgba(255,255,255,0.3)",display:"flex",alignItems:"center",gap:6}}>
-            <div style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.15)"}}/>{[t.village,t.townOrCity,t.district,t.stateOrUnionTerritory].filter(Boolean).join(" · ")}
+          <h1 style={{fontFamily:FD,fontSize:32,fontWeight:500,color:"#fff",lineHeight:1.1,textShadow:"0 2px 16px rgba(0,0,0,0.5)"}}>{t.templeName}</h1>
+          <div style={{marginTop:10,fontSize:12.5,color:"rgba(255,255,255,0.4)",display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>{[t.village,t.townOrCity,t.district,t.stateOrUnionTerritory].filter(Boolean).join(" · ")}
           </div>
         </div>
       </div>
@@ -823,7 +874,23 @@ export default function App() {
   const [stk, setStk] = useState(["home"]);
   const [temples, setTemples] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') !== 'light');
   const ref = useRef(null);
+
+  // Keep module-level C in sync with current theme before every render
+  C = isDark ? CDark : CLight;
+
+  useEffect(() => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#0E0A07' : '#FAFAF8');
+  }, [isDark]);
+
+  const toggleTheme = useCallback(() => {
+    setIsDark(v => {
+      const next = !v;
+      localStorage.setItem('theme', next ? 'dark' : 'light');
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     supabase.from("temples").select("*").then(({ data, error }) => {
@@ -843,14 +910,14 @@ export default function App() {
 
   if (loading) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
-      <style>{CSS}</style>
+      <style>{getCss(C)}</style>
       <div style={{fontFamily:FD,fontSize:48,color:"rgba(212,133,60,0.15)",animation:"breathe 3s ease-in-out infinite"}}>ॐ</div>
       <div style={{fontSize:11,color:C.textDD,fontWeight:700,letterSpacing:3,textTransform:"uppercase"}}>Loading</div>
     </div>
   );
 
   let page = null;
-  if (scr === "home") page = <Home nav={nav} oT={oT} temples={temples}/>;
+  if (scr === "home") page = <Home nav={nav} oT={oT} temples={temples} isDark={isDark} onToggleTheme={toggleTheme}/>;
   else if (scr === "explore") page = <Explore nav={nav} oT={oT} temples={temples}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back}/>;
   else if (scr === "search") page = <Search oT={oT} onBack={back} temples={temples}/>;
@@ -863,7 +930,7 @@ export default function App() {
 
   return (
     <div>
-      <style>{CSS}</style>
+      <style>{getCss(C)}</style>
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,position:"relative",boxShadow:"0 0 120px rgba(0,0,0,0.3)",display:"flex",flexDirection:"column"}}>
         <div ref={ref} style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
           {page}
