@@ -7,15 +7,15 @@ import { supabase } from "./supabase.js";
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const CDark = {
-  bg: "#0E0A07", bg2: "#161210", bg3: "#1E1814",
-  card: "#1C1712", cardH: "#241E18", cardB: "rgba(255,255,255,0.04)",
+  bg: "#1A1109", bg2: "#201610", bg3: "#2A1E14",
+  card: "#241A10", cardH: "#2E2218", cardB: "rgba(255,255,255,0.055)",
   saffron: "#D4853C", saffronH: "#E69A52", saffronDim: "rgba(212,133,60,0.12)",
   saffronPale: "rgba(212,133,60,0.08)",
   gold: "#C4A24E", goldDim: "rgba(196,162,78,0.1)",
   cream: "#F2E8D4", creamM: "#D4C4A8", creamD: "#A89878",
-  text: "#EDE4D4", textM: "#A89878", textD: "#6E5E48", textDD: "#4A3E30",
-  red: "#C44040", div: "rgba(255,255,255,0.06)", divL: "rgba(255,255,255,0.03)",
-  glass: "rgba(20,16,12,0.75)", glassL: "rgba(20,16,12,0.6)",
+  text: "#EDE4D4", textM: "#A89878", textD: "#6E5E48", textDD: "#5C4E3A",
+  red: "#C44040", div: "rgba(255,255,255,0.07)", divL: "rgba(255,255,255,0.035)",
+  glass: "rgba(26,17,9,0.78)", glassL: "rgba(26,17,9,0.62)",
 };
 const CLight = {
   bg: "#FAFAF8", bg2: "#F4F0EA", bg3: "#EDE8DF",
@@ -638,7 +638,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* HERO */}
-    <div style={{background:isDark?`linear-gradient(175deg,${hsl(30,45,10)},${hsl(350,40,7)} 55%,${C.bg})`:`linear-gradient(175deg,${hsl(30,60,94)},${hsl(350,50,97)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:isDark?`0 24px 80px ${hsl(350,30,5,0.6)}`:`0 24px 80px ${hsl(30,40,80,0.18)}`}}>
+    <div style={{background:isDark?`linear-gradient(175deg,${hsl(30,48,13)},${hsl(350,42,10)} 55%,${C.bg})`:`linear-gradient(175deg,${hsl(30,60,94)},${hsl(350,50,97)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:isDark?`0 24px 80px ${hsl(350,30,7,0.55)}`:`0 24px 80px ${hsl(30,40,80,0.18)}`}}>
       {/* Ambient glows */}
       <div style={{position:"absolute",top:"-8%",right:"-12%",width:320,height:320,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",filter:"blur(60px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
       <div style={{position:"absolute",bottom:"5%",left:"-18%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(160,80,180,0.04),transparent 60%)",filter:"blur(45px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none"}}/>
@@ -745,7 +745,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
 
     {/* DISCOVER MODE ENTRY */}
     <div className="rv t" onClick={() => nav("discover")} style={{margin:"32px 24px 0",borderRadius:26,overflow:"hidden",position:"relative",height:158,cursor:"pointer",animationDelay:".35s",boxShadow:`0 12px 48px rgba(0,0,0,0.18)`}}>
-      <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${hsl(28,55,11)},${hsl(350,45,7)})`}}/>
+      <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${hsl(28,55,14)},${hsl(350,45,10)})`}}/>
       <div style={{position:"absolute",top:"-15%",right:"-8%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.08),transparent 60%)",filter:"blur(40px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
       {/* Animated card deck hint */}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-58%)",display:"flex",alignItems:"center",gap:14}}>
@@ -784,7 +784,7 @@ const Home = ({nav, oT, oF, temples, isDark, onToggleTheme}) => {
 
     {/* ━━━ SACRED PREMIUM TEASER ━━━ */}
     <div className="rv" style={{margin:"42px 24px 0",animationDelay:".48s"}}>
-      <div style={{borderRadius:28,overflow:"hidden",position:"relative",background:`linear-gradient(140deg,${hsl(42,55,7)},${hsl(28,65,4)},${hsl(355,40,7)})`}}>
+      <div style={{borderRadius:28,overflow:"hidden",position:"relative",background:`linear-gradient(140deg,${hsl(42,55,10)},${hsl(28,65,7)},${hsl(355,40,10)})`}}>
         {/* Gold shimmer sweep */}
         <div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(196,162,78,0.06),transparent)",animation:"shimmer 8s ease-in-out infinite",pointerEvents:"none"}}/>
         {/* Radial ambient */}
@@ -1004,7 +1004,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           </div>}
           {/* ── Premium Audio Guide teaser ── */}
           <div style={{margin:"22px 0 8px",borderRadius:22,overflow:"hidden",position:"relative",border:"1px solid rgba(196,162,78,0.18)"}}>
-            <div style={{position:"absolute",inset:0,background:`linear-gradient(140deg,${hsl(42,55,7)},${hsl(28,65,4)})`,pointerEvents:"none"}}/>
+            <div style={{position:"absolute",inset:0,background:`linear-gradient(140deg,${hsl(42,55,10)},${hsl(28,65,7)})`,pointerEvents:"none"}}/>
             <div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(196,162,78,0.05),transparent)",animation:"shimmer 7s ease-in-out infinite",pointerEvents:"none"}}/>
             <div style={{position:"relative",padding:"18px 20px",display:"flex",alignItems:"center",gap:16}}>
               <div style={{width:52,height:52,borderRadius:16,background:"rgba(196,162,78,0.11)",border:"1px solid rgba(196,162,78,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -2051,7 +2051,7 @@ export default function App() {
   C = isDark ? CDark : CLight;
 
   useEffect(() => {
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#0E0A07' : '#FAFAF8');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#1A1109' : '#FAFAF8');
   }, [isDark]);
 
   const toggleTheme = useCallback(() => {
