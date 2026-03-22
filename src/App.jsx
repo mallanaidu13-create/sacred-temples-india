@@ -1,7 +1,60 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "./supabase.js";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+// ── Haptic feedback ──
+const haptic = (ms = 20) => { try { navigator.vibrate?.(ms); } catch(e) {} };
+
+// ── Dynamic Hindu Panchang ──
+const getHinduPanchang = (date = new Date()) => {
+  const synodicMonth = 29.53058867;
+  const knownNewMoon = new Date('2000-01-06T18:14:00Z');
+  const daysSince = (date - knownNewMoon) / 86400000;
+  const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth;
+  const tithiIdx = Math.floor(phase / synodicMonth * 30) % 15;
+  const tithis = ['Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami','Shashti','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi','Trayodashi','Chaturdashi','Purnima'];
+  const siderealMonth = 27.32166;
+  const nakPh = ((daysSince % siderealMonth) + siderealMonth) % siderealMonth;
+  const nakIdx = Math.floor(nakPh / siderealMonth * 27);
+  const nakshatras = ['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanishtha','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati'];
+  const yogas = ['Vishkambha','Priti','Ayushman','Saubhagya','Shobhana','Atiganda','Sukarma','Dhriti','Shula','Ganda','Vriddhi','Dhruva','Vyaghata','Harshana','Vajra','Siddhi','Vyatipata','Variyana','Parigha','Shiva','Siddha','Sadhya','Shubha','Shukla','Brahma','Indra','Vaidhriti'];
+  const doy = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const varas = ['Ravivara','Somavara','Mangalavara','Budhavara','Guruvara','Shukravara','Shanivara'];
+  return {
+    tithi: tithis[tithiIdx] || 'Pratipada',
+    nakshatra: nakshatras[nakIdx] || 'Ashwini',
+    yoga: yogas[Math.floor((doy * 27) / 365) % 27] || 'Siddha',
+    muhurta: 'Abhijit (11:52 – 12:44)',
+    vara: varas[date.getDay()],
+  };
+};
+
+// ── IndexedDB offline cache ──
+const IDB = (() => {
+  const NAME = 'sacredTemples', VER = 1, STORE = 'temples';
+  const open = () => new Promise((res, rej) => {
+    const r = indexedDB.open(NAME, VER);
+    r.onupgradeneeded = e => e.target.result.createObjectStore(STORE, {keyPath:'id'});
+    r.onsuccess = e => res(e.target.result);
+    r.onerror = () => rej(r.error);
+  });
+  return {
+    save: async (temples) => { try { const db = await open(); const tx = db.transaction(STORE,'readwrite'); const st = tx.objectStore(STORE); st.clear(); temples.forEach(t => st.put(t)); await new Promise((r,j) => { tx.oncomplete=r; tx.onerror=()=>j(tx.error); }); db.close(); } catch(e) {} },
+    load: async () => { try { const db = await open(); const tx = db.transaction(STORE,'readonly'); const st = tx.objectStore(STORE); const r = st.getAll(); const data = await new Promise((res,rej) => { r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); db.close(); return data||[]; } catch(e) { return []; } },
+  };
+})();
+
+// ── Recently viewed hook ──
+const useRecentlyViewed = () => {
+  const key = 'recentlyViewed';
+  const get = () => { try { return JSON.parse(localStorage.getItem(key)||'[]'); } catch { return []; } };
+  const add = useCallback((id) => {
+    const ids = get().filter(x => x !== id).slice(0, 7);
+    localStorage.setItem(key, JSON.stringify([id, ...ids]));
+  }, []);
+  return { getIds: get, addId: add };
+};
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  SACRED TEMPLES OF BHĀRATA
@@ -120,6 +173,11 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes premiumPulse{0%,100%{box-shadow:0 0 0 1px rgba(196,162,78,0.1)}50%{box-shadow:0 0 0 1px rgba(196,162,78,0.26),0 0 40px rgba(196,162,78,0.07)}}
 @keyframes badgePop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
 @keyframes skeletonShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
+.scrFwd{animation:slideInRight .28s cubic-bezier(.16,1,.3,1) both}
+.scrBack{animation:slideInLeft .28s cubic-bezier(.16,1,.3,1) both}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 .rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
 .fi{animation:fi .35s ease both}
 .t{transition:transform .12s cubic-bezier(.16,1,.3,1)}.t:active{transform:scale(.96)}
@@ -422,20 +480,22 @@ const ShlokaWidget = () => {
   );
 };
 
-const PanchangWidget = () => (
+const PanchangWidget = () => {
+  const p = getHinduPanchang();
+  return (
   <div style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
     <div style={{height:3,background:`linear-gradient(90deg,${C.saffron},${C.gold},transparent)`}}/>
     <div style={{padding:"16px 20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-        <div style={{fontFamily:FE,fontSize:13,color:C.textM,fontWeight:500,letterSpacing:.3}}>Today's Panchang</div>
-        <div style={{fontSize:11,color:C.saffron,fontWeight:700,padding:"4px 12px",borderRadius:8,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`,fontFamily:FD}}>{PANCHANG.vara}</div>
+        <div style={{fontFamily:FD,fontSize:13,color:C.textM,fontWeight:500,letterSpacing:.3}}>Today's Panchang</div>
+        <div style={{fontSize:11,color:C.saffron,fontWeight:700,padding:"4px 12px",borderRadius:8,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`,fontFamily:FD}}>{p.vara}</div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         {[
-          {l:"Tithi",v:PANCHANG.tithi,e:"🌙"},
-          {l:"Nakshatra",v:PANCHANG.nakshatra,e:"✦"},
-          {l:"Yoga",v:PANCHANG.yoga,e:"◎"},
-          {l:"Muhurta",v:PANCHANG.muhurta,e:"⊙"},
+          {l:"Tithi",v:p.tithi,e:"🌙"},
+          {l:"Nakshatra",v:p.nakshatra,e:"✦"},
+          {l:"Yoga",v:p.yoga,e:"◎"},
+          {l:"Muhurta",v:p.muhurta,e:"⊙"},
         ].map(p => (
           <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.saffronPale,border:`1px solid rgba(212,133,60,0.08)`}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
@@ -448,7 +508,8 @@ const PanchangWidget = () => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const PilgrimageCard = ({onNav}) => (
   <div className="t" onClick={() => onNav("explore")} style={{margin:"28px 24px 0",borderRadius:24,padding:"24px 22px",cursor:"pointer",position:"relative",overflow:"hidden",background:`linear-gradient(140deg,${hsl(215,40,12)},${hsl(215,50,6)})`}}>
@@ -489,7 +550,7 @@ const Chip = ({label, active, onClick}) => (
 );
 
 // ── Featured Card ──
-const FCard = ({t, onClick, onFav, d=0}) => {
+const FCard = memo(({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/400x600/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
   return (
@@ -511,7 +572,7 @@ const FCard = ({t, onClick, onFav, d=0}) => {
       </div>
       {/* Fav — top right */}
       <div style={{position:"absolute",top:18,right:18,zIndex:3}}>
-        <div className="t" onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s",cursor:"pointer"}}>
+        <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" className="t" onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s",cursor:"pointer"}}>
           {t.isFavorite ? "♥" : "♡"}
         </div>
       </div>
@@ -525,10 +586,10 @@ const FCard = ({t, onClick, onFav, d=0}) => {
       </div>
     </div>
   );
-};
+});
 
 // ── List Card ──
-const LCard = ({t, onClick, onFav, d=0}) => {
+const LCard = memo(({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
@@ -554,11 +615,11 @@ const LCard = ({t, onClick, onFav, d=0}) => {
             </span>
           </div>
         </div>
-        <div onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
+        <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
       </div>
     </div>
   );
-};
+});
 
 const IR = ({emoji, label, value, action}) => (
   <div className="t" onClick={action} style={{display:"flex",alignItems:"flex-start",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:action?"pointer":"default"}}>
@@ -573,7 +634,7 @@ const IR = ({emoji, label, value, action}) => (
 
 // Persistent theme toggle — used in every page header
 const ThemeBtn = ({isDark, onToggle}) => (
-  <button className="t" onClick={onToggle} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{
+  <button aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} className="t" onClick={onToggle} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{
     width:42,height:42,borderRadius:13,flexShrink:0,
     background:isDark?"rgba(255,255,255,0.05)":C.saffronDim,
     border:`1px solid ${isDark?C.div:C.saffronPale}`,
@@ -639,6 +700,25 @@ const TypingDots = () => (
   </div>
 );
 
+const Toast = ({msg, icon='✓', visible}) => (
+  <div style={{
+    position:'fixed', bottom:100, left:'50%', transform:'translateX(-50%)',
+    zIndex:999, pointerEvents:'none',
+    padding:'11px 22px', borderRadius:100,
+    background: visible ? C.card : 'transparent',
+    border: visible ? `1px solid ${C.div}` : 'none',
+    boxShadow: visible ? `0 8px 32px rgba(0,0,0,0.28), 0 0 0 1px ${C.saffronDim}` : 'none',
+    display:'flex', alignItems:'center', gap:8,
+    opacity: visible ? 1 : 0,
+    transition:'opacity .25s ease',
+    whiteSpace:'nowrap',
+    backdropFilter: visible ? 'blur(20px)' : 'none',
+  }}>
+    <span style={{fontSize:14,color:C.saffron}}>{icon}</span>
+    <span style={{fontSize:13,fontWeight:600,color:C.text,fontFamily:FB}}>{msg}</span>
+  </div>
+);
+
 const NavSvg = ({name, col}) => {
   const s = {width:22,height:22,display:"block"};
   if (name === "home") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10L12 3l9 7v10h-5v-6h-8v6H3z"/></svg>;
@@ -656,7 +736,7 @@ const BNav = ({a, on, savedCount=0}) => {
         const active = a === t.k;
         const col = active ? C.saffron : C.textDD;
         return (
-          <button key={t.k} className="t" onClick={() => on(t.k)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
+          <button key={t.k} aria-label={t.l} className="t" onClick={() => { haptic(12); on(t.k); }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
             {/* Top active indicator */}
             {active && <div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:24,height:3,borderRadius:2,background:C.saffron,boxShadow:`0 0 14px ${C.saffron}99`,transition:"all .3s cubic-bezier(.16,1,.3,1)"}}/>}
             <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:active?C.saffronDim:"transparent",transition:"all .25s cubic-bezier(.16,1,.3,1)",position:"relative"}}>
@@ -687,7 +767,7 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
-const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
+const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[]}) => {
   const { playing, toggle } = useOmChant();
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
@@ -888,6 +968,19 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
       </div>
     </div>
 
+    {/* RECENTLY VIEWED */}
+    {recentIds.length > 0 && (() => {
+      const recent = recentIds.map(id => temples.find(t => t.id === id)).filter(Boolean);
+      return recent.length > 0 ? (
+        <div style={{marginTop:40}}>
+          <SH title="Continue Exploring" sub="Recently visited temples" d={.52}/>
+          <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
+            {recent.map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.54+i*.08}/>)}
+          </div>
+        </div>
+      ) : null;
+    })()}
+
     {/* NEARBY */}
     <div style={{marginTop:42}}>
       <SH title="Near You" act="Map" onAct={() => nav("nearby")} d={.55}/>
@@ -1020,7 +1113,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
         {/* Gradient overlays: top dim for buttons, bottom for text legibility */}
         <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,rgba(0,0,0,0.35) 0%,transparent 35%,rgba(0,0,0,0.1) 55%,${b3} 100%)`}}/>
         <div style={{position:"absolute",top:18,left:18,right:18,display:"flex",justifyContent:"space-between",zIndex:5}}>
-          <button className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff"}}>←</button>
+          <button aria-label="Go back" className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff"}}>←</button>
           <div style={{display:"flex",gap:8}}>
             {/* Theme toggle — glass style to match photo overlay */}
             <button className="t" onClick={onToggleTheme} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -1167,24 +1260,48 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
   );
 };
 
+const POPULAR_SEARCHES = ["Jyotirlinga temples","Temples near Chennai","Devi temples Kerala","UNESCO heritage"];
 const Search = ({oT, oF, onBack, temples}) => {
   const [q, setQ] = useState("");
-  const rec = ["Jyotirlinga temples","Temples near Chennai","Devi temples Kerala","UNESCO heritage"];
-  const res = temples.filter(t => [t.templeName,t.deityPrimary,t.townOrCity,t.district,t.stateOrUnionTerritory].some(f => f.toLowerCase().includes(q.toLowerCase())));
+  const [history, setHistory] = useState(() => { try { return JSON.parse(localStorage.getItem('searchHistory')||'[]'); } catch { return []; } });
+  const res = q ? temples.filter(t => [t.templeName,t.deityPrimary,t.townOrCity,t.district,t.stateOrUnionTerritory].some(f => f?.toLowerCase().includes(q.toLowerCase()))) : [];
+  const saveHistory = (term) => {
+    if (!term.trim()) return;
+    const next = [term, ...history.filter(x => x !== term)].slice(0,5);
+    setHistory(next);
+    localStorage.setItem('searchHistory', JSON.stringify(next));
+  };
+  const doSearch = (term) => { setQ(term); saveHistory(term); };
+  const clearHistory = () => { setHistory([]); localStorage.removeItem('searchHistory'); };
   return (
     <div className="fi" style={{minHeight:"100vh",background:C.bg}}>
       <div style={{padding:"16px 24px",display:"flex",alignItems:"center",gap:14}}>
-        <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+        <button aria-label="Go back" className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
         <div style={{flex:1,padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`2px solid ${C.saffron}`,boxShadow:`0 0 0 4px ${C.saffronDim}`}}>
           <span style={{fontSize:15,color:C.saffron}}>⌕</span>
-          <input autoFocus type="text" placeholder="Temple, deity, city, state…" value={q} onChange={e => setQ(e.target.value)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
-          {q && <button className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button>}
+          <input autoFocus type="text" placeholder="Temple, deity, city, state…" value={q} onChange={e => { setQ(e.target.value); }} onKeyDown={e => e.key==='Enter' && saveHistory(q)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
+          {q && <button aria-label="Clear search" className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button>}
         </div>
       </div>
       {!q ? <div style={{padding:"18px 24px"}}>
+        {history.length > 0 && (
+          <div style={{marginBottom:22}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase"}}>Recent Searches</div>
+              <button className="t" onClick={clearHistory} style={{background:"none",border:"none",cursor:"pointer",fontSize:10,color:C.textD,fontWeight:600}}>Clear</button>
+            </div>
+            {history.map((s,i) => (
+              <div key={s} className="t rv" onClick={() => doSearch(s)} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.04}s`}}>
+                <svg width="13" height="13" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.49"/></svg>
+                <span style={{fontSize:14,color:C.textM,flex:1}}>{s}</span>
+                <button className="t" onClick={e => { e.stopPropagation(); const next = history.filter(x=>x!==s); setHistory(next); localStorage.setItem('searchHistory',JSON.stringify(next)); }} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:C.textDD}}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
         <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:18}}>Popular Searches</div>
-        {rec.map((s,i) => (
-          <div key={s} className="t rv" onClick={() => setQ(s)} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.04}s`}}>
+        {POPULAR_SEARCHES.map((s,i) => (
+          <div key={s} className="t rv" onClick={() => doSearch(s)} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.04}s`}}>
             <svg width="13" height="13" fill="none" stroke={C.textDD} strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <span style={{fontSize:14,color:C.textM}}>{s}</span>
           </div>
@@ -1200,7 +1317,7 @@ const Search = ({oT, oF, onBack, temples}) => {
 const StateBrowse = ({nav, onBack, isDark, onToggleTheme, onSelect}) => (
   <div className="fi" style={{paddingBottom:24}}>
     <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
-      <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+      <button aria-label="Go back" className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
       <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,flex:1}}>States</h1>
       <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
     </div>
@@ -1234,7 +1351,7 @@ const DistrictBrowse = ({onBack, oT, oF, temples, isDark, onToggleTheme, state})
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
-        <button className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+        <button aria-label="Go back" className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
         <div style={{flex:1}}>
           <h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream}}>{sName}</h1>
           <div style={{fontSize:12,color:C.textD,marginTop:3}}>{sCount ? `${sCount} temples` : `${stateTemples.length} temples in database`}</div>
@@ -1361,7 +1478,19 @@ const Saved = ({oT, oF, temples, isDark, onToggleTheme, onBrowse}) => {
         <div><h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Saved</h1><p style={{fontSize:13,color:C.textD,marginTop:5}}>{sv.length} temple{sv.length!==1?"s":""}</p></div>
         <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
-      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.05}/>) : <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it here." action={{label:"Browse Temples", onPress: onBrowse}}/>}
+      {sv.length > 0 ? sv.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.05}/>) : (
+        <div>
+          <Empty emoji="♥" title="No Saved Temples" sub="Tap the heart on any temple to save it here." action={{label:"Browse Temples", onPress: onBrowse}}/>
+          {temples.length > 0 && (
+            <div style={{marginTop:8}}>
+              <SH title="You Might Like" sub="Discover temples to save" d={.1}/>
+              <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
+                {temples.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.12+i*.08}/>)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -2138,7 +2267,19 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') !== 'light');
+  const [navDir, setNavDir] = useState('none');
+  const [pageKey, setPageKey] = useState(0);
+  const [toast, setToast] = useState({msg:'',icon:'✓',visible:false});
+  const toastTimer = useRef(null);
+  const { getIds: getRecentIds, addId: addRecentId } = useRecentlyViewed();
+  const [recentIds, setRecentIds] = useState(() => getRecentIds());
   const ref = useRef(null);
+
+  const showToast = useCallback((msg, icon='✓') => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({msg, icon, visible:true});
+    toastTimer.current = setTimeout(() => setToast(t => ({...t, visible:false})), 2400);
+  }, []);
 
   // Keep module-level C in sync with current theme before every render
   C = isDark ? CDark : CLight;
@@ -2160,9 +2301,17 @@ export default function App() {
     setFetchError(null);
     const { data, error } = await supabase.from("temples").select("*");
     if (error) {
-      setFetchError(error.message || "Could not load temples. Please check your connection.");
+      // Try IndexedDB fallback
+      const cached = await IDB.load();
+      if (cached.length > 0) {
+        setTemples(cached);
+        setFetchError(null);
+      } else {
+        setFetchError(error.message || "Could not load temples. Please check your connection.");
+      }
     } else if (data) {
       setTemples(data);
+      IDB.save(data); // persist for offline use
     }
     setLoading(false);
   }, []);
@@ -2172,23 +2321,30 @@ export default function App() {
     initParallax();
   }, [fetchTemples]);
 
-  const nav = useCallback(t => { setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
-  const back = useCallback(() => { setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
-  // backNoTmpReset: go back without clearing tmp — used from Chat so Detail context is preserved
-  const backNoTmpReset = useCallback(() => { setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
-  const oT = useCallback(t => { setTmp(t); nav("detail"); }, [nav]);
-  const onTab = useCallback(t => { setStk([t]); setScr(t); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  const nav = useCallback(t => { setNavDir('forward'); setPageKey(k => k+1); setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  const back = useCallback(() => { setNavDir('back'); setPageKey(k => k+1); setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  const backNoTmpReset = useCallback(() => { setNavDir('back'); setPageKey(k => k+1); setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  const oT = useCallback(t => {
+    addRecentId(t.id);
+    setRecentIds(getRecentIds());
+    setTmp(t);
+    nav("detail");
+  }, [nav, addRecentId, getRecentIds]);
+  const onTab = useCallback(t => { setNavDir('none'); setPageKey(k => k+1); setStk([t]); setScr(t); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
 
   // Favorites: optimistic update → Supabase persist → rollback on error
   const oF = useCallback(async (id, current) => {
     const next = !current;
+    haptic(next ? 30 : 15);
     setTemples(prev => prev.map(t => t.id === id ? {...t, isFavorite: next} : t));
+    showToast(next ? 'Saved to favourites' : 'Removed from saved', next ? '♥' : '♡');
     const { error } = await supabase.from("temples").update({ isFavorite: next }).eq("id", id);
     if (error) {
       console.error("Favorite update failed:", error.message);
       setTemples(prev => prev.map(t => t.id === id ? {...t, isFavorite: current} : t));
+      showToast('Could not save. Try again.', '✕');
     }
-  }, []);
+  }, [showToast]);
 
   const tabs = ["home","explore","nearby","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
@@ -2208,7 +2364,7 @@ export default function App() {
   const th = {isDark, onToggleTheme: toggleTheme};
 
   let page = null;
-  if (scr === "home") page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
+  if (scr === "home") page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} recentIds={recentIds} {...th}/>;
   else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
   else if (scr === "explore") page = <Explore nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} oF={oF} nav={nav} {...th}/>;
@@ -2222,13 +2378,16 @@ export default function App() {
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
 
+  const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : 'fi';
+
   return (
     <div>
       <style>{getCss(C)}</style>
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,position:"relative",boxShadow:"0 0 120px rgba(0,0,0,0.3)",display:"flex",flexDirection:"column"}}>
         <div ref={ref} style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
-          {page}
+          <div key={pageKey} className={transitionClass}>{page}</div>
         </div>
+        <Toast msg={toast.msg} icon={toast.icon} visible={toast.visible}/>
         {/* Sarathi FAB — floats above BNav */}
         {showNav && (
           <button className="t" onClick={() => nav("chat")} title="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,boxShadow:`0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)`}}><OmSvg size={28} color="#fff"/></button>
