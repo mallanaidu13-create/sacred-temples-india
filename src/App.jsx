@@ -221,6 +221,10 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
 @keyframes countUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes circuitGlow{0%,100%{box-shadow:0 0 0 1px rgba(212,133,60,0.1),0 4px 20px rgba(0,0,0,0.12)}50%{box-shadow:0 0 0 1px rgba(212,133,60,0.22),0 4px 28px rgba(212,133,60,0.08)}}
+@keyframes petalOrbit{0%{transform:translate(-50%,-50%) rotate(0deg) translateX(var(--po-r,96px)) rotate(0deg) scale(1);opacity:var(--po-op,0.7)}50%{opacity:calc(var(--po-op,0.7)*1.25);transform:translate(-50%,-50%) rotate(180deg) translateX(var(--po-r,96px)) rotate(-180deg) scale(1.1)}100%{transform:translate(-50%,-50%) rotate(360deg) translateX(var(--po-r,96px)) rotate(-360deg) scale(1);opacity:var(--po-op,0.7)}}
+@keyframes petalFloat{0%{transform:translate(-50%,-50%) translateY(0) translateX(0) scale(1) rotate(0deg);opacity:0}10%{opacity:0.85}75%{opacity:0.45}100%{transform:translate(-50%,-50%) translateY(-180px) translateX(var(--pf-x,0px)) scale(0.3) rotate(var(--pf-r,120deg));opacity:0}}
+@keyframes petalTwinkle{0%,100%{opacity:0.15;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(0.6)}40%{opacity:0.9;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(1.3)}70%{opacity:0.5;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(0.85)}}
+@keyframes petalSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -1138,6 +1142,101 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         </div>
         {/* Deep radial glow behind OM */}
         <div style={{position:"absolute",top:"50%",left:"50%",width:170,height:170,borderRadius:"50%",background:"radial-gradient(circle,rgba(240,192,96,0.28),rgba(212,133,60,0.10) 50%,transparent 70%)",transform:"translate(-50%,-50%)",filter:"blur(22px)",animation:"breathe 4s ease-in-out infinite",pointerEvents:"none"}}/>
+
+        {/* ═══ FLOWER & SPRINKLE LAYER 1 — Orbiting lotus petals (outer ring, slow) ═══ */}
+        {[
+          {emoji:"🌸",r:"118px",dur:"22s",op:0.72,delay:"0s"},
+          {emoji:"🌺",r:"118px",dur:"22s",op:0.65,delay:"2.75s"},
+          {emoji:"🌸",r:"118px",dur:"22s",op:0.70,delay:"5.5s"},
+          {emoji:"🪷",r:"118px",dur:"22s",op:0.68,delay:"8.25s"},
+          {emoji:"🌼",r:"118px",dur:"22s",op:0.62,delay:"11s"},
+          {emoji:"🌸",r:"118px",dur:"22s",op:0.70,delay:"13.75s"},
+          {emoji:"🌺",r:"118px",dur:"22s",op:0.65,delay:"16.5s"},
+          {emoji:"🪷",r:"118px",dur:"22s",op:0.72,delay:"19.25s"},
+        ].map((p,i) => (
+          <div key={`po1-${i}`} style={{
+            position:"absolute",top:"50%",left:"50%",fontSize:14,lineHeight:1,
+            pointerEvents:"none",zIndex:2,
+            "--po-r":p.r,"--po-op":p.op,
+            animation:`petalOrbit ${p.dur} linear infinite ${p.delay}`,
+          }}>{p.emoji}</div>
+        ))}
+
+        {/* ═══ FLOWER & SPRINKLE LAYER 2 — Orbiting marigold petals (inner ring, faster) ═══ */}
+        {[
+          {emoji:"🌼",r:"82px",dur:"14s",op:0.58,delay:"0s"},
+          {emoji:"✿",r:"82px",dur:"14s",op:0.55,delay:"2.33s"},
+          {emoji:"🌼",r:"82px",dur:"14s",op:0.60,delay:"4.66s"},
+          {emoji:"❀",r:"82px",dur:"14s",op:0.55,delay:"6.99s"},
+          {emoji:"🌼",r:"82px",dur:"14s",op:0.58,delay:"9.32s"},
+          {emoji:"✿",r:"82px",dur:"14s",op:0.52,delay:"11.65s"},
+        ].map((p,i) => (
+          <div key={`po2-${i}`} style={{
+            position:"absolute",top:"50%",left:"50%",fontSize:11,lineHeight:1,
+            pointerEvents:"none",zIndex:2,color:"rgba(240,192,96,0.85)",fontWeight:"bold",
+            "--po-r":p.r,"--po-op":p.op,
+            animation:`petalOrbit ${p.dur} linear infinite reverse ${p.delay}`,
+          }}>{p.emoji}</div>
+        ))}
+
+        {/* ═══ FLOWER & SPRINKLE LAYER 3 — Rising floating petals (drift upward) ═══ */}
+        {[
+          {emoji:"🌸",x:"-18px",r:"80deg",  dur:"6.8s",delay:"0s"},
+          {emoji:"🌺",x:"22px", r:"-65deg", dur:"8.2s",delay:"1.1s"},
+          {emoji:"🌼",x:"-8px", r:"110deg", dur:"7.4s",delay:"2.3s"},
+          {emoji:"🪷",x:"14px", r:"-95deg", dur:"9.0s",delay:"3.5s"},
+          {emoji:"🌸",x:"-24px",r:"55deg",  dur:"6.2s",delay:"4.6s"},
+          {emoji:"🌼",x:"10px", r:"-130deg",dur:"7.8s",delay:"5.7s"},
+        ].map((p,i) => (
+          <div key={`pf-${i}`} style={{
+            position:"absolute",top:"50%",left:"50%",fontSize:13,lineHeight:1,
+            pointerEvents:"none",zIndex:2,
+            "--pf-x":p.x,"--pf-r":p.r,
+            animation:`petalFloat ${p.dur} ease-out infinite ${p.delay}`,
+          }}>{p.emoji}</div>
+        ))}
+
+        {/* ═══ FLOWER & SPRINKLE LAYER 4 — Twinkling sparkle dots at fixed positions ═══ */}
+        {[
+          {deg:"0deg",  r:"136px",dur:"2.2s",delay:"0s",   col:"rgba(255,220,100,0.9)"},
+          {deg:"30deg", r:"142px",dur:"3.1s",delay:".4s",  col:"rgba(212,133,60,0.85)"},
+          {deg:"60deg", r:"130px",dur:"2.6s",delay:".8s",  col:"rgba(255,200,80,0.9)"},
+          {deg:"90deg", r:"140px",dur:"1.9s",delay:"1.2s", col:"rgba(196,162,78,0.9)"},
+          {deg:"120deg",r:"136px",dur:"2.8s",delay:".2s",  col:"rgba(255,220,100,0.85)"},
+          {deg:"150deg",r:"138px",dur:"2.4s",delay:".6s",  col:"rgba(212,133,60,0.9)"},
+          {deg:"180deg",r:"132px",dur:"3.0s",delay:"1.0s", col:"rgba(255,200,80,0.85)"},
+          {deg:"210deg",r:"142px",dur:"2.1s",delay:"1.4s", col:"rgba(196,162,78,0.9)"},
+          {deg:"240deg",r:"136px",dur:"2.7s",delay:".3s",  col:"rgba(255,220,100,0.9)"},
+          {deg:"270deg",r:"140px",dur:"1.8s",delay:".7s",  col:"rgba(212,133,60,0.85)"},
+          {deg:"300deg",r:"134px",dur:"2.9s",delay:"1.1s", col:"rgba(255,200,80,0.9)"},
+          {deg:"330deg",r:"138px",dur:"2.3s",delay:".5s",  col:"rgba(196,162,78,0.85)"},
+        ].map((s,i) => (
+          <div key={`pt-${i}`} style={{
+            position:"absolute",top:"50%",left:"50%",
+            width:i%3===0?5:i%3===1?4:3,
+            height:i%3===0?5:i%3===1?4:3,
+            borderRadius:"50%",background:s.col,
+            pointerEvents:"none",zIndex:2,
+            boxShadow:`0 0 6px ${s.col}`,
+            "--pt-deg":s.deg,"--pt-r":s.r,
+            animation:`petalTwinkle ${s.dur} ease-in-out infinite ${s.delay}`,
+          }}/>
+        ))}
+
+        {/* ═══ FLOWER & SPRINKLE LAYER 5 — SVG lotus mandala petals (outermost, ultra-slow spin) ═══ */}
+        <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",pointerEvents:"none",zIndex:1,animation:"omHaloSpin 45s linear infinite reverse",opacity:0.22}}>
+          <svg width={290} height={290} viewBox="0 0 290 290">
+            {Array.from({length:16},(_,i) => {
+              const a = (i*22.5)*Math.PI/180;
+              const r1=128, r2=142, r3=115;
+              const x1=145+r1*Math.cos(a), y1=145+r1*Math.sin(a);
+              const x2=145+r2*Math.cos(a+0.12), y2=145+r2*Math.sin(a+0.12);
+              const x3=145+r3*Math.cos(a+0.22), y3=145+r3*Math.sin(a+0.22);
+              return <path key={i} d={`M145,145 Q${x2},${y2} ${x1},${y1} Q${x2+2},${y2+2} ${x3},${y3} Z`} fill="rgba(212,133,60,0.6)" stroke="none"/>;
+            })}
+          </svg>
+        </div>
+
         {/* OM glyph */}
         <OmSymbol size={168} />
         {/* Om chant button */}
