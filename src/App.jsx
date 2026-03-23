@@ -215,6 +215,12 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes fabIn{from{opacity:0;transform:translateY(18px) scale(0.82)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes heartBurst{0%{transform:translate(-50%,-50%) rotate(var(--hb-deg)) translateX(0) scale(1.2);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--hb-deg)) translateX(32px) scale(0);opacity:0}}
 @keyframes premiumSheen{0%{left:-110%}40%{left:160%}100%{left:160%}}
+@keyframes floatUp{0%{transform:translateY(0) translateX(0) scale(1);opacity:0}8%{opacity:.75}80%{opacity:.35}100%{transform:translateY(-210px) translateX(var(--fp-x,0px)) scale(0.35);opacity:0}}
+@keyframes flipIn{0%{transform:perspective(500px) rotateX(-80deg);opacity:0}100%{transform:perspective(500px) rotateX(0deg);opacity:1}}
+@keyframes typeIn{0%{opacity:0;transform:scale(0.7) translateY(4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes countUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes circuitGlow{0%,100%{box-shadow:0 0 0 1px rgba(212,133,60,0.1),0 4px 20px rgba(0,0,0,0.12)}50%{box-shadow:0 0 0 1px rgba(212,133,60,0.22),0 4px 28px rgba(212,133,60,0.08)}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -370,6 +376,69 @@ const Reveal = ({children, delay=0, style={}}) => {
     </div>
   );
 };
+
+// ── Count-Up Hook — animates a number from 0 to target on trigger ──
+const useCountUp = (target, duration = 1400) => {
+  const [val, setVal] = useState(0);
+  const [triggered, setTriggered] = useState(false);
+  const rafRef = useRef(null);
+  const trigger = useCallback(() => { if (!triggered) setTriggered(true); }, [triggered]);
+  useEffect(() => {
+    if (!triggered) return;
+    const start = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3); // cubic ease-out
+      setVal(Math.round(target * eased));
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [triggered, target, duration]);
+  return [val, trigger];
+};
+
+// ── Typewriter — reveals text character by character on mount ──
+const Typewriter = ({text, delay = 400, speed = 58}) => {
+  const [shown, setShown] = useState(0);
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const to = setTimeout(() => {
+      let i = 0;
+      const id = setInterval(() => {
+        i++;
+        setShown(i);
+        if (i >= text.length) { clearInterval(id); setDone(true); }
+      }, speed);
+      return () => clearInterval(id);
+    }, delay);
+    return () => clearTimeout(to);
+  }, [text, delay, speed]);
+  return (
+    <span>
+      {text.split('').map((ch, i) => (
+        <span key={i} style={{
+          opacity: i < shown ? 1 : 0,
+          display: 'inline-block',
+          animation: i < shown ? `typeIn 0.18s ease both` : 'none',
+        }}>{ch}</span>
+      ))}
+      {!done && <span style={{animation:'cursorBlink 0.7s ease infinite',marginLeft:1,color:'inherit',opacity:.6}}>|</span>}
+    </span>
+  );
+};
+
+// ── Hero floating incense particles (deterministic positions) ──
+const HERO_PARTICLES = [
+  {b:6,  l:28, s:2.5, d:0,   dur:7.2, x:14},
+  {b:18, l:52, s:2,   d:1.4, dur:9.0, x:-9},
+  {b:10, l:68, s:3,   d:2.6, dur:6.8, x:18},
+  {b:30, l:38, s:1.5, d:0.7, dur:8.4, x:-16},
+  {b:22, l:75, s:2,   d:3.2, dur:7.6, x:7},
+  {b:40, l:22, s:2.5, d:1.0, dur:6.4, x:22},
+  {b:14, l:84, s:2,   d:2.0, dur:9.8, x:-6},
+  {b:35, l:58, s:1.5, d:0.4, dur:8.0, x:11},
+];
 
 // ── Om Chant Hook (MP3 + Web Audio API fallback) ──
 const useOmChant = () => {
@@ -566,8 +635,9 @@ const ShlokaWidget = () => {
 
 const PanchangWidget = () => {
   const p = getHinduPanchang();
+  const [ref, visible] = useReveal(0.2);
   return (
-  <div style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
+  <div ref={ref} style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
     <div style={{height:3,background:`linear-gradient(90deg,${C.saffron},${C.gold},transparent)`}}/>
     <div style={{padding:"16px 20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
@@ -580,13 +650,18 @@ const PanchangWidget = () => {
           {l:"Nakshatra",v:p.nakshatra,e:"✦"},
           {l:"Yoga",v:p.yoga,e:"◎"},
           {l:"Muhurta",v:p.muhurta,e:"⊙"},
-        ].map(p => (
-          <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.saffronPale,border:`1px solid rgba(212,133,60,0.08)`}}>
+        ].map((item,i) => (
+          <div key={item.l} style={{
+            padding:"12px 14px",borderRadius:14,background:C.saffronPale,
+            border:`1px solid rgba(212,133,60,0.08)`,
+            animation: visible ? `flipIn 0.55s cubic-bezier(.16,1,.3,1) ${i*0.09}s both` : 'none',
+            transformOrigin:'top center',
+          }}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-              <span style={{fontSize:16}}>{p.e}</span>
-              <span style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{p.l}</span>
+              <span style={{fontSize:16}}>{item.e}</span>
+              <span style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{item.l}</span>
             </div>
-            <div style={{fontFamily:FE,fontSize:14,color:C.creamM,fontWeight:500,lineHeight:1.3}}>{p.v}</div>
+            <div style={{fontFamily:FE,fontSize:14,color:C.creamM,fontWeight:500,lineHeight:1.3}}>{item.v}</div>
           </div>
         ))}
       </div>
@@ -944,10 +1019,67 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
+const SacredCircuits = ({nav, isDark}) => {
+  const [c1, t1] = useCountUp(12,  900);
+  const [c2, t2] = useCountUp(51,  1100);
+  const [c3, t3] = useCountUp(108, 1400);
+  const [c4, t4] = useCountUp(4,   700);
+  const stripRef = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { t1(); t2(); t3(); t4(); obs.disconnect(); }
+    }, {threshold: 0.35});
+    if (stripRef.current) obs.observe(stripRef.current);
+    return () => obs.disconnect();
+  }, [t1, t2, t3, t4]);
+  const circuits = [
+    {n:c1, l:"Jyotirlingas",   icon:"☽", h:350},
+    {n:c2, l:"Shakti Peethas", icon:"✦", h:280},
+    {n:c3, l:"Divya Desams",   icon:"☸", h:215},
+    {n:c4, l:"Char Dhams",     icon:"◎", h:140},
+  ];
+  return (
+    <Reveal delay={0}>
+      <div style={{margin:"36px 24px 0"}}>
+        <SH title="Sacred Circuits" sub="Complete pilgrimage networks of Bhārata"/>
+        <div ref={stripRef} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {circuits.map((c,i) => (
+            <div key={c.l} className="t" onClick={() => nav("explore")} style={{
+              padding:"18px 16px",borderRadius:20,cursor:"pointer",
+              background:`linear-gradient(140deg,${hsl(c.h,35,isDark?11:92)},${C.card})`,
+              border:`1px solid ${hsl(c.h,30,isDark?20:78,0.25)}`,
+              borderTop:`2.5px solid ${hsl(c.h,50,isDark?38:62,0.55)}`,
+              position:"relative",overflow:"hidden",
+              animation:`circuitGlow 4s ease-in-out infinite ${i*.8}s`,
+            }}>
+              <div style={{position:"absolute",top:0,left:"-100%",width:"45%",height:"100%",background:`linear-gradient(105deg,transparent,${hsl(c.h,60,70,0.07)},transparent)`,animation:`premiumSheen 5s ease-in-out infinite ${i*0.9+1}s`,pointerEvents:"none"}}/>
+              <div style={{fontSize:20,marginBottom:8,filter:`drop-shadow(0 0 6px ${hsl(c.h,60,55,0.5)})`}}>{c.icon}</div>
+              <div style={{fontFamily:FD,fontSize:28,fontWeight:500,color:hsl(c.h,55,isDark?68:42),lineHeight:1,marginBottom:6}}>{c.n}</div>
+              <div style={{fontSize:11,color:C.textM,fontWeight:600,letterSpacing:.3}}>{c.l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
+};
+
 const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[]}) => {
   const { playing, toggle } = useOmChant();
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
+  // Animated stats counters
+  const [templesCount, triggerTemples] = useCountUp(3000, 1600);
+  const [statesCount,  triggerStates]  = useCountUp(36,   1200);
+  const [deitiesCount, triggerDeities] = useCountUp(6,    900);
+  const statsRef = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { triggerTemples(); triggerStates(); triggerDeities(); obs.disconnect(); }
+    }, {threshold: 0.5});
+    if (statsRef.current) obs.observe(statsRef.current);
+    return () => obs.disconnect();
+  }, [triggerTemples, triggerStates, triggerDeities]);
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* HERO */}
@@ -955,13 +1087,27 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       {/* Ambient glows */}
       <div style={{position:"absolute",top:"-8%",right:"-12%",width:320,height:320,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",filter:"blur(60px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
       <div style={{position:"absolute",bottom:"5%",left:"-18%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(160,80,180,0.04),transparent 60%)",filter:"blur(45px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none"}}/>
+      {/* Floating incense particles */}
+      {HERO_PARTICLES.map((p,i) => (
+        <div key={i} style={{
+          position:"absolute", bottom:`${p.b}%`, left:`${p.l}%`,
+          width:p.s, height:p.s, borderRadius:"50%",
+          background:"rgba(240,192,96,0.6)",
+          boxShadow:`0 0 ${p.s*4}px rgba(240,192,96,0.45)`,
+          pointerEvents:"none", zIndex:1,
+          animation:`floatUp ${p.dur}s ease-in-out infinite ${p.d}s`,
+          '--fp-x':`${p.x}px`,
+        }}/>
+      ))}
 
       {/* Top row */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:28,position:"relative",zIndex:2}}>
         <div>
-          <div style={{fontSize:9,color:"rgba(212,133,60,0.45)",fontWeight:800,letterSpacing:5,textTransform:"uppercase",marginBottom:8}}>Discover</div>
-          <h1 style={{fontFamily:FD,fontSize:36,color:C.cream,fontWeight:500,lineHeight:.96,letterSpacing:-.5}}>Sacred<br/>Temples</h1>
-          <p style={{fontFamily:FD,fontSize:15,color:C.textDD,marginTop:8,fontStyle:"italic"}}>of Bhārata</p>
+          <div style={{fontSize:9,color:"rgba(212,133,60,0.45)",fontWeight:800,letterSpacing:5,textTransform:"uppercase",marginBottom:8,animation:"rv .5s ease both"}}>Discover</div>
+          <h1 style={{fontFamily:FD,fontSize:36,color:C.cream,fontWeight:500,lineHeight:.96,letterSpacing:-.5,animation:"rv .55s cubic-bezier(.16,1,.3,1) .08s both"}}>Sacred<br/>Temples</h1>
+          <p style={{fontFamily:FD,fontSize:15,color:C.textDD,marginTop:8,fontStyle:"italic",animation:"rv .55s cubic-bezier(.16,1,.3,1) .22s both"}}>
+            <Typewriter text="of Bhārata" delay={480} speed={62}/>
+          </p>
         </div>
         <button className="t" onClick={onToggleTheme} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{width:46,height:46,borderRadius:15,background:isDark?"rgba(255,255,255,0.05)":C.saffronDim,border:`1px solid ${isDark?C.div:C.saffronPale}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:isDark?"none":`0 4px 16px ${C.saffronDim}`}}>
           {isDark
@@ -1014,12 +1160,18 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         <span style={{flex:1,fontSize:14,color:C.textDD}}>Search temples, deities, places…</span>
       </div>
 
-      {/* Stats */}
-      <div style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2}}>
-        {[{v:"3,000+",l:"Temples"},{v:"28+",l:"States"},{v:"6",l:"Deities"}].map((s,i) => (
+      {/* Stats — count-up animation on mount */}
+      <div ref={statsRef} style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2}}>
+        {[
+          {val:templesCount, suffix:"+", l:"Temples"},
+          {val:statesCount,  suffix:"",  l:"States & UTs"},
+          {val:deitiesCount, suffix:"",  l:"Deities"},
+        ].map((s,i) => (
           <div key={s.l} style={{textAlign:"center",flex:1,padding:"14px 0",borderRadius:16,position:"relative"}}>
             {i > 0 && <div style={{position:"absolute",left:0,top:"20%",bottom:"20%",width:1,background:C.divL}}/>}
-            <div style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.saffron,textShadow:`0 0 20px rgba(212,133,60,0.3)`}}>{s.v}</div>
+            <div style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.saffron,textShadow:`0 0 20px rgba(212,133,60,0.3)`,animation:"countUp .6s ease both",animationDelay:`${i*.12}s`}}>
+              {s.val.toLocaleString()}{s.suffix}
+            </div>
             <div style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,marginTop:5,textTransform:"uppercase"}}>{s.l}</div>
           </div>
         ))}
@@ -1055,6 +1207,9 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         ? <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px"}}>{[0,1,2].map(i => <SkeletonCard key={i}/>)}</div>
         : <CardCarousel items={temples.slice(0,6)} renderCard={(t,i) => <FCard t={t} onClick={oT} onFav={oF} d={.3+i*.08}/>}/>}
     </div>
+
+    {/* SACRED CIRCUITS — count-up strip */}
+    <SacredCircuits nav={nav} isDark={isDark}/>
 
     {/* DISCOVER MODE ENTRY */}
     <div className="rv t" onClick={() => nav("discover")} style={{margin:"32px 24px 0",borderRadius:26,overflow:"hidden",position:"relative",height:158,cursor:"pointer",animationDelay:".35s",boxShadow:`0 12px 48px rgba(0,0,0,0.18)`}}>
