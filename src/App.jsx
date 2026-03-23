@@ -121,6 +121,7 @@ const PANCHANG = {
 
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
+const FE = FD; // alias — serif display font
 
 /* Small Om icon SVG — used in FAB button and chat header */
 const OmSvg = ({ size = 28, color }) => {
@@ -173,14 +174,16 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes premiumPulse{0%,100%{box-shadow:0 0 0 1px rgba(196,162,78,0.1)}50%{box-shadow:0 0 0 1px rgba(196,162,78,0.26),0 0 40px rgba(196,162,78,0.07)}}
 @keyframes badgePop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
 @keyframes skeletonShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-@keyframes slideInRight{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
-@keyframes slideInLeft{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
-.scrFwd{animation:slideInRight .28s cubic-bezier(.16,1,.3,1) both}
-.scrBack{animation:slideInLeft .28s cubic-bezier(.16,1,.3,1) both}
+@keyframes slideInRight{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-30%)}to{opacity:1;transform:translateX(0)}}
+@keyframes fabPulse{0%,100%{box-shadow:0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)}50%{box-shadow:0 4px 36px rgba(212,133,60,0.72),0 0 0 7px rgba(212,133,60,0.10)}}
+@keyframes fabIn{from{opacity:0;transform:translateY(18px) scale(0.82)}to{opacity:1;transform:translateY(0) scale(1)}}
+.scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
+.scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 .rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
-.fi{animation:fi .35s ease both}
-.t{transition:transform .12s cubic-bezier(.16,1,.3,1)}.t:active{transform:scale(.96)}
+.fi{animation:fi .32s ease both}
+.t{transition:transform .15s cubic-bezier(.16,1,.3,1),box-shadow .15s ease}.t:active{transform:scale(.955)}
 ::-webkit-scrollbar{width:0;height:0}
 input{font-family:${FB}}
 input::placeholder{color:${theme.textD}}
@@ -229,7 +232,9 @@ const TempleImage = ({src, hue, style, omSize=48, px=0, py=0}) => {
               height:`calc(100% + ${PAD*1.3}px)`,
               objectFit:'cover',
               opacity:loaded?1:0,
-              transition:`opacity ${loaded?'0':'1'}s ease, left 0.1s linear, top 0.1s linear`,
+              filter:loaded?'blur(0px)':'blur(14px)',
+              transform:loaded?'scale(1)':'scale(1.05)',
+              transition:'opacity 0.5s ease, filter 0.55s ease, transform 0.55s ease, left 0.1s linear, top 0.1s linear',
             }}
           />
         </div>
@@ -632,6 +637,61 @@ const IR = ({emoji, label, value, action}) => (
   </div>
 );
 
+// ── SVG Chevron Back Button ──
+const BackBtn = ({onClick, glass=false}) => (
+  <button aria-label="Go back" className="t" onClick={onClick} style={{
+    background: glass ? 'rgba(0,0,0,0.35)' : 'none',
+    backdropFilter: glass ? 'blur(14px)' : 'none',
+    border: glass ? '1px solid rgba(255,255,255,0.12)' : 'none',
+    cursor:'pointer', width:42, height:42, borderRadius:13, flexShrink:0,
+    display:'flex', alignItems:'center', justifyContent:'center',
+    color: glass ? '#fff' : C.cream,
+  }}>
+    <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2"
+      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  </button>
+);
+
+// ── FCard Carousel with Dot Indicators ──
+const CardCarousel = ({items, renderCard, pad='24px'}) => {
+  const [active, setActive] = useState(0);
+  const itemRefs = useRef([]);
+  const scrollRef = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { const idx = itemRefs.current.indexOf(e.target); if (idx>=0) setActive(idx); } });
+    }, {root: scrollRef.current, threshold: 0.55});
+    itemRefs.current.forEach(el => el && obs.observe(el));
+    return () => obs.disconnect();
+  }, [items.length]);
+  return (
+    <div>
+      <div ref={scrollRef} style={{display:'flex',gap:18,overflowX:'auto',padding:`0 ${pad} 4px`,scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}}>
+        {items.map((item,i) => (
+          <div key={item.id||i} ref={el => itemRefs.current[i]=el} style={{scrollSnapAlign:'start',flexShrink:0}}>
+            {renderCard(item,i)}
+          </div>
+        ))}
+        <div style={{flexShrink:0,width:8}}/>
+      </div>
+      {items.length > 1 && (
+        <div style={{display:'flex',gap:5,justifyContent:'center',paddingTop:10,paddingBottom:2}}>
+          {items.map((_,i) => (
+            <div key={i} style={{
+              height:5, borderRadius:3, background: i===active ? C.saffron : C.textDD,
+              width: i===active ? 20 : 5,
+              transition:'all 0.35s cubic-bezier(.16,1,.3,1)',
+              opacity: i===active ? 1 : 0.4,
+            }}/>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Persistent theme toggle — used in every page header
 const ThemeBtn = ({isDark, onToggle}) => (
   <button aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} className="t" onClick={onToggle} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{
@@ -702,7 +762,7 @@ const TypingDots = () => (
 
 const Toast = ({msg, icon='✓', visible}) => (
   <div style={{
-    position:'fixed', bottom:100, left:'50%', transform:'translateX(-50%)',
+    position:'fixed', bottom:100, left:'50%',
     zIndex:999, pointerEvents:'none',
     padding:'11px 22px', borderRadius:100,
     background: visible ? C.card : 'transparent',
@@ -710,7 +770,8 @@ const Toast = ({msg, icon='✓', visible}) => (
     boxShadow: visible ? `0 8px 32px rgba(0,0,0,0.28), 0 0 0 1px ${C.saffronDim}` : 'none',
     display:'flex', alignItems:'center', gap:8,
     opacity: visible ? 1 : 0,
-    transition:'opacity .25s ease',
+    transform: visible ? 'translateX(-50%) translateY(0) scale(1)' : 'translateX(-50%) translateY(16px) scale(0.92)',
+    transition:'opacity .26s cubic-bezier(.16,1,.3,1), transform .26s cubic-bezier(.16,1,.3,1)',
     whiteSpace:'nowrap',
     backdropFilter: visible ? 'blur(20px)' : 'none',
   }}>
@@ -731,36 +792,42 @@ const NavSvg = ({name, col}) => {
 const BNav = ({a, on, savedCount=0}) => {
   const items = [{k:"home",l:"Home"},{k:"explore",l:"Explore"},{k:"nearby",l:"Nearby"},{k:"saved",l:"Saved"},{k:"profile",l:"Profile"}];
   return (
-    <div style={{position:"sticky",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(28px) saturate(160%)",borderTop:`1px solid ${C.div}`,display:"flex",justifyContent:"space-around",padding:"6px 0 20px"}}>
-      {items.map(t => {
-        const active = a === t.k;
-        const col = active ? C.saffron : C.textDD;
-        return (
-          <button key={t.k} aria-label={t.l} className="t" onClick={() => { haptic(12); on(t.k); }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
-            {/* Top active indicator */}
-            {active && <div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:24,height:3,borderRadius:2,background:C.saffron,boxShadow:`0 0 14px ${C.saffron}99`,transition:"all .3s cubic-bezier(.16,1,.3,1)"}}/>}
-            <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:active?C.saffronDim:"transparent",transition:"all .25s cubic-bezier(.16,1,.3,1)",position:"relative"}}>
-              <NavSvg name={t.k} col={col}/>
-              {/* Saved badge */}
-              {t.k === "saved" && savedCount > 0 && (
-                <div style={{
-                  position:"absolute",top:-2,right:-2,
-                  minWidth:16,height:16,borderRadius:8,
-                  background:C.saffron,
-                  fontSize:8.5,fontWeight:800,color:"#fff",
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  padding:"0 4px",
-                  border:`2px solid ${C.bg}`,
-                  boxShadow:`0 0 8px rgba(212,133,60,0.5)`,
-                }}>
-                  {savedCount > 99 ? "99+" : savedCount}
-                </div>
-              )}
-            </div>
-            <span style={{fontSize:9.5,fontWeight:active?700:500,color:col,letterSpacing:.6}}>{t.l}</span>
-          </button>
-        );
-      })}
+    <div style={{position:"relative",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(28px) saturate(160%)",borderTop:`1px solid ${C.div}`,padding:"6px 0 20px"}}>
+      {/* Single sliding indicator pill */}
+      {(() => { const idx = items.map(t=>t.k).indexOf(a); return idx>=0 && (
+        <div style={{position:"absolute",top:0,left:`${idx * 20}%`,width:'20%',display:'flex',justifyContent:'center',transition:'left 0.38s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}}>
+          <div style={{width:28,height:3,borderRadius:3,background:`linear-gradient(90deg,${C.saffron},${C.saffronH})`,boxShadow:`0 0 14px ${C.saffron}99`}}/>
+        </div>
+      ); })()}
+      <div style={{display:"flex",justifyContent:"space-around"}}>
+        {items.map(t => {
+          const active = a === t.k;
+          const col = active ? C.saffron : C.textDD;
+          return (
+            <button key={t.k} aria-label={t.l} className="t" onClick={() => { haptic(12); on(t.k); }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
+              <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:active?C.saffronDim:"transparent",transform:active?'scale(1)':'scale(0.88)',transition:"all .28s cubic-bezier(.16,1,.3,1)",position:"relative"}}>
+                <NavSvg name={t.k} col={col}/>
+                {/* Saved badge */}
+                {t.k === "saved" && savedCount > 0 && (
+                  <div style={{
+                    position:"absolute",top:-2,right:-2,
+                    minWidth:16,height:16,borderRadius:8,
+                    background:C.saffron,
+                    fontSize:8.5,fontWeight:800,color:"#fff",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    padding:"0 4px",
+                    border:`2px solid ${C.bg}`,
+                    boxShadow:`0 0 8px rgba(212,133,60,0.5)`,
+                  }}>
+                    {savedCount > 99 ? "99+" : savedCount}
+                  </div>
+                )}
+              </div>
+              <span style={{fontSize:9.5,fontWeight:active?700:500,color:col,letterSpacing:.6,transition:'color .25s ease'}}>{t.l}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -874,11 +941,9 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     {/* FEATURED */}
     <div style={{marginTop:40}}>
       <SH title="Featured Temples" sub="Handpicked sacred destinations" act="See all" onAct={() => nav("explore")} d={.25}/>
-      <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
-        {loading
-          ? [0,1,2].map(i => <SkeletonCard key={i}/>)
-          : temples.slice(0,4).map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.3+i*.1}/>)}
-      </div>
+      {loading
+        ? <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px"}}>{[0,1,2].map(i => <SkeletonCard key={i}/>)}</div>
+        : <CardCarousel items={temples.slice(0,6)} renderCard={(t,i) => <FCard t={t} onClick={oT} onFav={oF} d={.3+i*.08}/>}/>}
     </div>
 
     {/* DISCOVER MODE ENTRY */}
@@ -974,9 +1039,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       return recent.length > 0 ? (
         <div style={{marginTop:40}}>
           <SH title="Continue Exploring" sub="Recently visited temples" d={.52}/>
-          <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px 14px",scrollSnapType:"x mandatory"}}>
-            {recent.map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.54+i*.08}/>)}
-          </div>
+          <CardCarousel items={recent} renderCard={(t,i) => <FCard t={t} onClick={oT} onFav={oF} d={.54+i*.08}/>}/>
         </div>
       ) : null;
     })()}
@@ -993,9 +1056,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     {temples.filter(x => x.isFavorite).length > 0 && (
       <div style={{marginTop:32,marginBottom:16}}>
         <SH title="Saved" act="All" onAct={() => nav("saved")} d={.7}/>
-        <div style={{display:"flex",gap:18,overflowX:"auto",padding:"0 24px"}}>
-          {temples.filter(x => x.isFavorite).map((t,i) => <FCard key={t.id} t={t} onClick={oT} onFav={oF} d={.75+i*.08}/>)}
-        </div>
+        <CardCarousel items={temples.filter(x => x.isFavorite)} renderCard={(t,i) => <FCard t={t} onClick={oT} onFav={oF} d={.75+i*.08}/>}/>
       </div>
     )}
 
@@ -1091,6 +1152,8 @@ const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
 const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
   const [sv, setSv] = useState(t.isFavorite);
   const [tab, setTab] = useState("overview");
+  const [tabKey, setTabKey] = useState(0);
+  const switchTab = (tb) => { setTab(tb); setTabKey(k => k+1); };
   const [shared, setShared] = useState(false);
   const doShare = () => {
     const text = `${t.templeName} — ${t.townOrCity}, ${t.stateOrUnionTerritory}`;
@@ -1113,7 +1176,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
         {/* Gradient overlays: top dim for buttons, bottom for text legibility */}
         <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,rgba(0,0,0,0.35) 0%,transparent 35%,rgba(0,0,0,0.1) 55%,${b3} 100%)`}}/>
         <div style={{position:"absolute",top:18,left:18,right:18,display:"flex",justifyContent:"space-between",zIndex:5}}>
-          <button aria-label="Go back" className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#fff"}}>←</button>
+          <BackBtn onClick={onBack} glass/>
           <div style={{display:"flex",gap:8}}>
             {/* Theme toggle — glass style to match photo overlay */}
             <button className="t" onClick={onToggleTheme} style={{width:46,height:46,borderRadius:15,background:"rgba(0,0,0,0.35)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -1141,11 +1204,11 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
       </div>
       <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50}}>
         {["overview","travel","visit","gallery"].map(tb => (
-          <button key={tb} className="t" onClick={() => setTab(tb)} style={{padding:"16px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
+          <button key={tb} className="t" onClick={() => switchTab(tb)} style={{padding:"16px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
         ))}
       </div>
       <div style={{padding:"10px 24px 0"}}>
-        {tab === "overview" && <div className="fi">
+        {tab === "overview" && <div key={tabKey} className="fi" style={{animationDuration:'0.22s'}}>
           {t.architectureStyle && <IR emoji="🏛" label="Architecture" value={t.architectureStyle}/>}
           <div style={{padding:"22px 0",borderBottom:`1px solid ${C.divL}`}}>
             <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
@@ -1161,7 +1224,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
             <p style={{fontSize:13.5,color:C.creamD,lineHeight:1.8}}>{t.specialNotes}</p>
           </div>}
           {/* ── Premium Audio Guide teaser ── */}
-          <div style={{margin:"22px 0 8px",borderRadius:22,overflow:"hidden",position:"relative",border:"1px solid rgba(196,162,78,0.18)"}}>
+          <div className="t" onClick={() => nav?.("audio")} style={{margin:"22px 0 8px",borderRadius:22,overflow:"hidden",position:"relative",border:"1px solid rgba(196,162,78,0.18)",cursor:"pointer"}}>
             <div style={{position:"absolute",inset:0,background:`linear-gradient(140deg,${hsl(42,55,10)},${hsl(28,65,7)})`,pointerEvents:"none"}}/>
             <div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(196,162,78,0.05),transparent)",animation:"shimmer 7s ease-in-out infinite",pointerEvents:"none"}}/>
             <div style={{position:"relative",padding:"18px 20px",display:"flex",alignItems:"center",gap:16}}>
@@ -1193,7 +1256,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
             <svg width="16" height="16" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{flexShrink:0,opacity:.65}}><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
         </div>}
-        {tab === "travel" && <div className="fi">
+        {tab === "travel" && <div key={tabKey} className="fi" style={{animationDuration:'0.22s'}}>
           <IR emoji="📍" label="Nearest City" value={t.nearestCity}/>
           <IR emoji="🚂" label="Railway" value={t.nearestRailwayStation}/>
           <IR emoji="✈" label="Airport" value={t.nearestAirport}/>
@@ -1211,7 +1274,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
             </div>
           )}
         </div>}
-        {tab === "visit" && <div className="fi">
+        {tab === "visit" && <div key={tabKey} className="fi" style={{animationDuration:'0.22s'}}>
           <div style={{padding:"18px 0",borderBottom:`1px solid ${C.divL}`}}>
             <div style={{fontSize:9.5,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Visitor Checklist</div>
             {[
@@ -1236,7 +1299,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           </div>
         </div>}
         {tab === "gallery" && (
-          <div className="fi" style={{paddingTop:8}}>
+          <div key={tabKey} className="fi" style={{paddingTop:8,animationDuration:'0.22s'}}>
             {/* Large hero shot */}
             <div style={{borderRadius:20,overflow:"hidden",height:240,position:"relative",marginBottom:8}}>
               <TempleImage src={`https://source.unsplash.com/800x480/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g0`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
@@ -1276,7 +1339,7 @@ const Search = ({oT, oF, onBack, temples}) => {
   return (
     <div className="fi" style={{minHeight:"100vh",background:C.bg}}>
       <div style={{padding:"16px 24px",display:"flex",alignItems:"center",gap:14}}>
-        <button aria-label="Go back" className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+        <BackBtn onClick={onBack}/>
         <div style={{flex:1,padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`2px solid ${C.saffron}`,boxShadow:`0 0 0 4px ${C.saffronDim}`}}>
           <span style={{fontSize:15,color:C.saffron}}>⌕</span>
           <input autoFocus type="text" placeholder="Temple, deity, city, state…" value={q} onChange={e => { setQ(e.target.value); }} onKeyDown={e => e.key==='Enter' && saveHistory(q)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
@@ -1317,7 +1380,7 @@ const Search = ({oT, oF, onBack, temples}) => {
 const StateBrowse = ({nav, onBack, isDark, onToggleTheme, onSelect}) => (
   <div className="fi" style={{paddingBottom:24}}>
     <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
-      <button aria-label="Go back" className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+      <BackBtn onClick={onBack}/>
       <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,flex:1}}>States</h1>
       <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
     </div>
@@ -1351,7 +1414,7 @@ const DistrictBrowse = ({onBack, oT, oF, temples, isDark, onToggleTheme, state})
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
-        <button aria-label="Go back" className="t" onClick={onBack} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+        <BackBtn onClick={onBack}/>
         <div style={{flex:1}}>
           <h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream}}>{sName}</h1>
           <div style={{fontSize:12,color:C.textD,marginTop:3}}>{sCount ? `${sCount} temples` : `${stateTemples.length} temples in database`}</div>
@@ -1503,7 +1566,7 @@ const About = ({onBack, isDark, onToggleTheme, temples}) => (
   <div className="fi" style={{minHeight:"100vh",background:C.bg,paddingBottom:48}}>
     {/* Header */}
     <div style={{padding:"20px 24px 0",display:"flex",alignItems:"center",gap:14,position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(24px)",borderBottom:`1px solid ${C.divL}`}}>
-      <button className="t" onClick={onBack} style={{width:44,height:44,borderRadius:14,background:"none",border:`1px solid ${C.div}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:C.cream,flexShrink:0}}>←</button>
+      <BackBtn onClick={onBack}/>
       <h1 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,flex:1}}>About</h1>
       <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
     </div>
@@ -1572,6 +1635,76 @@ const About = ({onBack, isDark, onToggleTheme, temples}) => (
     </div>
   </div>
 );
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const AudioGuide = ({onBack, isDark, onToggleTheme}) => {
+  const { playing, toggle } = useOmChant();
+  const GUIDES = [
+    {name:"Tirupati Balaji",loc:"Andhra Pradesh",dur:"14 min"},
+    {name:"Kashi Vishwanath",loc:"Uttar Pradesh",dur:"11 min"},
+    {name:"Meenakshi Amman",loc:"Tamil Nadu",dur:"13 min"},
+    {name:"Somnath Temple",loc:"Gujarat",dur:"10 min"},
+    {name:"Konark Sun Temple",loc:"Odisha",dur:"12 min"},
+    {name:"Brihadeeswarar",loc:"Tamil Nadu",dur:"15 min"},
+  ];
+  return (
+    <div className="fi" style={{minHeight:"100vh",background:C.bg,paddingBottom:48}}>
+      {/* Header */}
+      <div style={{padding:"20px 24px 0",display:"flex",alignItems:"center",gap:14,position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(24px)",borderBottom:`1px solid ${C.divL}`}}>
+        <BackBtn onClick={onBack}/>
+        <h1 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,flex:1}}>Audio Guide</h1>
+        <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+      </div>
+
+      {/* Om Chant */}
+      <div style={{padding:"44px 24px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:"40%",left:"50%",width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",transform:"translate(-50%,-50%)",filter:"blur(50px)",pointerEvents:"none"}}/>
+        {[180,130,90].map((r,i) => (
+          <div key={i} style={{position:"absolute",top:"42%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.05+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${8+i*2}s ease-in-out infinite ${i*.8}s`,pointerEvents:"none"}}/>
+        ))}
+        <OmSymbol size={110}/>
+        <h2 style={{fontFamily:FD,fontSize:22,color:C.cream,marginTop:20,marginBottom:8,fontWeight:500}}>Sacred Om Chant</h2>
+        <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260,margin:"0 auto 28px"}}>Experience the primordial sound — the vibration that underlies all creation</p>
+        <button onClick={toggle} className="t" style={{display:"inline-flex",alignItems:"center",gap:10,padding:"14px 32px",borderRadius:100,background:playing?C.saffron:"rgba(212,133,60,0.12)",border:`1.5px solid ${playing?C.saffron:"rgba(212,133,60,0.3)"}`,cursor:"pointer",fontSize:13,fontWeight:700,color:playing?"#fff":C.saffron,fontFamily:FB,transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:playing?`0 6px 32px rgba(212,133,60,0.4)`:"none"}}>
+          <div style={{display:"flex",alignItems:"center",gap:2,height:16}}>
+            {[1,1.8,1.3,2,1.5,1.1,1.7].map((h,i) => (
+              <div key={i} style={{width:2.5,borderRadius:2,background:playing?"#fff":C.saffron,height:`${h*6}px`,animation:playing?`soundWave 1.1s ease-in-out infinite ${i*.12}s`:"none",opacity:playing?1:.7}}/>
+            ))}
+          </div>
+          <span>{playing ? "Chanting…" : "Begin Chant"}</span>
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div style={{display:"flex",alignItems:"center",gap:14,padding:"0 28px",marginBottom:28}}>
+        <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,rgba(196,162,78,0.15))`}}/>
+        <span style={{fontFamily:FD,fontSize:14,color:"rgba(196,162,78,0.25)"}}>✦</span>
+        <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,rgba(196,162,78,0.15))`}}/>
+      </div>
+
+      {/* Temple Audio Guides */}
+      <div style={{padding:"0 24px"}}>
+        <div style={{fontSize:10,color:C.textDD,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Temple Audio Guides</div>
+        {GUIDES.map((g) => (
+          <div key={g.name} style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",marginBottom:10,borderRadius:18,background:C.card,border:`1px solid ${C.div}`}}>
+            <div style={{width:44,height:44,borderRadius:14,background:"rgba(196,162,78,0.09)",border:"1px solid rgba(196,162,78,0.18)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <svg width="18" height="18" fill="none" stroke="rgba(196,162,78,0.6)" strokeWidth="1.8" strokeLinecap="round" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:600,color:C.cream,fontFamily:FD,marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+              <div style={{fontSize:11,color:C.textD}}>{g.loc} · {g.dur}</div>
+            </div>
+            <div style={{padding:"3px 10px",borderRadius:99,background:"rgba(196,162,78,0.09)",border:"1px solid rgba(196,162,78,0.2)",fontSize:8,fontWeight:800,color:"rgba(196,162,78,0.75)",letterSpacing:1.2,textTransform:"uppercase",flexShrink:0}}>Premium</div>
+          </div>
+        ))}
+        <div style={{marginTop:8,padding:"18px 20px",borderRadius:18,background:C.saffronPale,border:`1px solid rgba(212,133,60,0.12)`,textAlign:"center"}}>
+          <div style={{fontSize:12,color:C.textD,lineHeight:1.7}}>More temple audio guides coming soon.<br/>Expert narrations covering history, rituals &amp; significance.</div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1665,7 +1798,7 @@ const Profile = ({isDark, onToggleTheme, temples, nav}) => {
   if (editing) return (
     <div className="fi" style={{paddingBottom:40}}>
       <div style={{padding:"22px 24px",display:"flex",alignItems:"center",gap:14}}>
-        <button className="t" onClick={() => setEditing(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:C.cream}}>←</button>
+        <BackBtn onClick={() => setEditing(false)}/>
         <h1 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream,flex:1}}>{isSignedIn?"Edit Profile":"Create Profile"}</h1>
         <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
@@ -1913,7 +2046,11 @@ const Discover = ({temples, oT, onBack}) => {
   };
   const onMove = (cx, cy) => {
     if (!drag.active) return;
-    setDrag(d => ({...d, x:cx-startRef.current.x, y:cy-startRef.current.y}));
+    const newX = cx - startRef.current.x;
+    const newY = cy - startRef.current.y;
+    // Haptic pulse exactly when crossing the save/skip threshold
+    if ((Math.abs(drag.x) < 110) !== (Math.abs(newX) < 110)) haptic(18);
+    setDrag(d => ({...d, x:newX, y:newY}));
   };
   const onEnd = () => {
     if (!drag.active) return;
@@ -1977,7 +2114,7 @@ const Discover = ({temples, oT, onBack}) => {
     <div style={{height:'100vh',background:C.bg,display:'flex',flexDirection:'column',overflow:'hidden',userSelect:'none'}}>
       {/* Header */}
       <div style={{padding:'20px 24px 12px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-        <button className="t" onClick={onBack} style={{width:46,height:46,borderRadius:15,background:'rgba(255,255,255,0.05)',border:`1px solid ${C.div}`,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,color:C.cream}}>←</button>
+        <BackBtn onClick={onBack}/>
         <div style={{textAlign:'center'}}>
           <h1 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream}}>Discover</h1>
           <div style={{fontSize:10,color:C.textD,marginTop:2,letterSpacing:.5}}>{idx+1} of {temples.length}</div>
@@ -2023,14 +2160,16 @@ const Discover = ({temples, oT, onBack}) => {
           onTransitionEnd={e => { if (flyDir && e.propertyName === 'transform') afterFly(); }}
         >
           <TempleImage src={`https://source.unsplash.com/400x700/?${deityQuery(top.deityPrimary)}`} hue={top.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={72} px={px} py={py}/>
-          {/* SAVED badge */}
-          <div style={{position:'absolute',top:32,left:20,padding:'9px 22px',borderRadius:14,background:'rgba(34,197,94,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:'rotate(-10deg)',opacity:saving||flyDir==='right'?1:0,transition:'opacity 0.18s',pointerEvents:'none'}}>
+          {/* SAVED badge — proportional spring */}
+          {(() => { const p = Math.max(0, Math.min(1, (drag.x - 55) / 60)); const sc = 0.55 + p * 0.55; return (
+          <div style={{position:'absolute',top:32,left:20,padding:'9px 22px',borderRadius:14,background:'rgba(34,197,94,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:`rotate(-10deg) scale(${flyDir==='right'?1:sc})`,opacity:flyDir==='right'?1:p,transition:drag.active?'none':'all 0.32s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}}>
             SAVED ♥
-          </div>
-          {/* SKIP badge */}
-          <div style={{position:'absolute',top:32,right:20,padding:'9px 22px',borderRadius:14,background:'rgba(239,68,68,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:'rotate(10deg)',opacity:skipping||flyDir==='left'?1:0,transition:'opacity 0.18s',pointerEvents:'none'}}>
+          </div>);})()}
+          {/* SKIP badge — proportional spring */}
+          {(() => { const p = Math.max(0, Math.min(1, (-drag.x - 55) / 60)); const sc = 0.55 + p * 0.55; return (
+          <div style={{position:'absolute',top:32,right:20,padding:'9px 22px',borderRadius:14,background:'rgba(239,68,68,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:`rotate(10deg) scale(${flyDir==='left'?1:sc})`,opacity:flyDir==='left'?1:p,transition:drag.active?'none':'all 0.32s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}}>
             SKIP ✕
-          </div>
+          </div>);})()}
           {/* Deity badge — top center */}
           <div style={{position:'absolute',top:18,left:'50%',transform:'translateX(-50%)',zIndex:5,pointerEvents:'none'}}>
             <div style={{display:'inline-flex',alignItems:'center',gap:5,padding:'5px 14px',borderRadius:100,background:'rgba(0,0,0,0.5)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.14)',fontSize:10,color:'rgba(255,255,255,0.92)',fontWeight:700,letterSpacing:.7,whiteSpace:'nowrap'}}>
@@ -2165,7 +2304,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:C.bg,position:'relative'}}>
       {/* Header */}
       <div style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px 12px',background:C.glass,backdropFilter:'blur(20px)',borderBottom:`1px solid ${C.divL}`,flexShrink:0,position:'sticky',top:0,zIndex:60}}>
-        <button className="t" onClick={onBack} style={{width:40,height:40,borderRadius:13,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'pointer',color:C.text,flexShrink:0}}>←</button>
+        <BackBtn onClick={onBack}/>
         <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.25)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={26}/></div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:7}}>
@@ -2348,7 +2487,7 @@ export default function App() {
 
   const tabs = ["home","explore","nearby","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
-  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat"].includes(scr);
+  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat","audio"].includes(scr);
 
   if (fetchError) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>
@@ -2376,9 +2515,10 @@ export default function App() {
   else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} onBrowse={() => nav("explore")} {...th}/>;
   else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
+  else if (scr === "audio") page = <AudioGuide onBack={back} {...th}/>;
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
 
-  const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : 'fi';
+  const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : '';
 
   return (
     <div>
@@ -2390,7 +2530,7 @@ export default function App() {
         <Toast msg={toast.msg} icon={toast.icon} visible={toast.visible}/>
         {/* Sarathi FAB — floats above BNav */}
         {showNav && (
-          <button className="t" onClick={() => nav("chat")} title="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,boxShadow:`0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)`}}><OmSvg size={28} color="#fff"/></button>
+          <button className="t" onClick={() => { haptic(20); nav("chat"); }} title="Ask Sarathi" aria-label="Ask Sarathi" style={{position:"absolute",bottom:88,right:18,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:110,animation:'fabIn 0.45s cubic-bezier(.22,1,.36,1) both, fabPulse 3s ease-in-out 0.45s infinite'}}><OmSvg size={28} color="#fff"/></button>
         )}
         {showNav && <BNav a={aTab} on={onTab} savedCount={temples.filter(t=>t.isFavorite).length}/>}
       </div>
