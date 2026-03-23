@@ -88,10 +88,45 @@ let C = CDark;
 const hsl = (h, s, l, a) => a != null ? `hsla(${h},${s}%,${l}%,${a})` : `hsl(${h},${s}%,${l}%)`;
 
 const STATES = [
-  {name:"Tamil Nadu",n:847,h:15},{name:"Andhra Pradesh",n:612,h:345},{name:"Karnataka",n:534,h:42},
-  {name:"Kerala",n:421,h:140},{name:"Maharashtra",n:567,h:25},{name:"Gujarat",n:398,h:35},
-  {name:"Rajasthan",n:389,h:20},{name:"Uttar Pradesh",n:445,h:30},{name:"Odisha",n:312,h:150},
-  {name:"Telangana",n:287,h:10},
+  // ── 28 States (sorted by temple count) ────────────────────────────────────
+  {name:"Tamil Nadu",         n:38615, h:15,  type:"state"},
+  {name:"Andhra Pradesh",     n:21503, h:345, type:"state"},
+  {name:"Maharashtra",        n:16800, h:25,  type:"state"},
+  {name:"Uttar Pradesh",      n:15200, h:30,  type:"state"},
+  {name:"Karnataka",          n:12850, h:42,  type:"state"},
+  {name:"Madhya Pradesh",     n:11400, h:28,  type:"state"},
+  {name:"Rajasthan",          n:9800,  h:20,  type:"state"},
+  {name:"Gujarat",            n:8950,  h:35,  type:"state"},
+  {name:"Odisha",             n:7200,  h:150, type:"state"},
+  {name:"West Bengal",        n:6400,  h:330, type:"state"},
+  {name:"Telangana",          n:6100,  h:10,  type:"state"},
+  {name:"Kerala",             n:5800,  h:140, type:"state"},
+  {name:"Bihar",              n:5200,  h:45,  type:"state"},
+  {name:"Uttarakhand",        n:4800,  h:200, type:"state"},
+  {name:"Himachal Pradesh",   n:3200,  h:215, type:"state"},
+  {name:"Jharkhand",          n:2900,  h:160, type:"state"},
+  {name:"Chhattisgarh",       n:2600,  h:135, type:"state"},
+  {name:"Assam",              n:2400,  h:165, type:"state"},
+  {name:"Punjab",             n:1900,  h:280, type:"state"},
+  {name:"Haryana",            n:1800,  h:50,  type:"state"},
+  {name:"Goa",                n:980,   h:180, type:"state"},
+  {name:"Tripura",            n:640,   h:320, type:"state"},
+  {name:"Manipur",            n:420,   h:175, type:"state"},
+  {name:"Meghalaya",          n:310,   h:170, type:"state"},
+  {name:"Arunachal Pradesh",  n:280,   h:195, type:"state"},
+  {name:"Nagaland",           n:180,   h:155, type:"state"},
+  {name:"Sikkim",             n:160,   h:210, type:"state"},
+  {name:"Mizoram",            n:120,   h:185, type:"state"},
+  // ── 8 Union Territories ─────────────────────────────────────────────────
+  // (J&K became UT on 31 Oct 2019; Ladakh carved out separately)
+  {name:"Delhi",              n:1200,  h:260, type:"ut"},
+  {name:"Jammu & Kashmir",    n:1700,  h:220, type:"ut"},
+  {name:"Puducherry",         n:520,   h:340, type:"ut"},
+  {name:"Ladakh",             n:44,    h:225, type:"ut"},
+  {name:"Chandigarh",         n:140,   h:270, type:"ut"},
+  {name:"Andaman & Nicobar",  n:110,   h:190, type:"ut"},
+  {name:"Dadra, NH & DD",     n:90,    h:130, type:"ut"},
+  {name:"Lakshadweep",        n:48,    h:195, type:"ut"},
 ];
 
 const DEITIES = [
@@ -180,6 +215,12 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes fabIn{from{opacity:0;transform:translateY(18px) scale(0.82)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes heartBurst{0%{transform:translate(-50%,-50%) rotate(var(--hb-deg)) translateX(0) scale(1.2);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--hb-deg)) translateX(32px) scale(0);opacity:0}}
 @keyframes premiumSheen{0%{left:-110%}40%{left:160%}100%{left:160%}}
+@keyframes floatUp{0%{transform:translateY(0) translateX(0) scale(1);opacity:0}8%{opacity:.75}80%{opacity:.35}100%{transform:translateY(-210px) translateX(var(--fp-x,0px)) scale(0.35);opacity:0}}
+@keyframes flipIn{0%{transform:perspective(500px) rotateX(-80deg);opacity:0}100%{transform:perspective(500px) rotateX(0deg);opacity:1}}
+@keyframes typeIn{0%{opacity:0;transform:scale(0.7) translateY(4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes countUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes circuitGlow{0%,100%{box-shadow:0 0 0 1px rgba(212,133,60,0.1),0 4px 20px rgba(0,0,0,0.12)}50%{box-shadow:0 0 0 1px rgba(212,133,60,0.22),0 4px 28px rgba(212,133,60,0.08)}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -335,6 +376,69 @@ const Reveal = ({children, delay=0, style={}}) => {
     </div>
   );
 };
+
+// ── Count-Up Hook — animates a number from 0 to target on trigger ──
+const useCountUp = (target, duration = 1400) => {
+  const [val, setVal] = useState(0);
+  const [triggered, setTriggered] = useState(false);
+  const rafRef = useRef(null);
+  const trigger = useCallback(() => { if (!triggered) setTriggered(true); }, [triggered]);
+  useEffect(() => {
+    if (!triggered) return;
+    const start = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3); // cubic ease-out
+      setVal(Math.round(target * eased));
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [triggered, target, duration]);
+  return [val, trigger];
+};
+
+// ── Typewriter — reveals text character by character on mount ──
+const Typewriter = ({text, delay = 400, speed = 58}) => {
+  const [shown, setShown] = useState(0);
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const to = setTimeout(() => {
+      let i = 0;
+      const id = setInterval(() => {
+        i++;
+        setShown(i);
+        if (i >= text.length) { clearInterval(id); setDone(true); }
+      }, speed);
+      return () => clearInterval(id);
+    }, delay);
+    return () => clearTimeout(to);
+  }, [text, delay, speed]);
+  return (
+    <span>
+      {text.split('').map((ch, i) => (
+        <span key={i} style={{
+          opacity: i < shown ? 1 : 0,
+          display: 'inline-block',
+          animation: i < shown ? `typeIn 0.18s ease both` : 'none',
+        }}>{ch}</span>
+      ))}
+      {!done && <span style={{animation:'cursorBlink 0.7s ease infinite',marginLeft:1,color:'inherit',opacity:.6}}>|</span>}
+    </span>
+  );
+};
+
+// ── Hero floating incense particles (deterministic positions) ──
+const HERO_PARTICLES = [
+  {b:6,  l:28, s:2.5, d:0,   dur:7.2, x:14},
+  {b:18, l:52, s:2,   d:1.4, dur:9.0, x:-9},
+  {b:10, l:68, s:3,   d:2.6, dur:6.8, x:18},
+  {b:30, l:38, s:1.5, d:0.7, dur:8.4, x:-16},
+  {b:22, l:75, s:2,   d:3.2, dur:7.6, x:7},
+  {b:40, l:22, s:2.5, d:1.0, dur:6.4, x:22},
+  {b:14, l:84, s:2,   d:2.0, dur:9.8, x:-6},
+  {b:35, l:58, s:1.5, d:0.4, dur:8.0, x:11},
+];
 
 // ── Om Chant Hook (MP3 + Web Audio API fallback) ──
 const useOmChant = () => {
@@ -531,8 +635,9 @@ const ShlokaWidget = () => {
 
 const PanchangWidget = () => {
   const p = getHinduPanchang();
+  const [ref, visible] = useReveal(0.2);
   return (
-  <div style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
+  <div ref={ref} style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
     <div style={{height:3,background:`linear-gradient(90deg,${C.saffron},${C.gold},transparent)`}}/>
     <div style={{padding:"16px 20px 18px"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
@@ -545,13 +650,18 @@ const PanchangWidget = () => {
           {l:"Nakshatra",v:p.nakshatra,e:"✦"},
           {l:"Yoga",v:p.yoga,e:"◎"},
           {l:"Muhurta",v:p.muhurta,e:"⊙"},
-        ].map(p => (
-          <div key={p.l} style={{padding:"12px 14px",borderRadius:14,background:C.saffronPale,border:`1px solid rgba(212,133,60,0.08)`}}>
+        ].map((item,i) => (
+          <div key={item.l} style={{
+            padding:"12px 14px",borderRadius:14,background:C.saffronPale,
+            border:`1px solid rgba(212,133,60,0.08)`,
+            animation: visible ? `flipIn 0.55s cubic-bezier(.16,1,.3,1) ${i*0.09}s both` : 'none',
+            transformOrigin:'top center',
+          }}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-              <span style={{fontSize:16}}>{p.e}</span>
-              <span style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{p.l}</span>
+              <span style={{fontSize:16}}>{item.e}</span>
+              <span style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase"}}>{item.l}</span>
             </div>
-            <div style={{fontFamily:FE,fontSize:14,color:C.creamM,fontWeight:500,lineHeight:1.3}}>{p.v}</div>
+            <div style={{fontFamily:FE,fontSize:14,color:C.creamM,fontWeight:500,lineHeight:1.3}}>{item.v}</div>
           </div>
         ))}
       </div>
@@ -909,10 +1019,67 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
+const SacredCircuits = ({nav, isDark}) => {
+  const [c1, t1] = useCountUp(12,  900);
+  const [c2, t2] = useCountUp(51,  1100);
+  const [c3, t3] = useCountUp(108, 1400);
+  const [c4, t4] = useCountUp(4,   700);
+  const stripRef = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { t1(); t2(); t3(); t4(); obs.disconnect(); }
+    }, {threshold: 0.35});
+    if (stripRef.current) obs.observe(stripRef.current);
+    return () => obs.disconnect();
+  }, [t1, t2, t3, t4]);
+  const circuits = [
+    {n:c1, l:"Jyotirlingas",   icon:"☽", h:350},
+    {n:c2, l:"Shakti Peethas", icon:"✦", h:280},
+    {n:c3, l:"Divya Desams",   icon:"☸", h:215},
+    {n:c4, l:"Char Dhams",     icon:"◎", h:140},
+  ];
+  return (
+    <Reveal delay={0}>
+      <div style={{margin:"36px 24px 0"}}>
+        <SH title="Sacred Circuits" sub="Complete pilgrimage networks of Bhārata"/>
+        <div ref={stripRef} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {circuits.map((c,i) => (
+            <div key={c.l} className="t" onClick={() => nav("explore")} style={{
+              padding:"18px 16px",borderRadius:20,cursor:"pointer",
+              background:`linear-gradient(140deg,${hsl(c.h,35,isDark?11:92)},${C.card})`,
+              border:`1px solid ${hsl(c.h,30,isDark?20:78,0.25)}`,
+              borderTop:`2.5px solid ${hsl(c.h,50,isDark?38:62,0.55)}`,
+              position:"relative",overflow:"hidden",
+              animation:`circuitGlow 4s ease-in-out infinite ${i*.8}s`,
+            }}>
+              <div style={{position:"absolute",top:0,left:"-100%",width:"45%",height:"100%",background:`linear-gradient(105deg,transparent,${hsl(c.h,60,70,0.07)},transparent)`,animation:`premiumSheen 5s ease-in-out infinite ${i*0.9+1}s`,pointerEvents:"none"}}/>
+              <div style={{fontSize:20,marginBottom:8,filter:`drop-shadow(0 0 6px ${hsl(c.h,60,55,0.5)})`}}>{c.icon}</div>
+              <div style={{fontFamily:FD,fontSize:28,fontWeight:500,color:hsl(c.h,55,isDark?68:42),lineHeight:1,marginBottom:6}}>{c.n}</div>
+              <div style={{fontSize:11,color:C.textM,fontWeight:600,letterSpacing:.3}}>{c.l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
+};
+
 const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[]}) => {
   const { playing, toggle } = useOmChant();
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
+  // Animated stats counters
+  const [templesCount, triggerTemples] = useCountUp(3000, 1600);
+  const [statesCount,  triggerStates]  = useCountUp(36,   1200);
+  const [deitiesCount, triggerDeities] = useCountUp(6,    900);
+  const statsRef = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { triggerTemples(); triggerStates(); triggerDeities(); obs.disconnect(); }
+    }, {threshold: 0.5});
+    if (statsRef.current) obs.observe(statsRef.current);
+    return () => obs.disconnect();
+  }, [triggerTemples, triggerStates, triggerDeities]);
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* HERO */}
@@ -920,13 +1087,27 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       {/* Ambient glows */}
       <div style={{position:"absolute",top:"-8%",right:"-12%",width:320,height:320,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",filter:"blur(60px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
       <div style={{position:"absolute",bottom:"5%",left:"-18%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(160,80,180,0.04),transparent 60%)",filter:"blur(45px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none"}}/>
+      {/* Floating incense particles */}
+      {HERO_PARTICLES.map((p,i) => (
+        <div key={i} style={{
+          position:"absolute", bottom:`${p.b}%`, left:`${p.l}%`,
+          width:p.s, height:p.s, borderRadius:"50%",
+          background:"rgba(240,192,96,0.6)",
+          boxShadow:`0 0 ${p.s*4}px rgba(240,192,96,0.45)`,
+          pointerEvents:"none", zIndex:1,
+          animation:`floatUp ${p.dur}s ease-in-out infinite ${p.d}s`,
+          '--fp-x':`${p.x}px`,
+        }}/>
+      ))}
 
       {/* Top row */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:28,position:"relative",zIndex:2}}>
         <div>
-          <div style={{fontSize:9,color:"rgba(212,133,60,0.45)",fontWeight:800,letterSpacing:5,textTransform:"uppercase",marginBottom:8}}>Discover</div>
-          <h1 style={{fontFamily:FD,fontSize:36,color:C.cream,fontWeight:500,lineHeight:.96,letterSpacing:-.5}}>Sacred<br/>Temples</h1>
-          <p style={{fontFamily:FD,fontSize:15,color:C.textDD,marginTop:8,fontStyle:"italic"}}>of Bhārata</p>
+          <div style={{fontSize:9,color:"rgba(212,133,60,0.45)",fontWeight:800,letterSpacing:5,textTransform:"uppercase",marginBottom:8,animation:"rv .5s ease both"}}>Discover</div>
+          <h1 style={{fontFamily:FD,fontSize:36,color:C.cream,fontWeight:500,lineHeight:.96,letterSpacing:-.5,animation:"rv .55s cubic-bezier(.16,1,.3,1) .08s both"}}>Sacred<br/>Temples</h1>
+          <p style={{fontFamily:FD,fontSize:15,color:C.textDD,marginTop:8,fontStyle:"italic",animation:"rv .55s cubic-bezier(.16,1,.3,1) .22s both"}}>
+            <Typewriter text="of Bhārata" delay={480} speed={62}/>
+          </p>
         </div>
         <button className="t" onClick={onToggleTheme} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{width:46,height:46,borderRadius:15,background:isDark?"rgba(255,255,255,0.05)":C.saffronDim,border:`1px solid ${isDark?C.div:C.saffronPale}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:isDark?"none":`0 4px 16px ${C.saffronDim}`}}>
           {isDark
@@ -979,12 +1160,18 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         <span style={{flex:1,fontSize:14,color:C.textDD}}>Search temples, deities, places…</span>
       </div>
 
-      {/* Stats */}
-      <div style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2}}>
-        {[{v:"3,000+",l:"Temples"},{v:"28+",l:"States"},{v:"6",l:"Deities"}].map((s,i) => (
+      {/* Stats — count-up animation on mount */}
+      <div ref={statsRef} style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2}}>
+        {[
+          {val:templesCount, suffix:"+", l:"Temples"},
+          {val:statesCount,  suffix:"",  l:"States & UTs"},
+          {val:deitiesCount, suffix:"",  l:"Deities"},
+        ].map((s,i) => (
           <div key={s.l} style={{textAlign:"center",flex:1,padding:"14px 0",borderRadius:16,position:"relative"}}>
             {i > 0 && <div style={{position:"absolute",left:0,top:"20%",bottom:"20%",width:1,background:C.divL}}/>}
-            <div style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.saffron,textShadow:`0 0 20px rgba(212,133,60,0.3)`}}>{s.v}</div>
+            <div style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.saffron,textShadow:`0 0 20px rgba(212,133,60,0.3)`,animation:"countUp .6s ease both",animationDelay:`${i*.12}s`}}>
+              {s.val.toLocaleString()}{s.suffix}
+            </div>
             <div style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,marginTop:5,textTransform:"uppercase"}}>{s.l}</div>
           </div>
         ))}
@@ -1021,6 +1208,9 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         : <CardCarousel items={temples.slice(0,6)} renderCard={(t,i) => <FCard t={t} onClick={oT} onFav={oF} d={.3+i*.08}/>}/>}
     </div>
 
+    {/* SACRED CIRCUITS — count-up strip */}
+    <SacredCircuits nav={nav} isDark={isDark}/>
+
     {/* DISCOVER MODE ENTRY */}
     <div className="rv t" onClick={() => nav("discover")} style={{margin:"32px 24px 0",borderRadius:26,overflow:"hidden",position:"relative",height:158,cursor:"pointer",animationDelay:".35s",boxShadow:`0 12px 48px rgba(0,0,0,0.18)`}}>
       <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${hsl(28,55,14)},${hsl(350,45,10)})`}}/>
@@ -1039,19 +1229,24 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       <div style={{position:"absolute",top:20,right:20,width:38,height:38,borderRadius:12,background:"rgba(212,133,60,0.12)",border:"1px solid rgba(212,133,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,color:C.saffron}}>→</div>
     </div>
 
-    {/* BY STATE */}
+    {/* BY STATE — shows top 8 + "See all 36" */}
     <Reveal delay={0}>
     <div style={{marginTop:42}}>
-      <SH title="By State" sub="Region by region" act="All" onAct={() => nav("stateBrowse")} d={.4}/>
+      <SH title="By State" sub={`All 28 states · 8 UTs covered`} act="All 36 →" onAct={() => nav("stateBrowse")} d={.4}/>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"0 24px"}}>
-        {STATES.slice(0,6).map((s,i) => (
-          <div key={s.name} className="t rv" onClick={() => nav("stateBrowse")} style={{padding:"20px 16px",borderRadius:18,cursor:"pointer",background:`linear-gradient(135deg,${hsl(s.h,35,isDark?13:90)},${C.card})`,border:`1px solid ${C.div}`,borderTop:`2px solid ${hsl(s.h,40,isDark?35:60,0.35)}`,position:"relative",overflow:"hidden",animationDelay:`${.45+i*.06}s`}}>
-            <div style={{width:10,height:10,borderRadius:5,background:hsl(s.h,50,50),opacity:.6,marginBottom:12}}/>
-            <div style={{fontFamily:FE,fontSize:17,fontWeight:500,color:C.creamM,lineHeight:1.2}}>{s.name}</div>
-            <div style={{fontSize:12,color:C.textM,marginTop:5}}>{s.n} temples</div>
+        {STATES.slice(0,8).map((s,i) => (
+          <div key={s.name} className="t rv" onClick={() => nav("stateBrowse")} style={{padding:"18px 16px",borderRadius:18,cursor:"pointer",background:`linear-gradient(135deg,${hsl(s.h,35,isDark?13:90)},${C.card})`,border:`1px solid ${C.div}`,borderTop:`2.5px solid ${hsl(s.h,40,isDark?35:60,0.45)}`,position:"relative",overflow:"hidden",animationDelay:`${.45+i*.05}s`}}>
+            <div style={{width:9,height:9,borderRadius:4,background:`linear-gradient(135deg,${hsl(s.h,60,55)},${hsl(s.h,50,40)})`,marginBottom:10}}/>
+            <div style={{fontFamily:FE,fontSize:16,fontWeight:500,color:C.creamM,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</div>
+            <div style={{fontSize:11,color:C.textM,marginTop:4}}>{s.n.toLocaleString()} temples</div>
           </div>
         ))}
       </div>
+      {/* "Show all" pill */}
+      <button className="t" onClick={() => nav("stateBrowse")} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,margin:"14px 24px 0",width:"calc(100% - 48px)",padding:"13px 20px",borderRadius:14,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.18)`,cursor:"pointer",fontSize:12.5,fontWeight:700,color:C.saffron,letterSpacing:.4}}>
+        View all 36 States & Union Territories
+        <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
     </div>
     </Reveal>
 
@@ -1472,33 +1667,92 @@ const Search = ({oT, oF, onBack, temples}) => {
   );
 };
 
-const StateBrowse = ({nav, onBack, isDark, onToggleTheme, onSelect}) => (
-  <div className="fi" style={{paddingBottom:24}}>
-    <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
-      <BackBtn onClick={onBack}/>
-      <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,flex:1}}>States</h1>
-      <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
-    </div>
-    <div style={{padding:"0 24px"}}>{STATES.map((s,i) => (
-      <div key={s.name} className="t rv" onClick={() => { onSelect(s); nav("districtBrowse"); }} style={{display:"flex",alignItems:"center",gap:16,padding:"18px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.03}s`}}>
-        <div style={{width:50,height:50,borderRadius:16,background:hsl(s.h,30,12),border:`1px solid ${hsl(s.h,30,20,0.15)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{width:10,height:10,borderRadius:4,background:hsl(s.h,40,40),opacity:.3}}/>
-        </div>
-        <div style={{flex:1}}>
-          <div style={{fontFamily:FD,fontSize:17,fontWeight:500,color:C.creamM}}>{s.name}</div>
-          <div style={{fontSize:12,color:C.textD,marginTop:4}}>{s.n} temples</div>
-        </div>
-        <span style={{color:C.textDD,fontSize:16}}>→</span>
+const StateBrowse = ({nav, onBack, isDark, onToggleTheme, onSelect}) => {
+  const states = STATES.filter(s => s.type === "state");
+  const uts    = STATES.filter(s => s.type === "ut");
+  const Row = ({s, i}) => (
+    <div key={s.name} className="t rv" onClick={() => { onSelect(s); nav("districtBrowse"); }}
+      style={{display:"flex",alignItems:"center",gap:16,padding:"16px 0",borderBottom:`1px solid ${C.divL}`,cursor:"pointer",animationDelay:`${i*.025}s`}}>
+      <div style={{width:48,height:48,borderRadius:14,background:hsl(s.h,30,isDark?12:90),border:`1.5px solid ${hsl(s.h,40,isDark?22:72,0.35)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <div style={{width:18,height:18,borderRadius:5,background:`linear-gradient(135deg,${hsl(s.h,55,50)},${hsl(s.h,45,35)})`,opacity:.65}}/>
       </div>
-    ))}</div>
-  </div>
-);
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:7}}>
+          <span style={{fontFamily:FD,fontSize:17,fontWeight:500,color:C.creamM}}>{s.name}</span>
+          {s.type==="ut" && <span style={{fontSize:8,fontWeight:800,letterSpacing:1,color:C.gold,background:C.goldDim,border:`1px solid rgba(196,162,78,0.2)`,padding:"2px 6px",borderRadius:5,textTransform:"uppercase",flexShrink:0}}>UT</span>}
+        </div>
+        <div style={{fontSize:11.5,color:C.textD,marginTop:3}}>{s.n.toLocaleString()} temples</div>
+      </div>
+      <svg width="16" height="16" fill="none" stroke={C.textDD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+  );
+  return (
+    <div className="fi" style={{paddingBottom:32}}>
+      <div style={{padding:"20px 24px",display:"flex",alignItems:"center",gap:14}}>
+        <BackBtn onClick={onBack}/>
+        <div style={{flex:1}}>
+          <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream}}>All States & UTs</h1>
+          <div style={{fontSize:11,color:C.textD,marginTop:3}}>{states.length} states · {uts.length} union territories</div>
+        </div>
+        <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
+      </div>
+      {/* States section */}
+      <div style={{padding:"0 24px"}}>
+        <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:6,paddingTop:4}}>States ({states.length})</div>
+        {states.map((s,i) => <Row key={s.name} s={s} i={i}/>)}
+      </div>
+      {/* Union Territories section */}
+      <div style={{padding:"20px 24px 0"}}>
+        <div style={{fontSize:9,color:C.gold,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:6}}>Union Territories ({uts.length})</div>
+        {uts.map((s,i) => <Row key={s.name} s={s} i={states.length + i}/>)}
+      </div>
+    </div>
+  );
+};
 
 const DISTRICT_MAP = {
-  "Tamil Nadu": [{n:"Thanjavur",c:89},{n:"Madurai",c:72},{n:"Kanchipuram",c:65},{n:"Ramanathapuram",c:48},{n:"Tiruchirappalli",c:56},{n:"Chidambaram",c:34}],
-  "Karnataka": [{n:"Mysuru",c:78},{n:"Hassan",c:54},{n:"Dakshina Kannada",c:42},{n:"Chikkamagaluru",c:38},{n:"Kodagu",c:29},{n:"Belagavi",c:47}],
-  "Andhra Pradesh": [{n:"Tirupati",c:95},{n:"Guntur",c:61},{n:"Krishna",c:53},{n:"Kurnool",c:49},{n:"Nellore",c:44},{n:"Srikakulam",c:38}],
-  "Kerala": [{n:"Thiruvananthapuram",c:67},{n:"Thrissur",c:72},{n:"Palakkad",c:55},{n:"Kozhikode",c:44},{n:"Malappuram",c:38},{n:"Idukki",c:29}],
+  // South India
+  "Tamil Nadu":       [{n:"Thanjavur",c:892},{n:"Madurai",c:724},{n:"Kanchipuram",c:648},{n:"Tiruchirappalli",c:562},{n:"Tirunelveli",c:498},{n:"Ramanathapuram",c:432},{n:"Chidambaram",c:385},{n:"Coimbatore",c:312},{n:"Salem",c:276},{n:"Vellore",c:248}],
+  "Andhra Pradesh":   [{n:"Tirupati",c:954},{n:"Guntur",c:614},{n:"Krishna",c:532},{n:"Kurnool",c:488},{n:"East Godavari",c:442},{n:"Nellore",c:398},{n:"West Godavari",c:356},{n:"Visakhapatnam",c:312},{n:"Srikakulam",c:284},{n:"Kadapa",c:256}],
+  "Karnataka":        [{n:"Mysuru",c:784},{n:"Hassan",c:542},{n:"Dakshina Kannada",c:418},{n:"Belagavi",c:472},{n:"Chikkamagaluru",c:382},{n:"Shivamogga",c:348},{n:"Kalaburagi",c:312},{n:"Kodagu",c:292},{n:"Dharwad",c:268},{n:"Udupi",c:244}],
+  "Kerala":           [{n:"Thrissur",c:724},{n:"Thiruvananthapuram",c:674},{n:"Palakkad",c:548},{n:"Kollam",c:512},{n:"Ernakulam",c:482},{n:"Kozhikode",c:438},{n:"Malappuram",c:384},{n:"Alappuzha",c:352},{n:"Idukki",c:292},{n:"Pathanamthitta",c:268}],
+  "Telangana":        [{n:"Hyderabad",c:412},{n:"Warangal",c:368},{n:"Nalgonda",c:312},{n:"Bhadradri Kothagudem",c:284},{n:"Nizamabad",c:248},{n:"Karimnagar",c:224},{n:"Mahbubnagar",c:198},{n:"Khammam",c:182}],
+  // West India
+  "Maharashtra":      [{n:"Pune",c:842},{n:"Nashik",c:724},{n:"Kolhapur",c:682},{n:"Aurangabad",c:618},{n:"Satara",c:572},{n:"Raigad",c:498},{n:"Solapur",c:468},{n:"Nagpur",c:412},{n:"Ahmednagar",c:384},{n:"Sindhudurg",c:328}],
+  "Gujarat":          [{n:"Junagadh",c:582},{n:"Somnath",c:524},{n:"Rajkot",c:448},{n:"Vadodara",c:412},{n:"Dwarka",c:392},{n:"Surat",c:368},{n:"Ahmedabad",c:348},{n:"Bhavnagar",c:312},{n:"Gandhinagar",c:256},{n:"Anand",c:224}],
+  "Goa":              [{n:"North Goa",c:312},{n:"South Goa",c:268}],
+  // North India
+  "Uttar Pradesh":    [{n:"Varanasi",c:1842},{n:"Mathura",c:1524},{n:"Ayodhya",c:1248},{n:"Prayagraj",c:984},{n:"Vrindavan",c:872},{n:"Agra",c:642},{n:"Lucknow",c:584},{n:"Gorakhpur",c:528},{n:"Meerut",c:468},{n:"Kanpur",c:392}],
+  "Rajasthan":        [{n:"Jaipur",c:724},{n:"Pushkar",c:648},{n:"Udaipur",c:582},{n:"Jodhpur",c:512},{n:"Nathdwara",c:468},{n:"Ajmer",c:428},{n:"Chittorgarh",c:384},{n:"Alwar",c:348},{n:"Kota",c:312},{n:"Bikaner",c:278}],
+  "Madhya Pradesh":   [{n:"Ujjain",c:892},{n:"Bhopal",c:568},{n:"Khajuraho",c:484},{n:"Omkareshwar",c:448},{n:"Indore",c:412},{n:"Gwalior",c:368},{n:"Jabalpur",c:324},{n:"Orchha",c:298},{n:"Chitrakoot",c:272},{n:"Amarkantak",c:248}],
+  "Uttarakhand":      [{n:"Rishikesh",c:624},{n:"Haridwar",c:584},{n:"Chamoli (Badrinath)",c:492},{n:"Rudraprayag (Kedarnath)",c:468},{n:"Dehradun",c:384},{n:"Almora",c:348},{n:"Pauri Garhwal",c:312},{n:"Nainital",c:276},{n:"Pithoragarh",c:248},{n:"Tehri",c:224}],
+  "Himachal Pradesh": [{n:"Kullu",c:412},{n:"Shimla",c:368},{n:"Chamba",c:324},{n:"Kangra",c:298},{n:"Mandi",c:272},{n:"Bilaspur",c:228},{n:"Hamirpur",c:196},{n:"Una",c:168}],
+  "Punjab":           [{n:"Amritsar",c:348},{n:"Ludhiana",c:284},{n:"Patiala",c:248},{n:"Anandpur Sahib",c:212},{n:"Jalandhar",c:196},{n:"Bathinda",c:168}],
+  "Haryana":          [{n:"Kurukshetra",c:412},{n:"Ambala",c:248},{n:"Faridabad",c:212},{n:"Gurugram",c:184},{n:"Panipat",c:168},{n:"Hisar",c:148}],
+  // East India
+  "West Bengal":      [{n:"Kolkata",c:724},{n:"Murshidabad",c:582},{n:"Birbhum (Tarapith)",c:498},{n:"Burdwan",c:412},{n:"Nadia",c:368},{n:"Hooghly",c:328},{n:"Medinipur",c:292},{n:"Cooch Behar",c:248},{n:"North 24 Parganas",c:224},{n:"Purulia",c:196}],
+  "Odisha":           [{n:"Puri",c:884},{n:"Cuttack",c:624},{n:"Bhubaneswar",c:548},{n:"Bhadrak",c:412},{n:"Koraput",c:368},{n:"Bolangir",c:324},{n:"Balasore",c:292},{n:"Ganjam",c:268},{n:"Sambalpur",c:244},{n:"Dhenkanal",c:212}],
+  "Bihar":            [{n:"Gaya (Bodh Gaya)",c:624},{n:"Patna",c:512},{n:"Darbhanga",c:448},{n:"Muzaffarpur",c:384},{n:"Bhagalpur",c:348},{n:"Vaishali",c:312},{n:"Sitamarhi",c:278},{n:"Nawada",c:242}],
+  "Jharkhand":        [{n:"Deoghar (Baidyanath)",c:484},{n:"Ranchi",c:368},{n:"Dumka",c:284},{n:"Hazaribagh",c:248},{n:"Dhanbad",c:212},{n:"Giridih",c:192}],
+  "Assam":            [{n:"Kamrup (Kamakhya)",c:542},{n:"Tezpur",c:384},{n:"Dibrugarh",c:312},{n:"Jorhat",c:272},{n:"Nagaon",c:248},{n:"Barpeta",c:218}],
+  "Chhattisgarh":     [{n:"Raipur",c:368},{n:"Dantewada",c:312},{n:"Rajnandgaon",c:268},{n:"Bilaspur",c:248},{n:"Bastar",c:224},{n:"Durg",c:192}],
+  // North-East
+  "Tripura":          [{n:"Gomati (Tripura Sundari)",c:248},{n:"West Tripura",c:198},{n:"North Tripura",c:112},{n:"South Tripura",c:82}],
+  "Manipur":          [{n:"Imphal West",c:168},{n:"Imphal East",c:142},{n:"Bishnupur",c:68},{n:"Thoubal",c:42}],
+  "Meghalaya":        [{n:"East Khasi Hills",c:128},{n:"West Jaintia Hills",c:88},{n:"East Garo Hills",c:58},{n:"West Khasi Hills",c:36}],
+  "Arunachal Pradesh":[{n:"East Kameng",c:68},{n:"Papum Pare",c:58},{n:"Upper Siang",c:48},{n:"Tawang",c:38},{n:"Dibang Valley",c:28},{n:"Lohit",c:40}],
+  "Nagaland":         [{n:"Kohima",c:68},{n:"Dimapur",c:58},{n:"Wokha",c:32},{n:"Mokukchung",c:22}],
+  "Sikkim":           [{n:"South Sikkim",c:64},{n:"East Sikkim",c:52},{n:"North Sikkim",c:28},{n:"West Sikkim",c:16}],
+  "Mizoram":          [{n:"Aizawl",c:48},{n:"Lunglei",c:32},{n:"Champhai",c:24},{n:"Kolasib",c:16}],
+  // UTs
+  "Delhi":            [{n:"Central Delhi",c:312},{n:"South Delhi",c:268},{n:"East Delhi",c:212},{n:"North Delhi",c:196},{n:"West Delhi",c:168},{n:"New Delhi",c:144}],
+  "Jammu & Kashmir":  [{n:"Jammu",c:484},{n:"Kathua",c:312},{n:"Udhampur (Vaishno Devi)",c:268},{n:"Anantnag",c:224},{n:"Srinagar",c:198},{n:"Kupwara",c:112},{n:"Pahalgam",c:102},{n:"Shopian",c:0}],
+  "Puducherry":       [{n:"Puducherry",c:312},{n:"Karaikal",c:128},{n:"Mahé",c:48},{n:"Yanam",c:32}],
+  "Chandigarh":       [{n:"Chandigarh",c:140}],
+  "Ladakh":           [{n:"Leh",c:28},{n:"Kargil",c:16}],
+  "Andaman & Nicobar":[{n:"South Andaman",c:68},{n:"North & Middle Andaman",c:32},{n:"Nicobar",c:10}],
+  "Dadra, NH & DD":   [{n:"Daman",c:44},{n:"Diu",c:28},{n:"Dadra & Nagar Haveli",c:18}],
+  "Lakshadweep":      [{n:"Kavaratti",c:28},{n:"Agatti",c:12},{n:"Amini",c:8}],
 };
 
 const DistrictBrowse = ({onBack, oT, oF, temples, isDark, onToggleTheme, state}) => {
