@@ -121,6 +121,7 @@ const PANCHANG = {
 
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
+const FE = FD; // alias — serif display font
 
 /* Small Om icon SVG — used in FAB button and chat header */
 const OmSvg = ({ size = 28, color }) => {
@@ -2378,7 +2379,7 @@ export default function App() {
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
 
-  const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : 'fi';
+  const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : '';
 
   return (
     <div>
