@@ -178,6 +178,8 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes slideInLeft{from{opacity:0;transform:translateX(-30%)}to{opacity:1;transform:translateX(0)}}
 @keyframes fabPulse{0%,100%{box-shadow:0 4px 22px rgba(212,133,60,0.45),0 0 0 2px rgba(212,133,60,0.15)}50%{box-shadow:0 4px 36px rgba(212,133,60,0.72),0 0 0 7px rgba(212,133,60,0.10)}}
 @keyframes fabIn{from{opacity:0;transform:translateY(18px) scale(0.82)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes heartBurst{0%{transform:translate(-50%,-50%) rotate(var(--hb-deg)) translateX(0) scale(1.2);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--hb-deg)) translateX(32px) scale(0);opacity:0}}
+@keyframes premiumSheen{0%{left:-110%}40%{left:160%}100%{left:160%}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -290,6 +292,48 @@ const useParallax = () => {
     return () => _parSubs.delete(fn);
   }, []);
   return xy;
+};
+
+// ── 3D Tilt Hook — perspective tilt on touch/mouse hover ──
+const useTilt = () => {
+  const [tilt, setTilt] = useState({x:0,y:0});
+  const ref = useRef(null);
+  const onMove = e => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    const cx = (e.clientX ?? e.touches?.[0]?.clientX ?? r.left+r.width/2) - r.left - r.width/2;
+    const cy = (e.clientY ?? e.touches?.[0]?.clientY ?? r.top+r.height/2) - r.top - r.height/2;
+    setTilt({ x: cy/r.height * -10, y: cx/r.width * 12 });
+  };
+  const onLeave = () => setTilt({x:0,y:0});
+  return { ref, tilt, onMove, onLeave };
+};
+
+// ── Scroll-Reveal Hook — one-shot IntersectionObserver entrance ──
+const useReveal = (threshold=0.12) => {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if(e.isIntersecting) { setVisible(true); obs.disconnect(); } }, {threshold});
+    if(ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return [ref, visible];
+};
+
+// ── Reveal Wrapper — fades+slides children in as they enter viewport ──
+const Reveal = ({children, delay=0, style={}}) => {
+  const [ref, visible] = useReveal();
+  return (
+    <div ref={ref} style={{
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(28px)',
+      transition: `opacity 0.55s ease ${delay}s, transform 0.55s cubic-bezier(.16,1,.3,1) ${delay}s`,
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
 };
 
 // ── Om Chant Hook (MP3 + Web Audio API fallback) ──
@@ -558,36 +602,67 @@ const Chip = ({label, active, onClick}) => (
 const FCard = memo(({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/400x600/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
   const [px, py] = useParallax();
+  const { ref: tiltRef, tilt, onMove: onTiltMove, onLeave: onTiltLeave } = useTilt();
+  const [burst, setBurst] = useState(false);
+  const handleFav = (e) => {
+    e.stopPropagation();
+    if (!t.isFavorite) { setBurst(true); setTimeout(() => setBurst(false), 750); }
+    onFav?.(t.id, t.isFavorite);
+  };
+  const isSettled = tilt.x === 0 && tilt.y === 0;
   return (
-    <div className="t rv" onClick={() => onClick(t)} style={{
+    <div className="rv" onClick={() => onClick(t)} style={{
       width:268,minWidth:268,height:360,borderRadius:26,overflow:"hidden",
       position:"relative",cursor:"pointer",flexShrink:0,scrollSnapAlign:"start",
       boxShadow:`0 16px 56px ${hsl(t.hue,30,5,0.6)}, 0 0 0 1px ${hsl(t.hue,30,20,0.12)}`,
       animationDelay:`${d}s`,
     }}>
-      {/* Full-bleed cinematic photo with Ken Burns + gyroscope parallax */}
-      <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={68} px={px} py={py}/>
-      {/* Shimmer sweep */}
-      <div style={{position:"absolute",top:0,left:"-120%",width:"60%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)",animation:"shimmer 6s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Deity badge — top left */}
-      <div style={{position:"absolute",top:18,left:18,zIndex:3}}>
-        <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 13px",borderRadius:100,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.12)",fontSize:10,color:"rgba(255,255,255,0.92)",fontWeight:700,letterSpacing:.7}}>
-          <div style={{width:5,height:5,borderRadius:"50%",background:"#E69A52",boxShadow:"0 0 8px rgba(212,133,60,0.8)"}}/>{t.deityPrimary}
+      {/* 3D tilt wrapper — perspective transform without conflicting with .t active scale */}
+      <div ref={tiltRef}
+        onMouseMove={onTiltMove} onTouchMove={onTiltMove}
+        onMouseLeave={onTiltLeave} onTouchEnd={onTiltLeave}
+        className="t"
+        style={{
+          position:'absolute', inset:0,
+          transform:`perspective(820px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transition: isSettled ? 'transform 0.5s cubic-bezier(.16,1,.3,1)' : 'none',
+          transformOrigin:'center center',
+          willChange:'transform',
+        }}>
+        {/* Full-bleed cinematic photo with Ken Burns + gyroscope parallax */}
+        <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={68} px={px} py={py}/>
+        {/* Shimmer sweep */}
+        <div style={{position:"absolute",top:0,left:"-120%",width:"60%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)",animation:"shimmer 6s ease-in-out infinite",pointerEvents:"none"}}/>
+        {/* Deity badge — top left */}
+        <div style={{position:"absolute",top:18,left:18,zIndex:3}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 13px",borderRadius:100,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.12)",fontSize:10,color:"rgba(255,255,255,0.92)",fontWeight:700,letterSpacing:.7}}>
+            <div style={{width:5,height:5,borderRadius:"50%",background:"#E69A52",boxShadow:"0 0 8px rgba(212,133,60,0.8)"}}/>{t.deityPrimary}
+          </div>
         </div>
-      </div>
-      {/* Fav — top right */}
-      <div style={{position:"absolute",top:18,right:18,zIndex:3}}>
-        <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" className="t" onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s",cursor:"pointer"}}>
-          {t.isFavorite ? "♥" : "♡"}
+        {/* Fav — top right (with heart burst anchor) */}
+        <div style={{position:"absolute",top:18,right:18,zIndex:3}}>
+          <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" className="t" onClick={handleFav} style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s",cursor:"pointer",position:"relative"}}>
+            {t.isFavorite ? "♥" : "♡"}
+            {/* Heart burst particles */}
+            {burst && [0,60,120,180,240,300].map((deg,i) => (
+              <div key={i} style={{
+                position:'absolute',top:'50%',left:'50%',
+                width:6,height:6,borderRadius:'50%',
+                background:'#ef4444',pointerEvents:'none',zIndex:20,
+                animation:`heartBurst 0.65s ease-out ${i*0.045}s both`,
+                '--hb-deg':`${deg}deg`,
+              }}/>
+            ))}
+          </div>
         </div>
-      </div>
-      {/* Cinematic bottom glass overlay */}
-      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"110px 22px 24px",background:"linear-gradient(transparent,rgba(0,0,0,0.45) 25%,rgba(0,0,0,0.88) 100%)"}}>
-        <h3 style={{fontFamily:FD,fontSize:23,fontWeight:500,color:"#fff",lineHeight:1.15,marginBottom:8,textShadow:"0 2px 12px rgba(0,0,0,0.4)"}}>{t.templeName}</h3>
-        <div style={{fontSize:11.5,color:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:5}}>
-          <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.3)"}}/>{t.townOrCity}, {t.stateOrUnionTerritory}
+        {/* Cinematic bottom glass overlay */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"110px 22px 24px",background:"linear-gradient(transparent,rgba(0,0,0,0.45) 25%,rgba(0,0,0,0.88) 100%)"}}>
+          <h3 style={{fontFamily:FD,fontSize:23,fontWeight:500,color:"#fff",lineHeight:1.15,marginBottom:8,textShadow:"0 2px 12px rgba(0,0,0,0.4)"}}>{t.templeName}</h3>
+          <div style={{fontSize:11.5,color:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:5}}>
+            <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.3)"}}/>{t.townOrCity}, {t.stateOrUnionTerritory}
+          </div>
+          {t.architectureStyle && <div style={{marginTop:10,fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:FD,fontStyle:"italic"}}>{t.architectureStyle}</div>}
         </div>
-        {t.architectureStyle && <div style={{marginTop:10,fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:FD,fontStyle:"italic"}}>{t.architectureStyle}</div>}
       </div>
     </div>
   );
@@ -917,7 +992,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     </div>
 
     {/* DAILY SHLOKA */}
-    <ShlokaWidget/>
+    <Reveal delay={0.05}><ShlokaWidget/></Reveal>
 
     {/* DEITIES */}
     <div style={{marginTop:38}}>
@@ -965,6 +1040,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     </div>
 
     {/* BY STATE */}
+    <Reveal delay={0}>
     <div style={{marginTop:42}}>
       <SH title="By State" sub="Region by region" act="All" onAct={() => nav("stateBrowse")} d={.4}/>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,padding:"0 24px"}}>
@@ -977,18 +1053,19 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         ))}
       </div>
     </div>
+    </Reveal>
 
     {/* PANCHANG */}
-    <PanchangWidget/>
+    <Reveal delay={0}><PanchangWidget/></Reveal>
 
     {/* PILGRIMAGE CIRCUIT */}
-    <PilgrimageCard onNav={nav}/>
+    <Reveal delay={0.05}><PilgrimageCard onNav={nav}/></Reveal>
 
     {/* ━━━ SACRED PREMIUM TEASER ━━━ */}
-    <div className="rv" style={{margin:"42px 24px 0",animationDelay:".48s"}}>
+    <Reveal delay={0.05} style={{margin:"42px 24px 0"}}>
       <div style={{borderRadius:28,overflow:"hidden",position:"relative",background:`linear-gradient(140deg,${hsl(42,55,10)},${hsl(28,65,7)},${hsl(355,40,10)})`}}>
-        {/* Gold shimmer sweep */}
-        <div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(196,162,78,0.06),transparent)",animation:"shimmer 8s ease-in-out infinite",pointerEvents:"none"}}/>
+        {/* Premium diagonal gold sheen sweep — pauses between passes */}
+        <div style={{position:"absolute",top:0,left:"-110%",width:"50%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(196,162,78,0.11),transparent)",animation:"premiumSheen 5s ease-in-out infinite",pointerEvents:"none"}}/>
         {/* Radial ambient */}
         <div style={{position:"absolute",top:"-20%",right:"-5%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(196,162,78,0.1),transparent 60%)",filter:"blur(40px)",animation:"breathe 7s ease-in-out infinite",pointerEvents:"none"}}/>
         <div style={{padding:"26px 22px 24px"}}>
@@ -1031,7 +1108,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
           </div>
         </div>
       </div>
-    </div>
+    </Reveal>
 
     {/* RECENTLY VIEWED */}
     {recentIds.length > 0 && (() => {
@@ -1155,6 +1232,15 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
   const [tabKey, setTabKey] = useState(0);
   const switchTab = (tb) => { setTab(tb); setTabKey(k => k+1); };
   const [shared, setShared] = useState(false);
+  const [heroCollapsed, setHeroCollapsed] = useState(false);
+  const sentinelRef = useRef(null);
+  useEffect(() => {
+    setHeroCollapsed(false);
+    const obs = new IntersectionObserver(([e]) => setHeroCollapsed(!e.isIntersecting), {threshold: 0, rootMargin: '-60px 0px 0px 0px'});
+    const el = sentinelRef.current;
+    if (el) obs.observe(el);
+    return () => obs.disconnect();
+  }, [t.id]);
   const doShare = () => {
     const text = `${t.templeName} — ${t.townOrCity}, ${t.stateOrUnionTerritory}`;
     if (navigator.share) {
@@ -1170,11 +1256,18 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
   const [px, py] = useParallax();
   return (
     <div className="fi" style={{paddingBottom:44}}>
-      <div style={{height:390,position:"relative",overflow:"hidden"}}>
+      {/* Scroll-linked collapsing hero */}
+      <div style={{height: heroCollapsed ? 240 : 390, position:"relative",overflow:"hidden",transition:'height 0.42s cubic-bezier(.16,1,.3,1)'}}>
         {/* Cinematic hero image with gyroscope parallax depth */}
         <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={80} px={px} py={py}/>
         {/* Gradient overlays: top dim for buttons, bottom for text legibility */}
         <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg,rgba(0,0,0,0.35) 0%,transparent 35%,rgba(0,0,0,0.1) 55%,${b3} 100%)`}}/>
+        {/* Mini-header fades in when hero collapses */}
+        {heroCollapsed && (
+          <div className="fi" style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 80px",display:"flex",alignItems:"center",justifyContent:"center",background:`linear-gradient(transparent,${b3} 70%)`,zIndex:4,animationDuration:'0.2s'}}>
+            <span style={{fontFamily:FD,fontSize:17,fontWeight:500,color:"#fff",textAlign:"center",lineHeight:1.2,textShadow:"0 1px 8px rgba(0,0,0,0.6)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}}>{t.templeName}</span>
+          </div>
+        )}
         <div style={{position:"absolute",top:18,left:18,right:18,display:"flex",justifyContent:"space-between",zIndex:5}}>
           <BackBtn onClick={onBack} glass/>
           <div style={{display:"flex",gap:8}}>
@@ -1201,6 +1294,8 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
             <div style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>{[t.village,t.townOrCity,t.district,t.stateOrUnionTerritory].filter(Boolean).join(" · ")}
           </div>
         </div>
+        {/* Sentinel: when this exits viewport, hero collapses */}
+        <div ref={sentinelRef} style={{position:"absolute",bottom:0,left:0,right:0,height:1,pointerEvents:"none"}}/>
       </div>
       <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50}}>
         {["overview","travel","visit","gallery"].map(tb => (
@@ -1226,7 +1321,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           {/* ── Premium Audio Guide teaser ── */}
           <div className="t" onClick={() => nav?.("audio")} style={{margin:"22px 0 8px",borderRadius:22,overflow:"hidden",position:"relative",border:"1px solid rgba(196,162,78,0.18)",cursor:"pointer"}}>
             <div style={{position:"absolute",inset:0,background:`linear-gradient(140deg,${hsl(42,55,10)},${hsl(28,65,7)})`,pointerEvents:"none"}}/>
-            <div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(196,162,78,0.05),transparent)",animation:"shimmer 7s ease-in-out infinite",pointerEvents:"none"}}/>
+            <div style={{position:"absolute",top:0,left:"-110%",width:"50%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(196,162,78,0.10),transparent)",animation:"premiumSheen 4.5s ease-in-out infinite 1s",pointerEvents:"none"}}/>
             <div style={{position:"relative",padding:"18px 20px",display:"flex",alignItems:"center",gap:16}}>
               <div style={{width:52,height:52,borderRadius:16,background:"rgba(196,162,78,0.11)",border:"1px solid rgba(196,162,78,0.22)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <svg width="20" height="20" fill="none" stroke="rgba(196,162,78,0.75)" strokeWidth="1.8" strokeLinecap="round" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
@@ -2125,6 +2220,16 @@ const Discover = ({temples, oT, onBack}) => {
 
       {/* Card stack */}
       <div style={{flex:1,position:'relative',margin:'0 0 8px'}}>
+        {/* Swipe direction background color pulse */}
+        <div style={{
+          position:'absolute',inset:0,pointerEvents:'none',borderRadius:28,zIndex:0,
+          background: drag.x > 0
+            ? `rgba(34,197,94,${Math.min(0.13, drag.x / 850)})`
+            : drag.x < 0
+            ? `rgba(239,68,68,${Math.min(0.13, -drag.x / 850)})`
+            : 'transparent',
+          transition: drag.active ? 'none' : 'background 0.45s ease',
+        }}/>
         {/* 3rd card — simple gradient peek */}
         {third && (
           <div style={{...cardBase,background:`linear-gradient(165deg,${hsl(third.hue,40,16)},${hsl(third.hue,50,4)})`,transform:`translateY(${20-progress*10}px) scale(${0.88+progress*0.06})`,transition:flyDir?'transform 0.45s cubic-bezier(.16,1,.3,1)':'transform 0.18s',zIndex:1,opacity:0.65}}>
