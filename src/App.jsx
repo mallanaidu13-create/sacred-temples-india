@@ -1134,7 +1134,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       </div>
 
       {/* OM SYMBOL — Central sacred focal point */}
-      <div style={{position:"relative",textAlign:"center",marginBottom:24,paddingTop:8}} aria-label="Sacred Om symbol" role="img">
+      <div style={{position:"relative",textAlign:"center",marginBottom:24,paddingTop:8}} aria-hidden="true">
         {/* Expanding pulse rings */}
         {[0,1,2].map(i => (
           <div key={i} aria-hidden="true" style={{position:"absolute",top:"50%",left:"50%",width:190,height:190,borderRadius:"50%",border:`1.5px solid rgba(212,133,60,0.18)`,transform:"translate(-50%,-50%)",animation:`ringExpand 3.6s ease-out infinite ${i*1.2}s`,pointerEvents:"none"}}/>
@@ -1490,7 +1490,7 @@ const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
           <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
         </div>
       </div>
-      <div className="t" role="button" aria-label="Search temples" tabIndex={0} onClick={() => nav("search")} onKeyDown={e => (e.key==='Enter'||e.key===' ') && nav("search")} style={{margin:"0 24px",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
+      <div className="t" role="button" aria-label="Search temples" tabIndex={0} onClick={() => nav("search")} onKeyDown={e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); nav("search"); } }} style={{margin:"0 24px",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
         <span style={{fontSize:15,color:C.textDD}} aria-hidden="true">⌕</span><span style={{flex:1,fontSize:14,color:C.textD}}>Search temples…</span>
       </div>
       <div style={{position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(20px)",padding:"14px 0 12px",borderBottom:`1px solid ${C.divL}`}}>
@@ -1607,8 +1607,10 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
         onKeyDown={(e) => {
           const tabs = ["overview","travel","visit","gallery"];
           const idx = tabs.indexOf(tab);
-          if (e.key === 'ArrowRight') { e.preventDefault(); switchTab(tabs[(idx+1) % tabs.length]); }
-          if (e.key === 'ArrowLeft') { e.preventDefault(); switchTab(tabs[(idx-1+tabs.length) % tabs.length]); }
+          let nextIdx = -1;
+          if (e.key === 'ArrowRight') { e.preventDefault(); nextIdx = (idx+1) % tabs.length; }
+          if (e.key === 'ArrowLeft') { e.preventDefault(); nextIdx = (idx-1+tabs.length) % tabs.length; }
+          if (nextIdx >= 0) { switchTab(tabs[nextIdx]); e.currentTarget.querySelectorAll('[role="tab"]')[nextIdx]?.focus(); }
         }}>
         {["overview","travel","visit","gallery"].map(tb => (
           <button key={tb} role="tab" aria-selected={tab===tb} aria-controls={`tabpanel-${tb}`} tabIndex={tab===tb?0:-1} className="t" onClick={() => switchTab(tb)} style={{padding:"16px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
