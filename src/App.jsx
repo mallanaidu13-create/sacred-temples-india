@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "./supabase.js";
 import LivePanchangam from "./LivePanchangam.jsx";
+import CinematicOverlay, { cinematicKeyframes } from "./CinematicOverlay.jsx";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -235,6 +236,7 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 ::-webkit-scrollbar{width:0;height:0}
 input{font-family:${FB}}
 input::placeholder{color:${theme.textD}}
+${cinematicKeyframes}
 `;
 
 // ── Temple Image Helpers ──
@@ -1087,11 +1089,13 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
   }, [triggerTemples, triggerStates, triggerDeities]);
   return (
   <div className="fi" style={{paddingBottom:28}}>
+    {/* Cinematic spiritual overlay — triggered by Om chant */}
+    <CinematicOverlay active={playing} />
     {/* HERO */}
-    <div style={{background:isDark?`linear-gradient(175deg,${hsl(30,48,13)},${hsl(350,42,10)} 55%,${C.bg})`:`linear-gradient(175deg,${hsl(30,60,94)},${hsl(350,50,97)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:isDark?`0 24px 80px ${hsl(350,30,7,0.55)}`:`0 24px 80px ${hsl(30,40,80,0.18)}`}}>
-      {/* Ambient glows */}
-      <div style={{position:"absolute",top:"-8%",right:"-12%",width:320,height:320,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",filter:"blur(60px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
-      <div style={{position:"absolute",bottom:"5%",left:"-18%",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(160,80,180,0.04),transparent 60%)",filter:"blur(45px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none"}}/>
+    <div style={{background:isDark?`linear-gradient(175deg,${hsl(30,48,13)},${hsl(350,42,10)} 55%,${C.bg})`:`linear-gradient(175deg,${hsl(30,60,94)},${hsl(350,50,97)} 55%,${C.bg})`,padding:"22px 24px 40px",borderRadius:"0 0 42px 42px",position:"relative",overflow:"hidden",boxShadow:isDark?`0 24px 80px ${hsl(350,30,7,0.55)}`:`0 24px 80px ${hsl(30,40,80,0.18)}`,transition:"box-shadow 1.5s ease"}}>
+      {/* Ambient glows — enhanced when Om chant is active */}
+      <div style={{position:"absolute",top:"-8%",right:"-12%",width:320,height:320,borderRadius:"50%",background:`radial-gradient(circle,rgba(212,133,60,${playing?0.14:0.07}),transparent 60%)`,filter:"blur(60px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none",transition:"background 1.5s ease"}}/>
+      <div style={{position:"absolute",bottom:"5%",left:"-18%",width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,rgba(160,80,180,${playing?0.08:0.04}),transparent 60%)`,filter:"blur(45px)",animation:"breathe 12s ease-in-out infinite 3s",pointerEvents:"none",transition:"background 1.5s ease"}}/>
       {/* Floating incense particles */}
       {HERO_PARTICLES.map((p,i) => (
         <div key={i} style={{
@@ -1141,8 +1145,8 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
             {Array.from({length:24},(_,i)=>{const a=(i*15)*Math.PI/180;return<line key={i} x1="110" y1="110" x2={110+104*Math.cos(a)} y2={110+104*Math.sin(a)} stroke="#F0C060" strokeWidth="2"/>;})}
           </svg>
         </div>
-        {/* Deep radial glow behind OM */}
-        <div style={{position:"absolute",top:"50%",left:"50%",width:170,height:170,borderRadius:"50%",background:"radial-gradient(circle,rgba(240,192,96,0.28),rgba(212,133,60,0.10) 50%,transparent 70%)",transform:"translate(-50%,-50%)",filter:"blur(22px)",animation:"breathe 4s ease-in-out infinite",pointerEvents:"none"}}/>
+        {/* Deep radial glow behind OM — intensifies during chant */}
+        <div style={{position:"absolute",top:"50%",left:"50%",width:playing?200:170,height:playing?200:170,borderRadius:"50%",background:`radial-gradient(circle,rgba(240,192,96,${playing?0.42:0.28}),rgba(212,133,60,${playing?0.18:0.10}) 50%,transparent 70%)`,transform:"translate(-50%,-50%)",filter:`blur(${playing?28:22}px)`,animation:"breathe 4s ease-in-out infinite",pointerEvents:"none",transition:"all 1.5s ease"}}/>
 
         {/* ═══ FLOWER & SPRINKLE LAYER 1 — Orbiting lotus petals (outer ring, slow) ═══ */}
         {[
@@ -1433,14 +1437,14 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     )}
 
     {/* Footer verse */}
-    <div style={{padding:"56px 40px 24px",textAlign:"center"}}>
-      <div style={{width:28,height:1,background:`rgba(196,162,78,0.18)`,margin:"0 auto 24px"}}/>
-      <div style={{fontFamily:FD,fontSize:16,color:C.textD,fontStyle:"italic",lineHeight:1.85,letterSpacing:.2}}>
+    <div style={{padding:"56px 40px 24px",textAlign:"center",position:"relative"}}>
+      <div style={{width:48,height:1,background:`linear-gradient(90deg,transparent,rgba(196,162,78,0.3),transparent)`,margin:"0 auto 24px"}}/>
+      <div style={{fontFamily:FD,fontSize:16,color:C.textD,fontStyle:"italic",lineHeight:1.85,letterSpacing:.2,textShadow:playing?`0 0 20px rgba(196,162,78,0.12)`:"none",transition:"text-shadow 1.5s ease"}}>
         "Where the temple bell resonates,<br/>the divine presence abides."
       </div>
       <div style={{marginTop:20,fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:3,textTransform:"uppercase"}}>Sacred Temples of Bhārata</div>
       <button className="t" onClick={() => nav("about")} style={{marginTop:16,padding:"8px 22px",borderRadius:99,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.18)`,cursor:"pointer",fontSize:11,fontWeight:700,color:C.saffron,letterSpacing:.8,textTransform:"uppercase",fontFamily:FB}}>About this App</button>
-      <div style={{width:28,height:1,background:`rgba(196,162,78,0.18)`,margin:"20px auto 0"}}/>
+      <div style={{width:48,height:1,background:`linear-gradient(90deg,transparent,rgba(196,162,78,0.3),transparent)`,margin:"20px auto 0"}}/>
     </div>
   </div>
   );
