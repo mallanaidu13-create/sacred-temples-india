@@ -2802,7 +2802,7 @@ Only include sections for which data is available. Do not fabricate data fields 
 Respond in English unless the user writes in another language. Do not make up specific temple facts you are unsure about — acknowledge uncertainty gracefully.`;
 
 const SUGGESTIONS_DEFAULT = [
-  { icon: '📍', label: 'Temples near me' },
+  { icon: '🛕', label: 'Famous temples to visit' },
   { icon: '🕐', label: 'Temple timings' },
   { icon: '🏛️', label: 'Famous temples in Tamil Nadu' },
   { icon: '🗺️', label: 'Route to Tirupati temple' },
@@ -2814,7 +2814,7 @@ const SUGGESTIONS_DEFAULT = [
 const searchTemples = (temples, query) => {
   if (!temples || !temples.length || !query) return [];
   const q = query.toLowerCase();
-  const words = q.split(/\s+/).filter(w => w.length > 2);
+  const words = q.split(/\s+/).filter(w => w.length > 1);
   const scored = temples.map(t => {
     let score = 0;
     const fields = [
@@ -2887,7 +2887,7 @@ const SarathiOmHero = () => (
     <div style={{position:'absolute',top:'50%',left:'50%',width:110,height:110,borderRadius:'50%',border:'1.5px solid rgba(212,133,60,0.15)',animation:'sarathiRingPulse 3.5s ease-out infinite',pointerEvents:'none'}}/>
     <div style={{position:'absolute',top:'50%',left:'50%',width:110,height:110,borderRadius:'50%',border:'1px solid rgba(212,133,60,0.1)',animation:'sarathiRingPulse 3.5s ease-out 1.2s infinite',pointerEvents:'none'}}/>
     {/* Om symbol */}
-    <span style={{
+    <span aria-label="Om — sacred divine presence" style={{
       fontFamily:"'Noto Serif Devanagari', serif",
       fontSize:72,
       lineHeight:1,
@@ -2958,7 +2958,7 @@ const Chat = ({onBack, temple, temples, isDark, onToggleTheme}) => {
       // Always include current temple context
       matchedTemples = [temple];
       // Also search for additional matches if query mentions other temples
-      const extra = searchTemples(allTemples, q).filter(t => t.id !== temple.id);
+      const extra = searchTemples(allTemples, q).filter(t => (t.id || t.templeName) !== (temple.id || temple.templeName));
       matchedTemples = matchedTemples.concat(extra.slice(0, 3));
     } else {
       matchedTemples = searchTemples(allTemples, q);
@@ -3021,7 +3021,7 @@ const Chat = ({onBack, temple, temples, isDark, onToggleTheme}) => {
       <div style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px 12px',background:C.glass,backdropFilter:'blur(20px)',borderBottom:`1px solid ${C.divL}`,flexShrink:0,position:'sticky',top:0,zIndex:60}}>
         <BackBtn onClick={onBack}/>
         <div style={{width:48,height:48,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.25),rgba(212,133,60,0.10))`,border:`1px solid rgba(212,133,60,0.3)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 0 20px rgba(212,133,60,0.12)'}}>
-          <span style={{fontFamily:"'Noto Serif Devanagari', serif",fontSize:26,color:C.saffron,lineHeight:1,animation:'sarathiBreathe 5s ease-in-out infinite'}}>ॐ</span>
+          <span aria-label="Om — sacred symbol" style={{fontFamily:"'Noto Serif Devanagari', serif",fontSize:26,color:C.saffron,lineHeight:1,animation:'sarathiBreathe 5s ease-in-out infinite'}}>ॐ</span>
         </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:7}}>
