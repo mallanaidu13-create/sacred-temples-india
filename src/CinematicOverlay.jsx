@@ -85,7 +85,7 @@ const CinematicOverlay = memo(({ active = false, enabled = true }) => {
     return () => {
       if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
     };
-  }, [active, enabled]);
+  }, [active, enabled, visible]);
 
   if (!visible && !fading) return null;
 
