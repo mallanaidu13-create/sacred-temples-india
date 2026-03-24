@@ -233,6 +233,13 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 .rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
 .fi{animation:fi .32s ease both}
 .t{transition:transform .15s cubic-bezier(.16,1,.3,1),box-shadow .15s ease}.t:active{transform:scale(.955)}
+.t:focus-visible{outline:2px solid ${theme.saffron};outline-offset:2px;border-radius:inherit}
+button:focus-visible{outline:2px solid ${theme.saffron};outline-offset:2px}
+input:focus-visible{outline:2px solid ${theme.saffron};outline-offset:0;border-radius:inherit}
+@keyframes tabFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.tabContent{animation:tabFade .25s cubic-bezier(.16,1,.3,1) both}
+.skipLink{position:absolute;left:-9999px;top:-9999px;z-index:9999;padding:12px 24px;background:${theme.saffron};color:#fff;font-weight:700;border-radius:0 0 12px 0;font-size:14px;text-decoration:none;font-family:${FB}}
+.skipLink:focus{left:0;top:0}
 ::-webkit-scrollbar{width:0;height:0}
 input{font-family:${FB}}
 input::placeholder{color:${theme.textD}}
@@ -705,7 +712,7 @@ const SH =({title, sub, act, onAct, d=0}) => (
 );
 
 const Chip = ({label, active, onClick}) => (
-  <button className="t" onClick={onClick} style={{
+  <button className="t" aria-pressed={active} onClick={onClick} style={{
     padding:"9px 18px",borderRadius:100,fontFamily:FB,fontSize:12,fontWeight:active?700:500,
     cursor:"pointer",whiteSpace:"nowrap",letterSpacing:.3,
     background:active?C.saffron:C.card,color:active?C.bg:C.textM,
@@ -902,14 +909,14 @@ const ThemeBtn = ({isDark, onToggle}) => (
 );
 
 const Empty = ({emoji, title, sub, action}) => (
-  <div className="fi" style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 40px",textAlign:"center"}}>
-    <div style={{width:96,height:96,borderRadius:"50%",background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,boxShadow:`0 0 32px rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:38,position:"relative"}}>
+  <div className="fi" role="status" style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"80px 40px",textAlign:"center"}}>
+    <div style={{width:96,height:96,borderRadius:"50%",background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,boxShadow:`0 0 32px rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:24,fontSize:38,position:"relative"}} aria-hidden="true">
       <span style={{position:"absolute",fontSize:72,fontFamily:FE,color:C.saffron,opacity:.07,userSelect:"none",lineHeight:1}}>ॐ</span>
       <span style={{position:"relative"}}>{emoji}</span>
     </div>
     <h3 style={{fontFamily:FE,fontSize:24,color:C.cream,marginBottom:10}}>{title}</h3>
     <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260,marginBottom:action?24:0}}>{sub}</p>
-    {action && <button className="t" onClick={action.onPress} style={{padding:"11px 28px",borderRadius:99,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 18px rgba(212,133,60,0.3)`}}>{action.label}</button>}
+    {action && <button className="t" onClick={action.onPress} style={{padding:"11px 28px",borderRadius:99,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,border:"none",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 18px rgba(212,133,60,0.3)`,transition:"box-shadow .2s ease, transform .15s ease"}}>{action.label}</button>}
   </div>
 );
 
@@ -984,10 +991,10 @@ const NavSvg = ({name, col}) => {
 const BNav = ({a, on, savedCount=0}) => {
   const items = [{k:"home",l:"Home"},{k:"explore",l:"Explore"},{k:"nearby",l:"Nearby"},{k:"saved",l:"Saved"},{k:"profile",l:"Profile"}];
   return (
-    <div style={{position:"relative",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(28px) saturate(160%)",borderTop:`1px solid ${C.div}`,padding:"6px 0 20px"}}>
+    <nav role="navigation" aria-label="Main navigation" style={{position:"relative",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(28px) saturate(160%)",borderTop:`1px solid ${C.div}`,padding:"6px 0 20px"}}>
       {/* Single sliding indicator pill */}
       {(() => { const idx = items.map(t=>t.k).indexOf(a); return idx>=0 && (
-        <div style={{position:"absolute",top:0,left:`${idx * 20}%`,width:'20%',display:'flex',justifyContent:'center',transition:'left 0.38s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}}>
+        <div style={{position:"absolute",top:0,left:`${idx * 20}%`,width:'20%',display:'flex',justifyContent:'center',transition:'left 0.38s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}} aria-hidden="true">
           <div style={{width:28,height:3,borderRadius:3,background:`linear-gradient(90deg,${C.saffron},${C.saffronH})`,boxShadow:`0 0 14px ${C.saffron}99`}}/>
         </div>
       ); })()}
@@ -996,7 +1003,7 @@ const BNav = ({a, on, savedCount=0}) => {
           const active = a === t.k;
           const col = active ? C.saffron : C.textDD;
           return (
-            <button key={t.k} aria-label={t.l} className="t" onClick={() => { haptic(12); on(t.k); }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
+            <button key={t.k} aria-label={t.l} aria-current={active ? "page" : undefined} className="t" onClick={() => { haptic(12); on(t.k); }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
               <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:active?C.saffronDim:"transparent",transform:active?'scale(1)':'scale(0.88)',transition:"all .28s cubic-bezier(.16,1,.3,1)",position:"relative"}}>
                 <NavSvg name={t.k} col={col}/>
                 {/* Saved badge */}
@@ -1020,7 +1027,7 @@ const BNav = ({a, on, savedCount=0}) => {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };
 
@@ -1118,7 +1125,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
             <Typewriter text="of Bhārata" delay={480} speed={62}/>
           </p>
         </div>
-        <button className="t" onClick={onToggleTheme} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{width:46,height:46,borderRadius:15,background:isDark?"rgba(255,255,255,0.05)":C.saffronDim,border:`1px solid ${isDark?C.div:C.saffronPale}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:isDark?"none":`0 4px 16px ${C.saffronDim}`}}>
+        <button className="t" aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} onClick={onToggleTheme} title={isDark ? "Switch to light mode" : "Switch to dark mode"} style={{width:46,height:46,borderRadius:15,background:isDark?"rgba(255,255,255,0.05)":C.saffronDim,border:`1px solid ${isDark?C.div:C.saffronPale}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:isDark?"none":`0 4px 16px ${C.saffronDim}`}}>
           {isDark
             ? <svg width="19" height="19" fill="none" stroke="rgba(255,220,100,0.85)" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
             : <svg width="19" height="19" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -1127,10 +1134,10 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       </div>
 
       {/* OM SYMBOL — Central sacred focal point */}
-      <div style={{position:"relative",textAlign:"center",marginBottom:24,paddingTop:8}}>
+      <div style={{position:"relative",textAlign:"center",marginBottom:24,paddingTop:8}} aria-label="Sacred Om symbol" role="img">
         {/* Expanding pulse rings */}
         {[0,1,2].map(i => (
-          <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:190,height:190,borderRadius:"50%",border:`1.5px solid rgba(212,133,60,0.18)`,transform:"translate(-50%,-50%)",animation:`ringExpand 3.6s ease-out infinite ${i*1.2}s`,pointerEvents:"none"}}/>
+          <div key={i} aria-hidden="true" style={{position:"absolute",top:"50%",left:"50%",width:190,height:190,borderRadius:"50%",border:`1.5px solid rgba(212,133,60,0.18)`,transform:"translate(-50%,-50%)",animation:`ringExpand 3.6s ease-out infinite ${i*1.2}s`,pointerEvents:"none"}}/>
         ))}
         {/* Slow spinning golden dashed halo */}
         <div style={{position:"absolute",top:"50%",left:"50%",width:240,height:240,borderRadius:"50%",border:"1px dashed rgba(212,133,60,0.18)",transform:"translate(-50%,-50%)",animation:"omHaloSpin 28s linear infinite",pointerEvents:"none"}}/>
@@ -1483,14 +1490,14 @@ const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
           <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
         </div>
       </div>
-      <div className="t" onClick={() => nav("search")} style={{margin:"0 24px",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
-        <span style={{fontSize:15,color:C.textDD}}>⌕</span><span style={{flex:1,fontSize:14,color:C.textD}}>Search temples…</span>
+      <div className="t" role="button" aria-label="Search temples" tabIndex={0} onClick={() => nav("search")} onKeyDown={e => (e.key==='Enter'||e.key===' ') && nav("search")} style={{margin:"0 24px",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
+        <span style={{fontSize:15,color:C.textDD}} aria-hidden="true">⌕</span><span style={{flex:1,fontSize:14,color:C.textD}}>Search temples…</span>
       </div>
       <div style={{position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(20px)",padding:"14px 0 12px",borderBottom:`1px solid ${C.divL}`}}>
         <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 24px"}}>{opts.map(f => <Chip key={f} label={f} active={f === "All" ? fl.length === 0 : fl.includes(f)} onClick={() => tg(f)}/>)}</div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 24px 0"}}>
           <span style={{fontSize:12,color:C.textD}}>{sorted.length} temples{fl.length>0?" · filtered":""}</span>
-          <button className="t" onClick={cycleSort} style={{background:sortBy!=="default"?C.saffronDim:C.card,border:`1px solid ${sortBy!=="default"?"rgba(212,133,60,0.3)":C.div}`,padding:"6px 13px",borderRadius:10,fontSize:11,color:sortBy!=="default"?C.saffron:C.textD,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",gap:5}}>
+          <button className="t" aria-label={`Sort by: ${sortLabels[sortBy]}`} onClick={cycleSort} style={{background:sortBy!=="default"?C.saffronDim:C.card,border:`1px solid ${sortBy!=="default"?"rgba(212,133,60,0.3)":C.div}`,padding:"6px 13px",borderRadius:10,fontSize:11,color:sortBy!=="default"?C.saffron:C.textD,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",gap:5}}>
             <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
             {sortLabels[sortBy]}
           </button>
@@ -1596,13 +1603,19 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
         {/* Sentinel: when this exits viewport, hero collapses */}
         <div ref={sentinelRef} style={{position:"absolute",bottom:0,left:0,right:0,height:1,pointerEvents:"none"}}/>
       </div>
-      <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50}}>
+      <div role="tablist" aria-label="Temple information" style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50}}
+        onKeyDown={(e) => {
+          const tabs = ["overview","travel","visit","gallery"];
+          const idx = tabs.indexOf(tab);
+          if (e.key === 'ArrowRight') { e.preventDefault(); switchTab(tabs[(idx+1) % tabs.length]); }
+          if (e.key === 'ArrowLeft') { e.preventDefault(); switchTab(tabs[(idx-1+tabs.length) % tabs.length]); }
+        }}>
         {["overview","travel","visit","gallery"].map(tb => (
-          <button key={tb} className="t" onClick={() => switchTab(tb)} style={{padding:"16px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
+          <button key={tb} role="tab" aria-selected={tab===tb} aria-controls={`tabpanel-${tb}`} tabIndex={tab===tb?0:-1} className="t" onClick={() => switchTab(tb)} style={{padding:"16px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
         ))}
       </div>
-      <div style={{padding:"10px 24px 0"}}>
-        {tab === "overview" && <div key={tabKey} className="fi" style={{animationDuration:'0.22s'}}>
+      <div role="tabpanel" id={`tabpanel-${tab}`} aria-label={tab} style={{padding:"10px 24px 0"}}>
+        {tab === "overview" && <div key={tabKey} className="tabContent">
           {t.architectureStyle && <IR emoji="🏛" label="Architecture" value={t.architectureStyle}/>}
           <div style={{padding:"22px 0",borderBottom:`1px solid ${C.divL}`}}>
             <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
@@ -1650,7 +1663,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
             <svg width="16" height="16" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{flexShrink:0,opacity:.65}}><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
         </div>}
-        {tab === "travel" && <div key={tabKey} className="fi" style={{animationDuration:'0.22s'}}>
+        {tab === "travel" && <div key={tabKey} className="tabContent">
           <IR emoji="📍" label="Nearest City" value={t.nearestCity}/>
           <IR emoji="🚂" label="Railway" value={t.nearestRailwayStation}/>
           <IR emoji="✈" label="Airport" value={t.nearestAirport}/>
@@ -1668,7 +1681,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
             </div>
           )}
         </div>}
-        {tab === "visit" && <div key={tabKey} className="fi" style={{animationDuration:'0.22s'}}>
+        {tab === "visit" && <div key={tabKey} className="tabContent">
           <div style={{padding:"18px 0",borderBottom:`1px solid ${C.divL}`}}>
             <div style={{fontSize:9.5,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Visitor Checklist</div>
             {[
@@ -1693,7 +1706,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
           </div>
         </div>}
         {tab === "gallery" && (
-          <div key={tabKey} className="fi" style={{paddingTop:8,animationDuration:'0.22s'}}>
+          <div key={tabKey} className="tabContent" style={{paddingTop:8}}>
             {/* Large hero shot */}
             <div style={{borderRadius:20,overflow:"hidden",height:240,position:"relative",marginBottom:8}}>
               <TempleImage src={`https://source.unsplash.com/800x480/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g0`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
@@ -1736,7 +1749,7 @@ const Search = ({oT, oF, onBack, temples}) => {
         <BackBtn onClick={onBack}/>
         <div style={{flex:1,padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`2px solid ${C.saffron}`,boxShadow:`0 0 0 4px ${C.saffronDim}`}}>
           <span style={{fontSize:15,color:C.saffron}}>⌕</span>
-          <input autoFocus type="text" placeholder="Temple, deity, city, state…" value={q} onChange={e => { setQ(e.target.value); }} onKeyDown={e => e.key==='Enter' && saveHistory(q)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
+          <input autoFocus type="search" aria-label="Search temples" placeholder="Temple, deity, city, state…" value={q} onChange={e => { setQ(e.target.value); }} onKeyDown={e => e.key==='Enter' && saveHistory(q)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
           {q && <button aria-label="Clear search" className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button>}
         </div>
       </div>
@@ -1764,7 +1777,7 @@ const Search = ({oT, oF, onBack, temples}) => {
           </div>
         ))}
       </div> : res.length > 0 ? <div style={{paddingTop:10}}>
-        <div style={{padding:"0 24px 12px",fontSize:12,color:C.textD}}>{res.length} result{res.length !== 1 ? "s" : ""}</div>
+        <div role="status" aria-live="polite" style={{padding:"0 24px 12px",fontSize:12,color:C.textD}}>{res.length} result{res.length !== 1 ? "s" : ""}</div>
         {res.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.04}/>)}
       </div> : <Empty emoji="⌕" title="No Results" sub={`Nothing for "${q}". Try another search.`}/>}
     </div>
@@ -2986,10 +2999,11 @@ export default function App() {
   return (
     <div>
       <style>{getCss(C)}</style>
+      <a href="#main-content" className="skipLink">Skip to main content</a>
       <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,position:"relative",boxShadow:"0 0 120px rgba(0,0,0,0.3)",display:"flex",flexDirection:"column"}}>
-        <div ref={ref} style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
+        <main id="main-content" ref={ref} role="main" style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
           <div key={pageKey} className={transitionClass}>{page}</div>
-        </div>
+        </main>
         <Toast msg={toast.msg} icon={toast.icon} visible={toast.visible}/>
         {/* Sarathi FAB — floats above BNav */}
         {showNav && (
