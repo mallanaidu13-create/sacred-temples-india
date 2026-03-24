@@ -227,6 +227,12 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes petalFloat{0%{transform:translate(-50%,-50%) translateY(0) translateX(0) scale(1) rotate(0deg);opacity:0}10%{opacity:0.85}75%{opacity:0.45}100%{transform:translate(-50%,-50%) translateY(-180px) translateX(var(--pf-x,0px)) scale(0.3) rotate(var(--pf-r,120deg));opacity:0}}
 @keyframes petalTwinkle{0%,100%{opacity:0.15;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(0.6)}40%{opacity:0.9;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(1.3)}70%{opacity:0.5;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(0.85)}}
 @keyframes petalSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes sarathiGlow{0%,100%{filter:drop-shadow(0 0 12px rgba(240,192,96,.6)) drop-shadow(0 0 32px rgba(212,133,60,.35)) drop-shadow(0 0 64px rgba(212,133,60,.15))}50%{filter:drop-shadow(0 0 24px rgba(255,220,100,.9)) drop-shadow(0 0 52px rgba(230,154,82,.6)) drop-shadow(0 0 96px rgba(212,133,60,.3))}}
+@keyframes sarathiBreathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.06);opacity:1}}
+@keyframes sarathiAura{0%{transform:translate(-50%,-50%) scale(.7);opacity:.5}50%{transform:translate(-50%,-50%) scale(1.15);opacity:.18}100%{transform:translate(-50%,-50%) scale(1.5);opacity:0}}
+@keyframes sarathiRingPulse{0%{transform:translate(-50%,-50%) scale(.6);opacity:.6;border-color:rgba(212,133,60,.4)}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0;border-color:rgba(212,133,60,0)}}
+@keyframes sarathiChipIn{from{opacity:0;transform:translateY(8px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes sarathiThinking{0%{background-position:200% center}100%{background-position:-200% center}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -2030,77 +2036,185 @@ const Saved = ({oT, oF, temples, isDark, onToggleTheme, onBrowse}) => {
 
 const ABOUT_TEXT = `I am Malla, and this app was born from something far deeper than an idea — it grew from a feeling I have carried with me for a long time. India is not simply a country to me; it is a living memory that breathes through its temples, where every stone, every carving, and every hushed corner holds a story that has travelled across generations without losing its meaning. Temples in India are not merely places of worship. They are expressions of faith and art, of science and devotion, of time itself — built by hands that believed in something far greater than themselves. While a handful of temples are known to the world and visited by millions, there are thousands more that remain quietly hidden: resting in forests, standing on lonely hills, tucked away in villages, or existing in places that most of us will never think to look. These temples are not lesser in any way. They are simply waiting to be seen, to be understood, and to be experienced with the attention they have always deserved. Many of them carry powerful local stories, a depth of spiritual energy, and an architectural beauty that has never been fully explored or shared. Over time, as life moved faster and attention drifted elsewhere, many such sacred places were left behind — not because they lost their importance, but because their stories were never brought forward. This app is my honest attempt to change that, to bring these temples closer to people who seek something more than just travel, something more than just a destination. It is built for those who want to explore, to feel, to understand, and to connect with a deeper side of India that no image can fully capture. It is also a small but sincere step towards encouraging thoughtful, respectful temple tourism — where visiting such places can support local communities, help preserve living traditions, and give these sacred spaces the care and attention they truly deserve. I believe that at least once in a lifetime, every person should stand inside a temple where time quietly slows, where silence speaks louder than any noise, and where you feel a sense of peace and belonging that words can only gesture towards. Not every temple in this app is famous. Not every place is crowded. But every place carries a meaning worth discovering, and a story worth carrying home. If this journey helps you find even one such place, feel even one such moment, or reconnect with something within yourself that you had almost forgotten, then this app has done everything it was meant to do. This is not just about temples. It is about stories, about roots, and about experiences that stay with you long after you have left. Sacred Temples India is simply a guide — but the journey, in every way that matters, is yours to take.`;
 
+const AboutDivider = () => (
+  <div style={{display:"flex",alignItems:"center",gap:14,padding:"0 24px",margin:"8px 0"}}>
+    <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,rgba(196,162,78,0.18))`}}/>
+    <span style={{fontFamily:FD,fontSize:15,color:"rgba(196,162,78,0.35)"}}>✦</span>
+    <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,rgba(196,162,78,0.18))`}}/>
+  </div>
+);
+
+const AboutSection = ({icon, label, title, children, accent}) => {
+  const borderColor = accent || "rgba(196,162,78,0.22)";
+  const iconBg = "rgba(196,162,78,0.08)";
+  return (
+    <div style={{margin:"0 16px 18px",borderRadius:20,background:C.card,border:`1px solid ${borderColor}`,overflow:"hidden",boxShadow:"0 2px 18px rgba(0,0,0,0.14)"}}>
+      <div style={{padding:"20px 20px 0",display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:38,height:38,borderRadius:12,background:iconBg,border:`1px solid ${borderColor}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:17}}>
+          {icon}
+        </div>
+        <div>
+          {label && <div style={{fontSize:9,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:C.textDD,marginBottom:3}}>{label}</div>}
+          <div style={{fontFamily:FD,fontSize:17,fontWeight:600,color:C.cream,lineHeight:1.2}}>{title}</div>
+        </div>
+      </div>
+      <div style={{padding:"14px 20px 20px"}}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const About = ({onBack, isDark, onToggleTheme, temples}) => (
-  <div className="fi" style={{minHeight:"100vh",background:C.bg,paddingBottom:48}}>
-    {/* Header */}
-    <div style={{padding:"20px 24px 0",display:"flex",alignItems:"center",gap:14,position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(24px)",borderBottom:`1px solid ${C.divL}`}}>
+  <div className="fi" style={{minHeight:"100vh",background:C.bg,paddingBottom:64}}>
+
+    {/* Sticky Header */}
+    <div style={{padding:"20px 24px 16px",display:"flex",alignItems:"center",gap:14,position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(24px)",borderBottom:`1px solid ${C.divL}`}}>
       <BackBtn onClick={onBack}/>
       <h1 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,flex:1}}>About</h1>
       <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
     </div>
 
-    {/* Hero block */}
-    <div style={{padding:"44px 28px 36px",textAlign:"center",position:"relative",overflow:"hidden"}}>
-      {/* Ambient glow behind OM */}
-      <div style={{position:"absolute",top:"30%",left:"50%",width:260,height:260,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.07),transparent 60%)",transform:"translate(-50%,-50%)",filter:"blur(50px)",animation:"breathe 6s ease-in-out infinite",pointerEvents:"none"}}/>
-      {[160,118,80].map((r,i) => (
-        <div key={i} style={{position:"absolute",top:"36%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.05+i*0.04})`,transform:"translate(-50%,-50%)",animation:`breathe ${8+i*2}s ease-in-out infinite ${i*.8}s`,pointerEvents:"none"}}/>
+    {/* Hero Block */}
+    <div style={{padding:"44px 24px 40px",textAlign:"center",position:"relative",overflow:"hidden",background:`linear-gradient(180deg,rgba(212,133,60,0.05) 0%,transparent 100%)`}}>
+      <div style={{position:"absolute",top:"38%",left:"50%",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,rgba(212,133,60,0.09),transparent 65%)",transform:"translate(-50%,-50%)",filter:"blur(48px)",animation:"breathe 6s ease-in-out infinite",pointerEvents:"none"}}/>
+      {[170,124,82].map((r,i) => (
+        <div key={i} style={{position:"absolute",top:"38%",left:"50%",width:r,height:r,borderRadius:"50%",border:`1px solid rgba(212,133,60,${0.06+i*0.05})`,transform:"translate(-50%,-50%)",animation:`breathe ${8+i*2}s ease-in-out infinite ${i*.9}s`,pointerEvents:"none"}}/>
       ))}
-      <OmSymbol size={100} />
-      <div style={{marginTop:24,position:"relative",zIndex:2}}>
-        <h2 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,letterSpacing:-.2,lineHeight:1.15}}>Sacred Temples<br/>of India</h2>
-        <p style={{fontFamily:FD,fontSize:14,color:"rgba(212,133,60,0.45)",fontStyle:"italic",marginTop:10,letterSpacing:.3}}>A personal journey by Malla</p>
+      <OmSymbol size={96}/>
+      <div style={{marginTop:22,position:"relative",zIndex:2}}>
+        <h2 style={{fontFamily:FD,fontSize:28,fontWeight:600,color:C.cream,lineHeight:1.15,letterSpacing:.2}}>Sacred Temples<br/>of India</h2>
+        <p style={{fontFamily:FD,fontSize:14,color:C.saffron,fontStyle:"italic",marginTop:10,opacity:.75,letterSpacing:.4}}>A personal journey by Malla</p>
+        <p style={{fontFamily:FD,fontSize:15,color:C.creamD,lineHeight:1.75,marginTop:18,maxWidth:320,margin:"18px auto 0",letterSpacing:.15}}>Discovering the divine in every stone, every carving, and every sacred moment across India.</p>
       </div>
     </div>
 
-    {/* Divider */}
-    <div style={{display:"flex",alignItems:"center",gap:14,padding:"0 28px",marginBottom:32}}>
-      <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,rgba(196,162,78,0.18))`}}/>
-      <span style={{fontFamily:FD,fontSize:16,color:"rgba(196,162,78,0.3)"}}>✦</span>
-      <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,rgba(196,162,78,0.18))`}}/>
+    {/* Stats Row */}
+    <div style={{display:"flex",gap:10,padding:"0 16px 28px",overflowX:"auto",scrollbarWidth:"none"}}>
+      {[
+        {n:temples.length, label:"Sacred Places"},
+        {n:"36", label:"States and UTs"},
+        {n:"6", label:"Sacred Deities"},
+      ].map(s => (
+        <div key={s.label} style={{flex:1,minWidth:96,borderRadius:16,background:C.card,border:`1px solid rgba(196,162,78,0.15)`,padding:"16px 10px",textAlign:"center",boxShadow:"0 2px 12px rgba(0,0,0,0.10)"}}>
+          <div style={{fontFamily:FD,fontSize:22,fontWeight:600,color:C.saffron,lineHeight:1}}>{s.n}</div>
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",color:C.textDD,marginTop:5}}>{s.label}</div>
+        </div>
+      ))}
     </div>
 
-    {/* The story */}
-    <div style={{padding:"0 28px"}}>
-      <p style={{
-        fontFamily:FD,fontSize:17.5,color:C.creamM,lineHeight:2.05,
-        letterSpacing:.18,
-        borderLeft:`2px solid rgba(196,162,78,0.18)`,
-        paddingLeft:20,
-      }}>
-        {ABOUT_TEXT}
+    <AboutDivider/>
+
+    {/* Mission Section */}
+    <AboutSection icon="✦" label="Our Purpose" title="Why This App Was Born" accent="rgba(212,133,60,0.22)">
+      <p style={{fontFamily:FD,fontSize:16,color:C.creamM,lineHeight:1.9,letterSpacing:.15}}>
+        I am Malla, and this app was born from something far deeper than an idea — it grew from a feeling I have carried with me for a long time. It is my honest attempt to bring sacred temples closer to people who seek something more than just travel, something more than just a destination. It is built for those who want to explore, to feel, to understand, and to connect with a deeper side of India that no image can fully capture.
+      </p>
+    </AboutSection>
+
+    {/* Heritage Section */}
+    <AboutSection icon="🏛" label="India's Heritage" title="A Living Memory in Stone" accent="rgba(196,162,78,0.2)">
+      <p style={{fontFamily:FD,fontSize:16,color:C.creamM,lineHeight:1.9,letterSpacing:.15}}>
+        India is not simply a country — it is a living memory that breathes through its temples, where every stone, every carving, and every hushed corner holds a story that has travelled across generations without losing its meaning. Temples here are not merely places of worship. They are expressions of faith and art, of science and devotion, of time itself — built by hands that believed in something far greater than themselves.
+      </p>
+    </AboutSection>
+
+    {/* Hidden Temples Section */}
+    <AboutSection icon="◎" label="Beyond the Famous" title="Temples Waiting to Be Seen" accent="rgba(168,152,120,0.22)">
+      <p style={{fontFamily:FD,fontSize:16,color:C.creamM,lineHeight:1.9,letterSpacing:.15}}>
+        While a handful of temples are known to the world and visited by millions, there are thousands more that remain quietly hidden — resting in forests, standing on lonely hills, tucked away in villages, or existing in places that most of us will never think to look. These temples are not lesser in any way. They carry powerful local stories, a depth of spiritual energy, and an architectural beauty that has never been fully explored or shared.
+      </p>
+    </AboutSection>
+
+    {/* Why It Matters Section */}
+    <AboutSection icon="❤" label="Why It Matters" title="Preserving What Is Sacred" accent="rgba(180,60,60,0.2)">
+      <p style={{fontFamily:FD,fontSize:16,color:C.creamM,lineHeight:1.9,letterSpacing:.15}}>
+        Over time, as life moved faster and attention drifted elsewhere, many sacred places were left behind — not because they lost their importance, but because their stories were never brought forward. This app is also a small but sincere step towards encouraging thoughtful, respectful temple tourism — where visiting such places can support local communities, help preserve living traditions, and give these sacred spaces the care they truly deserve.
+      </p>
+    </AboutSection>
+
+    <AboutDivider/>
+
+    {/* Spiritual Journey Section */}
+    <div style={{margin:"8px 16px 18px",borderRadius:20,background:`linear-gradient(135deg,rgba(212,133,60,0.10) 0%,rgba(196,162,78,0.06) 100%)`,border:"1px solid rgba(212,133,60,0.2)",padding:"24px 20px",boxShadow:"0 2px 18px rgba(0,0,0,0.12)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+        <div style={{width:38,height:38,borderRadius:12,background:"rgba(212,133,60,0.12)",border:"1px solid rgba(212,133,60,0.25)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:17}}>☸</div>
+        <div>
+          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:C.textDD,marginBottom:3}}>Spiritual Journey</div>
+          <div style={{fontFamily:FD,fontSize:17,fontWeight:600,color:C.cream,lineHeight:1.2}}>A Moment That Stays With You</div>
+        </div>
+      </div>
+      <p style={{fontFamily:FD,fontSize:16,color:C.creamM,lineHeight:1.9,letterSpacing:.15}}>
+        I believe that at least once in a lifetime, every person should stand inside a temple where time quietly slows, where silence speaks louder than any noise, and where you feel a sense of peace and belonging that words can only gesture towards. Not every temple in this app is famous. Not every place is crowded. But every place carries a meaning worth discovering, and a story worth carrying home.
       </p>
     </div>
 
-    {/* Divider */}
-    <div style={{display:"flex",alignItems:"center",gap:14,padding:"40px 28px 0",marginBottom:28}}>
-      <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,rgba(196,162,78,0.12))`}}/>
-      <span style={{fontFamily:FD,fontSize:14,color:"rgba(196,162,78,0.2)"}}>✦</span>
-      <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,rgba(196,162,78,0.12))`}}/>
+    {/* Trust and Authenticity */}
+    <AboutSection icon="◈" label="Crafted with Heart" title="Authentic and Trustworthy" accent="rgba(196,162,78,0.2)">
+      <p style={{fontFamily:FD,fontSize:16,color:C.creamM,lineHeight:1.9,letterSpacing:.15}}>
+        Every temple listed here has been gathered with care and presented with sincere respect for the traditions they represent. This app is not just a directory — it is a curated collection of sacred experiences, built by someone who deeply believes in the value of what these places hold and the stories they carry.
+      </p>
+    </AboutSection>
+
+    {/* Future Vision */}
+    <div style={{margin:"0 16px 28px",borderRadius:20,background:C.card,border:"1px solid rgba(196,162,78,0.18)",overflow:"hidden",boxShadow:"0 2px 18px rgba(0,0,0,0.14)"}}>
+      <div style={{padding:"20px 20px 14px",borderBottom:"1px solid rgba(196,162,78,0.10)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:38,height:38,borderRadius:12,background:"rgba(196,162,78,0.08)",border:"1px solid rgba(196,162,78,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:17}}>🌅</div>
+          <div>
+            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.8,textTransform:"uppercase",color:C.textDD,marginBottom:3}}>What is Coming</div>
+            <div style={{fontFamily:FD,fontSize:17,fontWeight:600,color:C.cream,lineHeight:1.2}}>The Vision Ahead</div>
+          </div>
+        </div>
+      </div>
+      <div style={{padding:"16px 20px 20px",display:"flex",flexDirection:"column",gap:12}}>
+        {[
+          {icon:"🎧", text:"Audio guides and narrated temple tours"},
+          {icon:"🗺", text:"Detailed pilgrimage route planning"},
+          {icon:"📖", text:"Community stories and personal darshan accounts"},
+          {icon:"🌿", text:"Seasonal festivals and auspicious dates"},
+        ].map((item,i) => (
+          <div key={i} style={{display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:32,height:32,borderRadius:10,background:"rgba(196,162,78,0.07)",border:"1px solid rgba(196,162,78,0.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:15}}>{item.icon}</div>
+            <span style={{fontFamily:FD,fontSize:15,color:C.creamM,lineHeight:1.6}}>{item.text}</span>
+          </div>
+        ))}
+      </div>
     </div>
 
-    {/* Footer meta */}
-    <div style={{padding:"0 28px",display:"flex",flexDirection:"column",gap:10}}>
+    <AboutDivider/>
+
+    {/* App Meta */}
+    <div style={{margin:"8px 16px 0",borderRadius:18,background:C.card,border:`1px solid ${C.div}`,overflow:"hidden"}}>
       {[
         {l:"App", v:"Sacred Temples India"},
         {l:"Version", v:"1.0"},
         {l:"Temples", v:`${temples.length} sacred places`},
         {l:"Creator", v:"Malla Naidu"},
-      ].map(r => (
-        <div key={r.l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${C.divL}`}}>
+      ].map((r,i,arr) => (
+        <div key={r.l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:i<arr.length-1?`1px solid ${C.divL}`:"none"}}>
           <span style={{fontSize:11,fontWeight:700,color:C.textDD,letterSpacing:1.2,textTransform:"uppercase"}}>{r.l}</span>
-          <span style={{fontSize:13,color:C.creamD,fontFamily:FD}}>{r.v}</span>
+          <span style={{fontSize:14,color:C.creamD,fontFamily:FD}}>{r.v}</span>
         </div>
       ))}
     </div>
 
-    {/* Closing line */}
-    <div style={{padding:"36px 28px 0",textAlign:"center"}}>
-      <div style={{fontFamily:FD,fontSize:15,color:C.textD,fontStyle:"italic",lineHeight:1.8}}>
-        "The journey is yours to take."
+    {/* Closing Emotional CTA */}
+    <div style={{margin:"28px 16px 0",borderRadius:20,background:`linear-gradient(135deg,rgba(212,133,60,0.12) 0%,rgba(196,162,78,0.07) 100%)`,border:"1px solid rgba(212,133,60,0.22)",padding:"32px 24px",textAlign:"center",boxShadow:"0 2px 20px rgba(212,133,60,0.08)"}}>
+      <OmSymbol size={42} style={{opacity:.85}}/>
+      <div style={{fontFamily:FD,fontSize:20,fontWeight:600,color:C.cream,lineHeight:1.5,marginTop:16,letterSpacing:.2}}>
+        This is not just about temples.
       </div>
-      <div style={{width:24,height:1,background:"rgba(196,162,78,0.15)",margin:"18px auto 0"}}/>
+      <div style={{fontFamily:FD,fontSize:16,color:C.creamM,lineHeight:1.85,marginTop:12,letterSpacing:.15}}>
+        It is about stories, about roots, and about experiences that stay with you long after you have left. Sacred Temples India is simply a guide — but the journey, in every way that matters, is yours to take.
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:14,marginTop:24}}>
+        <div style={{flex:1,height:1,background:"linear-gradient(to right,transparent,rgba(196,162,78,0.22))"}}/>
+        <span style={{fontFamily:FD,fontSize:13,color:C.saffron,fontStyle:"italic",opacity:.8}}>ॐ शान्तिः शान्तिः शान्तिः</span>
+        <div style={{flex:1,height:1,background:"linear-gradient(to left,transparent,rgba(196,162,78,0.22))"}}/>
+      </div>
     </div>
+
   </div>
 );
 
@@ -2695,14 +2809,80 @@ Your expertise covers:
 
 Tone: Warm, reverent, knowledgeable — like a learned temple priest who is also a well-travelled guide. Use gentle Sanskrit terms where appropriate (Namaste, Darshan, Prasad, etc.). Keep responses concise but meaningful. Use bullet points or numbered lists for routes/steps. When asked about a specific temple, provide rich context including mythology, architecture, and travel guidance. Always end pilgrimage guidance with a brief blessing or auspicious note.
 
+IMPORTANT: When you receive a context block labeled [TEMPLE DATA FROM DATABASE], use that real data in your response. Present the information in clearly structured sections using **bold headers** such as:
+**🛕 Temple Overview**
+**📍 Location & How to Reach**
+**🕐 Darshan Timings**
+**🎪 Festivals & Significance**
+**🏛️ Architecture & History**
+**📝 Special Notes**
+Only include sections for which data is available. Do not fabricate data fields that are not provided. If multiple temples match, present each briefly. If the database provides data, always prefer it over general knowledge.
+
 Respond in English unless the user writes in another language. Do not make up specific temple facts you are unsure about — acknowledge uncertainty gracefully.`;
 
 const SUGGESTIONS_DEFAULT = [
-  "What are the 12 Jyotirlingas?",
-  "Tell me about Char Dham pilgrimage",
-  "Best time to visit temples in South India?",
-  "What is the significance of Abhishek?",
+  { icon: '🛕', label: 'Famous temples to visit' },
+  { icon: '🕐', label: 'Temple timings' },
+  { icon: '🏛️', label: 'Famous temples in Tamil Nadu' },
+  { icon: '🗺️', label: 'Route to Tirupati temple' },
+  { icon: '🎪', label: 'Festivals and significance' },
+  { icon: '🕉️', label: 'What are the 12 Jyotirlingas?' },
 ];
+
+/* Search temples dataset by matching user query against key fields */
+const searchTemples = (temples, query) => {
+  if (!temples || !temples.length || !query) return [];
+  const q = query.toLowerCase();
+  const words = q.split(/\s+/).filter(w => w.length > 1);
+  const scored = temples.map(t => {
+    let score = 0;
+    const fields = [
+      t.templeName, t.deityPrimary, t.deitySecondary,
+      t.townOrCity, t.village, t.district,
+      t.stateOrUnionTerritory, t.nearestCity,
+      t.architectureStyle, t.majorFestivals,
+      t.historicalSignificance, t.specialNotes,
+    ].map(f => (f || '').toLowerCase());
+    const all = fields.join(' ');
+    // Exact phrase match in name gets highest score
+    if ((t.templeName || '').toLowerCase().includes(q)) score += 50;
+    // Exact phrase in any field
+    if (all.includes(q)) score += 20;
+    // Word-by-word matching
+    words.forEach(w => {
+      if ((t.templeName || '').toLowerCase().includes(w)) score += 10;
+      if ((t.deityPrimary || '').toLowerCase().includes(w)) score += 8;
+      if ((t.stateOrUnionTerritory || '').toLowerCase().includes(w)) score += 6;
+      if ((t.townOrCity || '').toLowerCase().includes(w)) score += 6;
+      if ((t.district || '').toLowerCase().includes(w)) score += 5;
+      if (all.includes(w)) score += 2;
+    });
+    return { temple: t, score };
+  }).filter(r => r.score > 0);
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, 5).map(r => r.temple);
+};
+
+/* Format temple data into a structured text block for the AI prompt */
+const formatTempleData = (temple) => {
+  const lines = [];
+  lines.push(`Temple: ${temple.templeName}`);
+  if (temple.deityPrimary) lines.push(`Primary Deity: ${temple.deityPrimary}`);
+  if (temple.deitySecondary) lines.push(`Secondary Deity: ${temple.deitySecondary}`);
+  const loc = [temple.village, temple.townOrCity, temple.district, temple.stateOrUnionTerritory].filter(Boolean).join(', ');
+  if (loc) lines.push(`Location: ${loc}`);
+  if (temple.latitude && temple.longitude) lines.push(`Coordinates: ${temple.latitude}, ${temple.longitude}`);
+  if (temple.nearestCity) lines.push(`Nearest City: ${temple.nearestCity}`);
+  if (temple.nearestRailwayStation) lines.push(`Nearest Railway Station: ${temple.nearestRailwayStation}`);
+  if (temple.nearestAirport) lines.push(`Nearest Airport: ${temple.nearestAirport}`);
+  if (temple.routeSummary) lines.push(`Route: ${temple.routeSummary}`);
+  if (temple.darshanTimings) lines.push(`Darshan Timings: ${temple.darshanTimings}`);
+  if (temple.majorFestivals) lines.push(`Major Festivals: ${temple.majorFestivals}`);
+  if (temple.architectureStyle) lines.push(`Architecture: ${temple.architectureStyle}`);
+  if (temple.historicalSignificance) lines.push(`Historical Significance: ${temple.historicalSignificance}`);
+  if (temple.specialNotes) lines.push(`Special Notes: ${temple.specialNotes}`);
+  return lines.join('\n');
+};
 
 // Simple markdown → React renderer (bold, code, line breaks)
 const renderMd = (text) => {
@@ -2718,10 +2898,47 @@ const renderMd = (text) => {
   });
 };
 
-const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
+/* Sarathi sacred Om hero — shown in welcome state */
+const SarathiOmHero = () => (
+  <div style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'28px 0 12px',position:'relative'}}>
+    {/* Aura rings */}
+    <div style={{position:'absolute',top:'50%',left:'50%',width:140,height:140,borderRadius:'50%',background:'radial-gradient(circle,rgba(212,133,60,0.10),transparent 70%)',transform:'translate(-50%,-50%)',animation:'sarathiAura 4s ease-in-out infinite',pointerEvents:'none'}}/>
+    <div style={{position:'absolute',top:'50%',left:'50%',width:110,height:110,borderRadius:'50%',border:'1.5px solid rgba(212,133,60,0.15)',animation:'sarathiRingPulse 3.5s ease-out infinite',pointerEvents:'none'}}/>
+    <div style={{position:'absolute',top:'50%',left:'50%',width:110,height:110,borderRadius:'50%',border:'1px solid rgba(212,133,60,0.1)',animation:'sarathiRingPulse 3.5s ease-out 1.2s infinite',pointerEvents:'none'}}/>
+    {/* Om symbol */}
+    <span aria-label="Om — sacred divine presence" style={{
+      fontFamily:"'Noto Serif Devanagari', serif",
+      fontSize:72,
+      lineHeight:1,
+      color:C.saffron,
+      animation:'sarathiBreathe 5s ease-in-out infinite, sarathiGlow 5s ease-in-out infinite',
+      userSelect:'none',
+      position:'relative',
+      zIndex:2,
+    }}>ॐ</span>
+    <div style={{marginTop:10,fontSize:13,color:C.textM,fontFamily:FD,fontWeight:500,letterSpacing:.5}}>
+      Sarathi is ready to guide you
+    </div>
+  </div>
+);
+
+/* Enhanced thinking indicator */
+const SarathiThinking = () => (
+  <div style={{display:'flex',justifyContent:'flex-start',alignItems:'flex-end',gap:8,animation:'fi .3s ease both'}}>
+    <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={17}/></div>
+    <div style={{padding:'12px 20px',borderRadius:'4px 18px 18px 18px',background:C.card,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',gap:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:5}}>
+        {[0,1,2].map(i => <div key={i} style={{width:7,height:7,borderRadius:'50%',background:C.saffron,opacity:.5,animation:`soundWave 1.2s ease-in-out infinite ${i*.18}s`}}/>)}
+      </div>
+      <span style={{fontSize:11,color:C.textD,fontFamily:FB,fontStyle:'italic'}}>Sarathi is contemplating…</span>
+    </div>
+  </div>
+);
+
+const Chat = ({onBack, temple, temples, isDark, onToggleTheme}) => {
   const greeting = temple
     ? `Namaste 🙏 I'm **Sarathi**, your divine guide. You're exploring **${temple.templeName}** in ${temple.townOrCity || temple.stateOrUnionTerritory}. Ask me anything — history, rituals, travel routes, or nearby temples.`
-    : `Namaste 🙏 I'm **Sarathi**, your divine guide to the sacred temples of Bhārata. I can help with temple history, pilgrimage routes, rituals, festivals, and travel. What would you like to know?`;
+    : `Namaste 🙏 I'm **Sarathi**, your divine guide to the sacred temples of Bhārata. I can help with temple history, pilgrimage routes, darshan timings, festivals, travel directions, and much more. What would you like to know?`;
 
   const [msgs, setMsgs] = useState([{role:'assistant', text: greeting}]);
   const [input, setInput] = useState('');
@@ -2731,10 +2948,10 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
   const taRef = useRef(null);
 
   const suggestions = temple ? [
-    `Tell me about ${temple.templeName}`,
-    `How do I travel to ${temple.townOrCity || temple.stateOrUnionTerritory}?`,
-    `What festivals are celebrated here?`,
-    `Best time to visit and darshan tips`,
+    { icon: '🛕', label: `Tell me about ${temple.templeName}` },
+    { icon: '🗺️', label: `How to reach ${temple.townOrCity || temple.stateOrUnionTerritory}` },
+    { icon: '🎪', label: 'Festivals celebrated here' },
+    { icon: '🕐', label: 'Darshan timings and tips' },
   ] : SUGGESTIONS_DEFAULT;
 
   const hasUserMsg = msgs.some(m => m.role === 'user');
@@ -2746,11 +2963,33 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
   const send = async (text) => {
     const q = (text || input).trim();
     if (!q || isLoading) return;
+    haptic(15);
     const nextMsgs = [...msgs, {role:'user', text: q}];
     setMsgs(nextMsgs);
     setInput('');
     if (taRef.current) { taRef.current.style.height = 'auto'; }
     setIsLoading(true);
+
+    // Search local temple data for relevant matches
+    const allTemples = temples || [];
+    let matchedTemples = [];
+    if (temple) {
+      // Always include current temple context
+      matchedTemples = [temple];
+      // Also search for additional matches if query mentions other temples
+      const extra = searchTemples(allTemples, q).filter(t => (t.id || t.templeName) !== (temple.id || temple.templeName));
+      matchedTemples = matchedTemples.concat(extra.slice(0, 3));
+    } else {
+      matchedTemples = searchTemples(allTemples, q);
+    }
+
+    // Build enriched system prompt with matched data
+    let enrichedPrompt = SARATHI_SYSTEM_PROMPT;
+    if (matchedTemples.length > 0) {
+      const dataBlock = matchedTemples.map(t => formatTempleData(t)).join('\n---\n');
+      enrichedPrompt += `\n\n[TEMPLE DATA FROM DATABASE]\nThe following real temple records matched the user's query. Use this data in your response:\n\n${dataBlock}`;
+    }
+
     try {
       const contents = nextMsgs.map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
@@ -2762,7 +3001,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-            system_instruction: {parts: [{text: SARATHI_SYSTEM_PROMPT}]},
+            system_instruction: {parts: [{text: enrichedPrompt}]},
             contents,
           }),
         }
@@ -2771,7 +3010,24 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
       const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       setMsgs(prev => [...prev, {role:'assistant', text: reply || '🙏 Sarathi could not respond. Please try again.'}]);
     } catch (e) {
-      setMsgs(prev => [...prev, {role:'assistant', text:'🙏 Unable to reach Sarathi right now. Please check your connection and try again.'}]);
+      // Fallback: present local data if available when API fails
+      if (matchedTemples.length > 0) {
+        const fallback = matchedTemples.map(t => {
+          const parts = [`**🛕 ${t.templeName}**`];
+          if (t.deityPrimary) parts.push(`**Deity:** ${t.deityPrimary}`);
+          const loc = [t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(', ');
+          if (loc) parts.push(`**📍 Location:** ${loc}`);
+          if (t.darshanTimings) parts.push(`**🕐 Timings:** ${t.darshanTimings}`);
+          if (t.majorFestivals) parts.push(`**🎪 Festivals:** ${t.majorFestivals}`);
+          if (t.routeSummary) parts.push(`**🗺️ Route:** ${t.routeSummary}`);
+          if (t.historicalSignificance) parts.push(`**🏛️ History:** ${t.historicalSignificance}`);
+          if (t.specialNotes) parts.push(`**📝 Notes:** ${t.specialNotes}`);
+          return parts.join('\n');
+        }).join('\n\n---\n\n');
+        setMsgs(prev => [...prev, {role:'assistant', text:`🙏 I couldn't reach the cloud, but here's what I found in our temple records:\n\n${fallback}`}]);
+      } else {
+        setMsgs(prev => [...prev, {role:'assistant', text:'🙏 Unable to reach Sarathi right now. Please check your connection and try again.'}]);
+      }
     }
     setIsLoading(false);
   };
@@ -2783,14 +3039,16 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
       {/* Header */}
       <div style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px 12px',background:C.glass,backdropFilter:'blur(20px)',borderBottom:`1px solid ${C.divL}`,flexShrink:0,position:'sticky',top:0,zIndex:60}}>
         <BackBtn onClick={onBack}/>
-        <div style={{width:44,height:44,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.25)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><OmSvg size={26}/></div>
+        <div style={{width:48,height:48,borderRadius:14,background:`linear-gradient(135deg,rgba(212,133,60,0.25),rgba(212,133,60,0.10))`,border:`1px solid rgba(212,133,60,0.3)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 0 20px rgba(212,133,60,0.12)'}}>
+          <span aria-label="Om — sacred symbol" style={{fontFamily:"'Noto Serif Devanagari', serif",fontSize:26,color:C.saffron,lineHeight:1,animation:'sarathiBreathe 5s ease-in-out infinite'}}>ॐ</span>
+        </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:7}}>
-            <span style={{fontSize:15.5,fontWeight:700,color:C.text,fontFamily:FD}}>Sarathi</span>
-            <span style={{fontSize:9,color:C.textDD,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',fontFamily:FB}}>सारथी</span>
-            <div style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 6px rgba(74,222,128,0.6)',flexShrink:0}}/>
+            <span style={{fontSize:16,fontWeight:700,color:C.text,fontFamily:FD}}>Sarathi</span>
+            <span style={{fontSize:10,color:C.saffron,fontWeight:600,letterSpacing:1,fontFamily:FB,opacity:.8}}>सारथी</span>
+            <div style={{width:7,height:7,borderRadius:'50%',background:'#4ade80',boxShadow:'0 0 8px rgba(74,222,128,0.6)',flexShrink:0,animation:'glow 2s ease-in-out infinite'}}/>
           </div>
-          <div style={{fontSize:11,color:C.textD,marginTop:1}}>{GEMINI_KEY ? 'Divine guide · powered by Google Gemini' : 'Divine guide · AI key not configured'}</div>
+          <div style={{fontSize:11,color:C.textD,marginTop:2}}>{GEMINI_KEY ? 'Live · Divine guide powered by Gemini' : 'Divine guide · AI key not configured'}</div>
         </div>
         <button className="t" onClick={onToggleTheme} style={{width:36,height:36,borderRadius:11,background:C.bg3,border:`1px solid ${C.div}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}}>
           {isDark
@@ -2813,35 +3071,60 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
 
       {/* Messages */}
       <div style={{flex:1,overflowY:'auto',padding:'14px 16px 8px',display:'flex',flexDirection:'column',gap:10}}>
+        {/* Sacred Om hero before any user messages */}
+        {!hasUserMsg && <SarathiOmHero/>}
+
         {msgs.map((m, i) => (
           <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start',alignItems:'flex-end',gap:8}}>
             {m.role === 'assistant' && (
               <div style={{width:30,height:30,borderRadius:10,background:`linear-gradient(135deg,rgba(212,133,60,0.22),rgba(212,133,60,0.08))`,border:`1px solid rgba(212,133,60,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginBottom:2}}><OmSvg size={17}/></div>
             )}
             <div style={{
-              maxWidth:'78%',
+              maxWidth:'82%',
               padding:m.role==='user'?'10px 14px':'12px 16px',
               borderRadius:m.role==='user'?'18px 18px 4px 18px':'4px 18px 18px 18px',
               background:m.role==='user'?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:`${C.card}`,
               border:m.role==='user'?'none':`1px solid ${C.div}`,
               boxShadow:m.role==='user'?`0 3px 16px rgba(212,133,60,0.25)`:`0 2px 12px rgba(0,0,0,0.08)`,
             }}>
-              <div style={{fontSize:13.5,color:m.role==='user'?'#fff':C.text,lineHeight:1.75,fontFamily:FB}}>
+              <div style={{fontSize:13.5,color:m.role==='user'?'#fff':C.text,lineHeight:1.8,fontFamily:FB}}>
                 {renderMd(m.text)}
               </div>
             </div>
           </div>
         ))}
-        {isLoading && <TypingDots/>}
+        {isLoading && <SarathiThinking/>}
         <div ref={endRef}/>
       </div>
 
-      {/* Suggestions */}
+      {/* Suggestion chips */}
       {!hasUserMsg && (
-        <div style={{padding:'6px 16px 8px',flexShrink:0,display:'flex',gap:7,flexWrap:'wrap'}}>
-          {suggestions.map(s => (
-            <button key={s} className="t" onClick={() => send(s)} style={{padding:'7px 13px',borderRadius:100,background:C.bg3,border:`1px solid ${C.div}`,fontSize:11.5,color:C.textM,cursor:'pointer',fontFamily:FB,fontWeight:500,whiteSpace:'nowrap'}}>
-              {s}
+        <div style={{padding:'6px 16px 10px',flexShrink:0,display:'flex',gap:8,flexWrap:'wrap'}}>
+          {suggestions.map((s, idx) => (
+            <button
+              key={s.label}
+              className="t"
+              onClick={() => send(s.label)}
+              style={{
+                padding:'8px 14px',
+                borderRadius:100,
+                background:`linear-gradient(135deg,${C.bg3},${C.card})`,
+                border:`1px solid ${C.div}`,
+                fontSize:12,
+                color:C.textM,
+                cursor:'pointer',
+                fontFamily:FB,
+                fontWeight:500,
+                whiteSpace:'nowrap',
+                display:'flex',
+                alignItems:'center',
+                gap:6,
+                animation:`sarathiChipIn .4s cubic-bezier(.22,1,.36,1) ${idx * .06}s both`,
+                boxShadow:`0 1px 6px rgba(0,0,0,0.06)`,
+              }}
+            >
+              <span style={{fontSize:13}}>{s.icon}</span>
+              {s.label}
             </button>
           ))}
         </div>
@@ -2855,7 +3138,7 @@ const Chat = ({onBack, temple, isDark, onToggleTheme}) => {
             value={input}
             onChange={e => { setInput(e.target.value); autoResize(e.target); }}
             onKeyDown={onKey}
-            placeholder="Ask about temples, routes, rituals…"
+            placeholder="Ask about temples, routes, timings, festivals…"
             rows={1}
             style={{flex:1,background:'none',border:'none',outline:'none',resize:'none',fontFamily:FB,fontSize:13.5,color:C.text,lineHeight:1.55,minHeight:22,maxHeight:120,padding:0}}
           />
@@ -2985,7 +3268,7 @@ export default function App() {
   else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
   else if (scr === "explore") page = <Explore nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} oF={oF} nav={nav} {...th}/>;
-  else if (scr === "chat") page = <Chat onBack={backNoTmpReset} temple={tmp} {...th}/>;
+  else if (scr === "chat") page = <Chat onBack={backNoTmpReset} temple={tmp} temples={temples} {...th}/>;
   else if (scr === "search") page = <Search oT={oT} oF={oF} onBack={back} temples={temples}/>;
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
