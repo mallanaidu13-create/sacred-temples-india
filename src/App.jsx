@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "./supabase.js";
+import LivePanchangam from "./LivePanchangam.jsx";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -1349,8 +1350,8 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     </div>
     </Reveal>
 
-    {/* PANCHANG */}
-    <Reveal delay={0}><PanchangWidget/></Reveal>
+    {/* LIVE PANCHĀṄGAM */}
+    <Reveal delay={0}><LivePanchangam/></Reveal>
 
     {/* PILGRIMAGE CIRCUIT */}
     <Reveal delay={0.05}><PilgrimageCard onNav={nav}/></Reveal>
