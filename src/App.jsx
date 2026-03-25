@@ -132,7 +132,7 @@ const STATES = [
 ];
 
 const DEITIES = [
-  {name:"Shiva",sk:"शिव",n:1847,h:350,icon:"☽"},
+  {name:"Shiva",sk:"शिव",n:1847,h:350,icon:"☽",noPic:true},
   {name:"Vishnu",sk:"विष्णु",n:1523,h:215,icon:"☸"},
   {name:"Devi",sk:"देवी",n:1206,h:280,icon:"✦"},
   {name:"Ganesha",sk:"गणेश",n:1045,h:28,icon:"◈"},
@@ -1305,7 +1305,8 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         {DEITIES.map((d,i) => (
           <div key={d.name} className="t rv" onClick={() => nav("explore")} style={{minWidth:102,textAlign:"center",cursor:"pointer",animationDelay:`${.15+i*.08}s`,scrollSnapAlign:"start"}}>
             <div style={{width:82,height:82,borderRadius:26,margin:"0 auto 12px",position:"relative",overflow:"hidden",boxShadow:`0 8px 28px ${hsl(d.h,30,8,0.6)}, 0 0 0 1px ${hsl(d.h,30,20,0.18)}`}}>
-              <TempleImage src={`https://source.unsplash.com/160x160/?${deityQuery(d.name)}&sig=${d.name}`} hue={d.h} style={{width:82,height:82}} omSize={22}/>
+              {!d.noPic && <TempleImage src={`https://source.unsplash.com/160x160/?${deityQuery(d.name)}&sig=${d.name}`} hue={d.h} style={{width:82,height:82}} omSize={22}/>}
+              {d.noPic && <div style={{position:"absolute",inset:0,background:`linear-gradient(165deg,${hsl(d.h,40,16)},${hsl(d.h,50,4)})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,opacity:0.4}}>{d.icon}</div>}
               {/* gradient + sanskrit overlay */}
               <div style={{position:"absolute",inset:0,background:`linear-gradient(transparent 35%,rgba(0,0,0,0.72))`}}/>
               <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontFamily:FD,fontSize:13,color:"rgba(255,255,255,0.92)",lineHeight:1,letterSpacing:.3}}>{d.sk}</div>
