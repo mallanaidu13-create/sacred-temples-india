@@ -189,7 +189,7 @@ const OmSymbol = ({ size = 160, style = {} }) => (
 );
 
 /* Shiva divine glow + Ganga flow hero — appears below Om in hero section */
-const SHIVA_IMG = "https://github.com/user-attachments/assets/474f6efe-cad7-4c96-a4b0-21d092fa3adc";
+const SHIVA_IMG = "https://source.unsplash.com/220x380/?shiva+temple+india&sig=shiva-hero";
 const GANGA_DROPS = [
   {x:46, delay:"0s",   dur:"3.2s"}, {x:52, delay:"0.8s",  dur:"3.8s"},
   {x:49, delay:"1.5s", dur:"3.0s"}, {x:44, delay:"2.2s",  dur:"3.5s"},
