@@ -306,6 +306,7 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes petalFloat{0%{transform:translate(-50%,-50%) translateY(0) translateX(0) scale(1) rotate(0deg);opacity:0}10%{opacity:0.85}75%{opacity:0.45}100%{transform:translate(-50%,-50%) translateY(-180px) translateX(var(--pf-x,0px)) scale(0.3) rotate(var(--pf-r,120deg));opacity:0}}
 @keyframes petalTwinkle{0%,100%{opacity:0.15;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(0.6)}40%{opacity:0.9;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(1.3)}70%{opacity:0.5;transform:translate(-50%,-50%) rotate(var(--pt-deg,0deg)) translateX(var(--pt-r,130px)) scale(0.85)}}
 @keyframes petalSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes searchGlow{0%,100%{box-shadow:0 0 0 1px rgba(212,133,60,0.12),0 0 20px rgba(212,133,60,0.04)}50%{box-shadow:0 0 0 1px rgba(212,133,60,0.28),0 0 28px rgba(212,133,60,0.1)}}
 @keyframes sarathiGlow{0%,100%{filter:drop-shadow(0 0 12px rgba(240,192,96,.6)) drop-shadow(0 0 32px rgba(212,133,60,.35)) drop-shadow(0 0 64px rgba(212,133,60,.15))}50%{filter:drop-shadow(0 0 24px rgba(255,220,100,.9)) drop-shadow(0 0 52px rgba(230,154,82,.6)) drop-shadow(0 0 96px rgba(212,133,60,.3))}}
 @keyframes sarathiBreathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.06);opacity:1}}
 @keyframes sarathiAura{0%{transform:translate(-50%,-50%) scale(.7);opacity:.5}50%{transform:translate(-50%,-50%) scale(1.15);opacity:.18}100%{transform:translate(-50%,-50%) scale(1.5);opacity:0}}
@@ -783,7 +784,7 @@ const PilgrimageCard = ({onNav}) => (
 const SH =({title, sub, act, onAct, d=0}) => (
   <div className="rv" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",padding:"0 24px",marginBottom:20,animationDelay:`${d}s`}}>
     <div>
-      <h2 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream,letterSpacing:-.3,lineHeight:1.1}}>{title}</h2>
+      <h2 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream,letterSpacing:-.3,lineHeight:1.1,background:`linear-gradient(135deg,${C.cream},${C.saffron})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>{title}</h2>
       {sub && <p style={{fontSize:11,color:C.textD,marginTop:6,letterSpacing:.5,fontWeight:500}}>{sub}</p>}
     </div>
     {act && <button className="t" onClick={onAct} style={{background:C.saffronDim,border:`1px solid rgba(212,133,60,0.15)`,color:C.saffron,fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:FB,padding:"7px 14px",borderRadius:10,letterSpacing:.6,textTransform:"uppercase",display:"flex",alignItems:"center",gap:4}}>
@@ -796,9 +797,10 @@ const Chip = ({label, active, onClick}) => (
   <button className="t" onClick={onClick} style={{
     padding:"9px 18px",borderRadius:100,fontFamily:FB,fontSize:12,fontWeight:active?700:500,
     cursor:"pointer",whiteSpace:"nowrap",letterSpacing:.3,
-    background:active?C.saffron:C.card,color:active?C.bg:C.textM,
+    background:active?`linear-gradient(135deg,${C.saffron},${C.saffronH})`:C.card,color:active?"#fff":C.textM,
     border:active?"none":`1px solid ${C.div}`,
-    boxShadow:active?"0 4px 20px rgba(212,133,60,0.3)":"none",
+    boxShadow:active?`0 4px 20px rgba(212,133,60,0.35), 0 0 0 1px rgba(212,133,60,0.2)`:"none",
+    transform:active?"scale(1.04)":"scale(1)",
     transition:"all .2s cubic-bezier(.16,1,.3,1)",
   }}>{label}</button>
 );
@@ -819,7 +821,7 @@ const FCard = memo(({t, onClick, onFav, d=0}) => {
     <div className="rv" onClick={() => onClick(t)} style={{
       width:268,minWidth:268,height:360,borderRadius:26,overflow:"hidden",
       position:"relative",cursor:"pointer",flexShrink:0,scrollSnapAlign:"start",
-      boxShadow:`0 16px 56px ${hsl(t.hue,30,5,0.6)}, 0 0 0 1px ${hsl(t.hue,30,20,0.12)}`,
+      boxShadow:`0 16px 56px ${hsl(t.hue,30,5,0.6)}, 0 8px 24px rgba(0,0,0,0.25), 0 0 0 1px ${hsl(t.hue,30,20,0.15)}, inset 0 1px 0 rgba(255,255,255,0.06)`,
       animationDelay:`${d}s`,
     }}>
       {/* 3D tilt wrapper — perspective transform without conflicting with .t active scale */}
@@ -881,7 +883,8 @@ const LCard = memo(({t, onClick, onFav, d=0}) => {
       display:"flex",gap:0,padding:0,margin:"0 24px 12px",borderRadius:20,
       background:C.card,cursor:"pointer",animationDelay:`${d}s`,
       border:`1px solid ${C.div}`,overflow:"hidden",
-      boxShadow:`0 2px 12px rgba(0,0,0,0.18)`,
+      boxShadow:`0 2px 12px rgba(0,0,0,0.18), 0 0 0 1px rgba(212,133,60,0.04)`,
+      transition:"box-shadow .25s ease, transform .15s cubic-bezier(.16,1,.3,1)",
     }}>
       <div style={{width:3,flexShrink:0,background:`linear-gradient(180deg,${C.saffron},${C.gold})`}}/>
       <div style={{display:"flex",gap:14,padding:14,flex:1,minWidth:0}}>
@@ -1072,11 +1075,11 @@ const NavSvg = ({name, col}) => {
 const BNav = ({a, on, savedCount=0}) => {
   const items = [{k:"home",l:"Home"},{k:"explore",l:"Explore"},{k:"nearby",l:"Nearby"},{k:"saved",l:"Saved"},{k:"profile",l:"Profile"}];
   return (
-    <div style={{position:"relative",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(28px) saturate(160%)",borderTop:`1px solid ${C.div}`,padding:"6px 0 20px"}}>
+    <div style={{position:"relative",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(28px) saturate(180%)",borderTop:`1px solid ${C.div}`,padding:"6px 0 20px",boxShadow:`0 -8px 32px rgba(0,0,0,0.12)`}}>
       {/* Single sliding indicator pill */}
       {(() => { const idx = items.map(t=>t.k).indexOf(a); return idx>=0 && (
-        <div style={{position:"absolute",top:0,left:`${idx * 20}%`,width:'20%',display:'flex',justifyContent:'center',transition:'left 0.38s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}}>
-          <div style={{width:28,height:3,borderRadius:3,background:`linear-gradient(90deg,${C.saffron},${C.saffronH})`,boxShadow:`0 0 14px ${C.saffron}99`}}/>
+        <div style={{position:"absolute",top:-1,left:`${idx * 20}%`,width:'20%',display:'flex',justifyContent:'center',transition:'left 0.38s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}}>
+          <div style={{width:36,height:3,borderRadius:3,background:`linear-gradient(90deg,${C.saffron},${C.saffronH})`,boxShadow:`0 0 18px ${C.saffron}bb, 0 0 6px ${C.saffron}66`}}/>
         </div>
       ); })()}
       <div style={{display:"flex",justifyContent:"space-around"}}>
@@ -1085,7 +1088,7 @@ const BNav = ({a, on, savedCount=0}) => {
           const col = active ? C.saffron : C.textDD;
           return (
             <button key={t.k} aria-label={t.l} className="t" onClick={() => { haptic(12); on(t.k); }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 14px",position:"relative"}}>
-              <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:active?C.saffronDim:"transparent",transform:active?'scale(1)':'scale(0.88)',transition:"all .28s cubic-bezier(.16,1,.3,1)",position:"relative"}}>
+              <div style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:active?C.saffronDim:"transparent",transform:active?'scale(1)':'scale(0.88)',transition:"all .28s cubic-bezier(.16,1,.3,1)",position:"relative",boxShadow:active?`0 0 16px rgba(212,133,60,0.2)`:"none"}}>
                 <NavSvg name={t.k} col={col}/>
                 {/* Saved badge */}
                 {t.k === "saved" && savedCount > 0 && (
@@ -1348,13 +1351,13 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       <ShivaDivineHero />
 
       {/* Search */}
-      <div className="t" onClick={() => nav("search")} style={{padding:"15px 20px",borderRadius:18,background:"rgba(255,255,255,0.04)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",gap:14,border:`1px solid ${C.div}`,cursor:"pointer",position:"relative",zIndex:2,marginTop:26}}>
-        <span style={{fontSize:16,color:C.textDD}}>⌕</span>
+      <div className="t" onClick={() => nav("search")} style={{padding:"15px 20px",borderRadius:18,background:"rgba(255,255,255,0.04)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",gap:14,border:`1px solid rgba(212,133,60,0.18)`,cursor:"pointer",position:"relative",zIndex:2,marginTop:26,animation:"searchGlow 4s ease-in-out infinite"}}>
+        <span style={{fontSize:16,color:C.saffron,opacity:.6}}>⌕</span>
         <span style={{flex:1,fontSize:14,color:C.textDD}}>Search temples, deities, places…</span>
       </div>
 
       {/* Stats — count-up animation on mount */}
-      <div ref={statsRef} style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2}}>
+      <div ref={statsRef} style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2,padding:"6px 8px",borderRadius:22,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.divL}`,backdropFilter:"blur(12px)"}}>
         {[
           {val:templesCount, suffix:"+", l:"Temples"},
           {val:statesCount,  suffix:"",  l:"States & UTs"},
@@ -1527,13 +1530,13 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
 
     {/* Footer verse */}
     <div style={{padding:"56px 40px 24px",textAlign:"center"}}>
-      <div style={{width:28,height:1,background:`rgba(196,162,78,0.18)`,margin:"0 auto 24px"}}/>
+      <div style={{width:60,height:1,background:`linear-gradient(90deg,transparent,rgba(196,162,78,0.3),transparent)`,margin:"0 auto 24px"}}/>
       <div style={{fontFamily:FD,fontSize:16,color:C.textD,fontStyle:"italic",lineHeight:1.85,letterSpacing:.2}}>
         "Where the temple bell resonates,<br/>the divine presence abides."
       </div>
       <div style={{marginTop:20,fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:3,textTransform:"uppercase"}}>Sacred Temples of Bhārata</div>
       <button className="t" onClick={() => nav("about")} style={{marginTop:16,padding:"8px 22px",borderRadius:99,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.18)`,cursor:"pointer",fontSize:11,fontWeight:700,color:C.saffron,letterSpacing:.8,textTransform:"uppercase",fontFamily:FB}}>About this App</button>
-      <div style={{width:28,height:1,background:`rgba(196,162,78,0.18)`,margin:"20px auto 0"}}/>
+      <div style={{width:60,height:1,background:`linear-gradient(90deg,transparent,rgba(196,162,78,0.3),transparent)`,margin:"20px auto 0"}}/>
     </div>
   </div>
   );
