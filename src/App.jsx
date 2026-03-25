@@ -784,7 +784,7 @@ const PilgrimageCard = ({onNav}) => (
 const SH =({title, sub, act, onAct, d=0}) => (
   <div className="rv" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",padding:"0 24px",marginBottom:20,animationDelay:`${d}s`}}>
     <div>
-      <h2 style={{fontFamily:FD,fontSize:24,fontWeight:500,letterSpacing:-.3,lineHeight:1.1,background:`linear-gradient(135deg,${C.cream},${C.saffron})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>{title}</h2>
+      <h2 style={{fontFamily:FD,fontSize:24,fontWeight:500,color:C.cream,letterSpacing:-.3,lineHeight:1.1,background:`linear-gradient(135deg,${C.cream},${C.saffron})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>{title}</h2>
       {sub && <p style={{fontSize:11,color:C.textD,marginTop:6,letterSpacing:.5,fontWeight:500}}>{sub}</p>}
     </div>
     {act && <button className="t" onClick={onAct} style={{background:C.saffronDim,border:`1px solid rgba(212,133,60,0.15)`,color:C.saffron,fontSize:10.5,fontWeight:700,cursor:"pointer",fontFamily:FB,padding:"7px 14px",borderRadius:10,letterSpacing:.6,textTransform:"uppercase",display:"flex",alignItems:"center",gap:4}}>
@@ -1354,7 +1354,6 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       <div className="t" onClick={() => nav("search")} style={{padding:"15px 20px",borderRadius:18,background:"rgba(255,255,255,0.04)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",gap:14,border:`1px solid rgba(212,133,60,0.18)`,cursor:"pointer",position:"relative",zIndex:2,marginTop:26,animation:"searchGlow 4s ease-in-out infinite"}}>
         <span style={{fontSize:16,color:C.saffron,opacity:.6}}>⌕</span>
         <span style={{flex:1,fontSize:14,color:C.textDD}}>Search temples, deities, places…</span>
-        <span style={{fontSize:10,color:C.textDD,opacity:.5,fontWeight:600,letterSpacing:.5}}>⌘K</span>
       </div>
 
       {/* Stats — count-up animation on mount */}
