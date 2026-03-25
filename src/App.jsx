@@ -188,6 +188,86 @@ const OmSymbol = ({ size = 160, style = {} }) => (
   </span>
 );
 
+/* Shiva divine glow + Ganga flow hero — appears below Om in hero section */
+const SHIVA_IMG = "https://github.com/user-attachments/assets/474f6efe-cad7-4c96-a4b0-21d092fa3adc";
+const GANGA_DROPS = [
+  {x:46, delay:"0s",   dur:"3.2s"}, {x:52, delay:"0.8s",  dur:"3.8s"},
+  {x:49, delay:"1.5s", dur:"3.0s"}, {x:44, delay:"2.2s",  dur:"3.5s"},
+  {x:54, delay:"0.4s", dur:"4.0s"}, {x:48, delay:"1.9s",  dur:"2.9s"},
+];
+const ShivaDivineHero = () => (
+  <div style={{position:"relative",display:"flex",justifyContent:"center",alignItems:"flex-start",marginTop:18,marginBottom:8,zIndex:2}}>
+    {/* Ganga droplets — start from hair area (top 15%) */}
+    {GANGA_DROPS.map((d,i) => (
+      <div key={i} style={{
+        position:"absolute", left:`${d.x}%`, top:"12%",
+        width:2, height:10, borderRadius:4,
+        background:"linear-gradient(to bottom, rgba(160,210,255,0.82), rgba(180,230,255,0.3))",
+        filter:"blur(0.5px)",
+        pointerEvents:"none", zIndex:5,
+        animation:`gangaDrop ${d.dur} ease-in infinite ${d.delay}`,
+      }}/>
+    ))}
+
+    {/* Shiva image wrapper — breathing float */}
+    <div style={{
+      position:"relative",
+      animation:"shivaBreath 6s ease-in-out infinite",
+      willChange:"transform",
+    }}>
+      {/* Layer A — Core aura behind image */}
+      <div style={{
+        position:"absolute", inset:"-18px",
+        borderRadius:"50%",
+        background:"radial-gradient(ellipse at 50% 40%, rgba(140,190,255,0.22) 0%, rgba(100,160,230,0.10) 45%, transparent 72%)",
+        filter:"blur(18px)",
+        animation:"shivaGlowPulse 4s ease-in-out infinite",
+        pointerEvents:"none", zIndex:0,
+      }}/>
+      {/* Layer A warm mix */}
+      <div style={{
+        position:"absolute", inset:"-12px",
+        borderRadius:"50%",
+        background:"radial-gradient(ellipse at 50% 60%, rgba(212,133,60,0.10) 0%, transparent 65%)",
+        filter:"blur(14px)",
+        animation:"shivaGlowPulse 4s ease-in-out infinite 2s",
+        pointerEvents:"none", zIndex:0,
+      }}/>
+      {/* Layer C — Edge highlight ring */}
+      <div style={{
+        position:"absolute", inset:"-4px",
+        borderRadius:18,
+        animation:"shivaEdgeGlow 4s ease-in-out infinite",
+        pointerEvents:"none", zIndex:0,
+      }}/>
+
+      {/* The Shiva image */}
+      <img
+        src={SHIVA_IMG}
+        alt="Divine Lord Shiva glowing with sacred Ganga flow"
+        style={{
+          display:"block",
+          width:220, height:"auto",
+          maxWidth:"100%",
+          borderRadius:16,
+          objectFit:"cover",
+          position:"relative", zIndex:1,
+        }}
+      />
+
+      {/* Ganga mist — bottom fade dissolve */}
+      <div style={{
+        position:"absolute", bottom:0, left:0, right:0, height:"35%",
+        background:"linear-gradient(to top, rgba(100,160,230,0.18) 0%, rgba(140,200,255,0.08) 55%, transparent 100%)",
+        borderRadius:"0 0 16px 16px",
+        filter:"blur(6px)",
+        pointerEvents:"none", zIndex:2,
+        animation:"shivaGlowPulse 6s ease-in-out infinite 1s",
+      }}/>
+    </div>
+  </div>
+);
+
 const getCss = (theme) => `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Serif+Devanagari:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -232,6 +312,10 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes sarathiRingPulse{0%{transform:translate(-50%,-50%) scale(.6);opacity:.6;border-color:rgba(212,133,60,.4)}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0;border-color:rgba(212,133,60,0)}}
 @keyframes sarathiChipIn{from{opacity:0;transform:translateY(8px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes sarathiThinking{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes shivaBreath{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.02)}}
+@keyframes shivaGlowPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.85;transform:scale(1.06)}}
+@keyframes shivaEdgeGlow{0%,100%{box-shadow:0 0 28px 6px rgba(180,220,255,0.13),0 0 60px 16px rgba(120,180,255,0.07)}50%{box-shadow:0 0 44px 12px rgba(180,220,255,0.22),0 0 90px 28px rgba(120,180,255,0.12)}}
+@keyframes gangaDrop{0%{opacity:0;transform:translateY(-4px)}15%{opacity:.72}75%{opacity:.38}100%{opacity:0;transform:translateY(60px)}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -1259,6 +1343,9 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
           </button>
         </div>
       </div>
+
+      {/* SHIVA DIVINE HERO — below Om symbol */}
+      <ShivaDivineHero />
 
       {/* Search */}
       <div className="t" onClick={() => nav("search")} style={{padding:"15px 20px",borderRadius:18,background:"rgba(255,255,255,0.04)",backdropFilter:"blur(20px)",display:"flex",alignItems:"center",gap:14,border:`1px solid ${C.div}`,cursor:"pointer",position:"relative",zIndex:2,marginTop:26}}>
