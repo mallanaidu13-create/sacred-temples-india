@@ -87,6 +87,8 @@ const CLight = {
 let C = CDark;
 
 const hsl = (h, s, l, a) => a != null ? `hsla(${h},${s}%,${l}%,${a})` : `hsl(${h},${s}%,${l}%)`;
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
 const STATES = [
   // ── 28 States (sorted by temple count) ────────────────────────────────────
@@ -180,7 +182,7 @@ const OmSymbol = ({ size = 160, style = {} }) => (
     fontSize: size,
     lineHeight: 1,
     color: C.saffron,
-    animation: "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
+    animation: prefersReducedMotion() ? "none" : "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
     userSelect: "none",
     ...style,
   }}>
@@ -189,7 +191,7 @@ const OmSymbol = ({ size = 160, style = {} }) => (
 );
 
 /* Shiva divine glow + Ganga flow hero — appears below Om in hero section */
-const SHIVA_IMG = "https://source.unsplash.com/220x380/?shiva+temple+india&sig=shiva-hero";
+const SHIVA_IMG = "/shiva-hero.svg";
 const GANGA_DROPS = [
   {x:46, delay:"0s",   dur:"3.2s"}, {x:52, delay:"0.8s",  dur:"3.8s"},
   {x:49, delay:"1.5s", dur:"3.0s"}, {x:44, delay:"2.2s",  dur:"3.5s"},
@@ -205,14 +207,14 @@ const ShivaDivineHero = () => (
         background:"linear-gradient(to bottom, rgba(160,210,255,0.82), rgba(180,230,255,0.3))",
         filter:"blur(0.5px)",
         pointerEvents:"none", zIndex:5,
-        animation:`gangaDrop ${d.dur} ease-in infinite ${d.delay}`,
+        animation: prefersReducedMotion() ? "none" : `gangaDrop ${d.dur} ease-in infinite ${d.delay}`,
       }}/>
     ))}
 
     {/* Shiva image wrapper — breathing float */}
     <div style={{
       position:"relative",
-      animation:"shivaBreath 6s ease-in-out infinite",
+      animation: prefersReducedMotion() ? "none" : "shivaBreath 6s ease-in-out infinite",
       willChange:"transform",
     }}>
       {/* Layer A — Core aura behind image */}
@@ -221,7 +223,7 @@ const ShivaDivineHero = () => (
         borderRadius:"50%",
         background:"radial-gradient(ellipse at 50% 40%, rgba(140,190,255,0.22) 0%, rgba(100,160,230,0.10) 45%, transparent 72%)",
         filter:"blur(18px)",
-        animation:"shivaGlowPulse 4s ease-in-out infinite",
+        animation: prefersReducedMotion() ? "none" : "shivaGlowPulse 4s ease-in-out infinite",
         pointerEvents:"none", zIndex:0,
       }}/>
       {/* Layer A warm mix */}
@@ -230,14 +232,14 @@ const ShivaDivineHero = () => (
         borderRadius:"50%",
         background:"radial-gradient(ellipse at 50% 60%, rgba(212,133,60,0.10) 0%, transparent 65%)",
         filter:"blur(14px)",
-        animation:"shivaGlowPulse 4s ease-in-out infinite 2s",
+        animation: prefersReducedMotion() ? "none" : "shivaGlowPulse 4s ease-in-out infinite 2s",
         pointerEvents:"none", zIndex:0,
       }}/>
       {/* Layer C — Edge highlight ring */}
       <div style={{
         position:"absolute", inset:"-4px",
         borderRadius:18,
-        animation:"shivaEdgeGlow 4s ease-in-out infinite",
+        animation: prefersReducedMotion() ? "none" : "shivaEdgeGlow 4s ease-in-out infinite",
         pointerEvents:"none", zIndex:0,
       }}/>
 
@@ -245,6 +247,8 @@ const ShivaDivineHero = () => (
       <img
         src={SHIVA_IMG}
         alt="Divine Lord Shiva glowing with sacred Ganga flow"
+        loading="lazy"
+        decoding="async"
         style={{
           display:"block",
           width:220, height:"auto",
@@ -262,7 +266,7 @@ const ShivaDivineHero = () => (
         borderRadius:"0 0 16px 16px",
         filter:"blur(6px)",
         pointerEvents:"none", zIndex:2,
-        animation:"shivaGlowPulse 6s ease-in-out infinite 1s",
+        animation: prefersReducedMotion() ? "none" : "shivaGlowPulse 6s ease-in-out infinite 1s",
       }}/>
     </div>
   </div>
