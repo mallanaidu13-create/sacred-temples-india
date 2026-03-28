@@ -1171,6 +1171,18 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
   const { playing, toggle } = useOmChant();
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
+  const savedCount = temples.filter(x => x.isFavorite).length;
+  const trendingDeity = temples.reduce((acc, t) => {
+    const deity = t.deityPrimary || "Sacred";
+    acc[deity] = (acc[deity] || 0) + 1;
+    return acc;
+  }, {});
+  const topDeity = Object.entries(trendingDeity).sort((a, b) => b[1] - a[1])[0]?.[0] || "Shiva";
+  const quickActions = [
+    { label: "Explore All", sub: "Browse temples", onClick: () => nav("explore"), icon: "🛕" },
+    { label: "Find Nearby", sub: "Temples around you", onClick: () => nav("nearby"), icon: "📍" },
+    { label: "Sacred States", sub: "View all 36", onClick: () => nav("stateBrowse"), icon: "🗺️" },
+  ];
   // Animated stats counters
   const [templesCount, triggerTemples] = useCountUp(3000, 1600);
   const [statesCount,  triggerStates]  = useCountUp(36,   1200);
@@ -1361,6 +1373,18 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
         <span style={{flex:1,fontSize:14,color:C.textDD}}>Search temples, deities, places…</span>
       </div>
 
+      {/* Contextual highlights */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:14,position:"relative",zIndex:2}}>
+        <div style={{padding:"12px 12px 11px",borderRadius:14,background:isDark?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.8)",border:`1px solid ${C.divL}`,backdropFilter:"blur(12px)"}}>
+          <div style={{fontSize:9.5,fontWeight:700,color:C.textD,letterSpacing:1.2,textTransform:"uppercase"}}>Trending Deity</div>
+          <div style={{marginTop:6,fontFamily:FD,fontSize:18,color:C.creamM,lineHeight:1.2}}>{topDeity}</div>
+        </div>
+        <div style={{padding:"12px 12px 11px",borderRadius:14,background:isDark?"rgba(255,255,255,0.04)":"rgba(255,255,255,0.8)",border:`1px solid ${C.divL}`,backdropFilter:"blur(12px)",textAlign:"right"}}>
+          <div style={{fontSize:9.5,fontWeight:700,color:C.textD,letterSpacing:1.2,textTransform:"uppercase"}}>Saved Shrines</div>
+          <div style={{marginTop:6,fontFamily:FD,fontSize:18,color:C.creamM,lineHeight:1.2}}>{savedCount}</div>
+        </div>
+      </div>
+
       {/* Stats — count-up animation on mount */}
       <div ref={statsRef} style={{display:"flex",justifyContent:"center",gap:0,marginTop:28,position:"relative",zIndex:2,padding:"6px 8px",borderRadius:22,background:"rgba(255,255,255,0.03)",border:`1px solid ${C.divL}`,backdropFilter:"blur(12px)"}}>
         {[
@@ -1375,6 +1399,27 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
             </div>
             <div style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,marginTop:5,textTransform:"uppercase"}}>{s.l}</div>
           </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Quick actions */}
+    <div style={{marginTop:18,padding:"0 24px"}}>
+      <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:2,scrollSnapType:"x proximity"}}>
+        {quickActions.map((qa, i) => (
+          <button key={qa.label} className="t rv" onClick={qa.onClick} style={{
+            minWidth:164, padding:"12px 14px", borderRadius:16, border:`1px solid ${C.div}`,
+            background:`linear-gradient(140deg,${C.cardH},${C.card})`, display:"flex", alignItems:"center", gap:10,
+            cursor:"pointer", textAlign:"left", scrollSnapAlign:"start", animationDelay:`${0.08 + i * 0.05}s`,
+          }}>
+            <div style={{width:34,height:34,borderRadius:11,background:C.saffronDim,border:`1px solid ${C.saffronPale}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>
+              {qa.icon}
+            </div>
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:12.5,fontWeight:700,color:C.creamM,whiteSpace:"nowrap"}}>{qa.label}</div>
+              <div style={{fontSize:10.5,color:C.textD,marginTop:2,whiteSpace:"nowrap"}}>{qa.sub}</div>
+            </div>
+          </button>
         ))}
       </div>
     </div>
