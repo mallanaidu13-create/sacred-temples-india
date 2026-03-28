@@ -327,6 +327,7 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 .rv{animation:rv .55s cubic-bezier(.16,1,.3,1) both}
 .fi{animation:fi .32s ease both}
 .t{transition:transform .15s cubic-bezier(.16,1,.3,1),box-shadow .15s ease}.t:active{transform:scale(.955)}
+button:focus-visible,[role="button"]:focus-visible,input:focus-visible{outline:2px solid ${theme.saffron};outline-offset:2px;box-shadow:0 0 0 4px ${theme.saffronPale}}
 ::-webkit-scrollbar{width:0;height:0}
 input{font-family:${FB}}
 input::placeholder{color:${theme.textD}}
@@ -1566,6 +1567,8 @@ const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
     if (sortBy === "state") return (a.stateOrUnionTerritory||"").localeCompare(b.stateOrUnionTerritory||"");
     return 0;
   });
+  const activeFilterCount = fl.length;
+  const hasActiveState = sortBy !== "default" || activeFilterCount > 0;
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"22px 24px 16px",display:"flex",alignItems:"center",gap:10}}>
@@ -1579,9 +1582,10 @@ const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
           <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
         </div>
       </div>
-      <div className="t" onClick={() => nav("search")} style={{margin:"0 24px",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
-        <span style={{fontSize:15,color:C.textDD}}>⌕</span><span style={{flex:1,fontSize:14,color:C.textD}}>Search temples…</span>
-      </div>
+      <button className="t" onClick={() => nav("search")} style={{margin:"0 24px",width:"calc(100% - 48px)",padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`1px solid ${C.div}`,cursor:"pointer"}}>
+        <span style={{fontSize:15,color:C.textDD}}>⌕</span><span style={{flex:1,textAlign:"left",fontSize:14,color:C.textD}}>Search temples…</span>
+        <span style={{fontSize:10.5,fontWeight:700,color:C.textDD,letterSpacing:.4,textTransform:"uppercase"}}>Tap to open</span>
+      </button>
       <div style={{position:"sticky",top:0,zIndex:50,background:C.glass,backdropFilter:"blur(20px)",padding:"14px 0 12px",borderBottom:`1px solid ${C.divL}`}}>
         <div style={{display:"flex",gap:8,overflowX:"auto",padding:"0 24px"}}>{opts.map(f => <Chip key={f} label={f} active={f === "All" ? fl.length === 0 : fl.includes(f)} onClick={() => tg(f)}/>)}</div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 24px 0"}}>
@@ -1590,6 +1594,31 @@ const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
             <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
             {sortLabels[sortBy]}
           </button>
+        </div>
+        {hasActiveState && (
+          <div style={{display:"flex",alignItems:"center",gap:8,overflowX:"auto",padding:"12px 24px 0"}}>
+            {sortBy !== "default" && (
+              <button className="t" onClick={() => setSortBy("default")} style={{padding:"6px 10px",borderRadius:999,background:C.saffronPale,border:`1px solid ${C.saffronDim}`,color:C.saffron,fontSize:10.5,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                Sort: {sortLabels[sortBy]} ✕
+              </button>
+            )}
+            {fl.map(f => (
+              <button key={f} className="t" onClick={() => tg(f)} style={{padding:"6px 10px",borderRadius:999,background:C.card,border:`1px solid ${C.div}`,color:C.textM,fontSize:10.5,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                {f} ✕
+              </button>
+            ))}
+            <button className="t" onClick={() => { setFl([]); setSortBy("default"); }} style={{padding:"6px 10px",borderRadius:999,background:"transparent",border:`1px dashed ${C.div}`,color:C.textD,fontSize:10.5,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+              Reset all
+            </button>
+          </div>
+        )}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 24px 0"}}>
+          <span style={{fontSize:11,color:C.textDD}}>
+            {activeFilterCount > 0 ? `${activeFilterCount} active filter${activeFilterCount > 1 ? "s" : ""}` : "No active filters"}
+          </span>
+          <span style={{fontSize:11,color:C.textDD}}>
+            View: {v === "grid" ? "Grid" : "List"}
+          </span>
         </div>
       </div>
       <div style={{paddingTop:16}}>
