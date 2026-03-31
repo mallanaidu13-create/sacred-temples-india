@@ -336,6 +336,11 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes goldenRing{0%{transform:translate(-50%,-50%) scale(1);opacity:0.85;border-color:rgba(212,133,60,0.9)}100%{transform:translate(-50%,-50%) scale(2.8);opacity:0;border-color:rgba(212,133,60,0)}}
 @keyframes borderDraw{from{stroke-dashoffset:var(--bd-len,100)}to{stroke-dashoffset:0}}
 @keyframes cardSlideIn{from{opacity:0;transform:translateY(28px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes vizBar{0%,100%{transform:scaleY(0.15);opacity:0.12}50%{transform:scaleY(1);opacity:0.88}}
+@keyframes sunriseSweep{0%{clip-path:inset(0 100% 0 0);opacity:1}65%{clip-path:inset(0 0% 0 0);opacity:0.88}100%{clip-path:inset(0 0% 0 0);opacity:0}}
+@keyframes intentionIn{0%{opacity:0;transform:scale(0.96) translateY(16px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes routeDash{from{stroke-dashoffset:var(--route-len,800)}to{stroke-dashoffset:0}}
+@keyframes dotPulse{0%,100%{r:4;opacity:0.8}50%{r:6;opacity:1}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -904,6 +909,8 @@ const FCard = memo(({t, onClick, onFav, d=0}) => {
 // ── List Card ──
 const LCard = memo(({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const [burst, setBurst] = useState(0);
+  const DEGS = [0,45,90,135,180,225,270,315];
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
       display:"flex",gap:0,padding:0,margin:"0 24px 12px",borderRadius:20,
@@ -928,7 +935,12 @@ const LCard = memo(({t, onClick, onFav, d=0}) => {
             </span>
           </div>
         </div>
-        <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
+        <div style={{position:"relative",display:"flex",alignItems:"center",padding:"8px 4px"}}>
+          {burst > 0 && DEGS.map((deg,i) => (
+            <div key={`hb-${burst}-${i}`} aria-hidden="true" style={{position:"absolute",top:"50%",left:"50%",width:6,height:6,borderRadius:"50%",background:C.red,pointerEvents:"none",zIndex:10,"--hb-deg":`${deg}deg`,animation:"heartBurst 0.65s ease-out both",animationDelay:`${i*0.04}s`}}/>
+          ))}
+          <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" onClick={e => { e.stopPropagation(); if (!t.isFavorite) { setBurst(b => b+1); haptic(30); } onFav?.(t.id, t.isFavorite); }} style={{fontSize:15,color:t.isFavorite?C.red:C.textDD,cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
+        </div>
       </div>
     </div>
   );
@@ -1142,6 +1154,180 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
+// ── Circuit progress helpers ──
+const cpGet = id => { try { return JSON.parse(localStorage.getItem(`cp_${id}`) || '[]'); } catch { return []; } };
+const cpSet = (id, arr) => localStorage.setItem(`cp_${id}`, JSON.stringify(arr));
+
+// ── Geographic coordinates for pilgrimage route map ──
+// [x, y] in SVG viewBox (0 0 210 265) where x=(lon-68)*7, y=(37-lat)*8
+const CIRCUIT_COORDS = {
+  jyotirlingas: [
+    [17,129,"Somnath"],[8,118,"Nageshwar"],[38,136,"Tryambakeshwar"],[38,143,"Bhimashankar"],
+    [50,136,"Grishneshwar"],[57,119,"Omkareshwar"],[55,110,"Mahakaleshwar"],
+    [78,50,"Kedarnath"],[105,94,"Kashi"],[131,100,"Vaidyanath"],
+    [76,167,"Mallikarjuna"],[79,221,"Rameshwaram"],
+  ],
+  shakti_peethas: [
+    [14,72,"Mansa Devi"],[8,80,"Jwala Devi"],[46,136,"Kolhapur"],
+    [109,88,"Varanasi"],[140,124,"Tarapith"],[140,117,"Dakshineswar"],
+    [160,91,"Kamakhya"],[8,167,"Kanyakumari"],[14,96,"Naina Devi"],
+    [60,80,"Vaishnodevi"],[84,192,"Chennai"],[60,136,"Tulja Bhavani"],
+  ],
+  divya_desams: [
+    [82,159,"Tirumala"],[75,182,"Srirangam"],[78,50,"Badrinath"],[8,136,"Dwarka"],
+    [84,185,"Kanchipuram"],[75,200,"Kumbakonam"],[72,196,"Thanjavur"],
+    [84,192,"Chennai"],[79,221,"Rameswaram"],[70,229,"Kanyakumari"],
+    [56,216,"Thiruvananthapuram"],[49,208,"Guruvayur"],[62,200,"Madurai"],
+    [77,188,"Tirupati"],[98,168,"Srisailam"],[105,94,"Mathura"],
+    [90,157,"Ahobilam"],[47,179,"Mangalore"],[55,110,"Ujjain"],
+    [82,66,"Haridwar"],
+  ],
+  char_dham: [
+    [73,48,"Yamunotri"],[76,49,"Gangotri"],[78,50,"Kedarnath"],[81,50,"Badrinath"],
+  ],
+};
+
+// ── SVG Progress Arc ──
+const ProgressArc = ({ visited, total, hue, size = 38 }) => {
+  const pct = total > 0 ? Math.min(1, visited / total) : 0;
+  const r = 14, circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct);
+  if (visited === 0) return null;
+  return (
+    <svg width={size} height={size} viewBox="0 0 36 36" style={{position:"absolute",top:10,right:10}}>
+      <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3"/>
+      <circle cx="18" cy="18" r={r} fill="none"
+        stroke={hsl(hue,60,58)} strokeWidth="3" strokeLinecap="round"
+        strokeDasharray={circ.toFixed(1)} strokeDashoffset={offset.toFixed(1)}
+        transform="rotate(-90 18 18)"
+        style={{transition:"stroke-dashoffset 0.7s cubic-bezier(.22,1,.36,1)"}}/>
+      <text x="18" y="22" textAnchor="middle" fontSize="7.5" fontWeight="700"
+        fill={hsl(hue,60,65)} style={{fontFamily:FB}}>{visited}</text>
+    </svg>
+  );
+};
+
+// ── Om Circular Visualizer ──
+const OmVisualizer = ({ playing }) => {
+  const HEIGHTS = [14,22,12,28,16,24,10,26,18,30,12,22,28,14,24,18,32,14,20,26,10,28,16,22,30,12,26,18,22,28,14,20,16,24,20,18];
+  const R = 158;
+  return (
+    <div aria-hidden="true" style={{position:"absolute",top:"50%",left:"50%",width:0,height:0,pointerEvents:"none",zIndex:1}}>
+      {HEIGHTS.map((h,i) => {
+        const rad = (i * 10 - 90) * Math.PI / 180;
+        const x = Math.cos(rad) * R;
+        const y = Math.sin(rad) * R;
+        const spd = (0.62 + Math.abs(Math.sin(i * 0.8)) * 0.52).toFixed(2);
+        const dly = (i * 0.042 % 0.72).toFixed(3);
+        return (
+          <div key={i} style={{
+            position:"absolute", width:3, height:h,
+            transform:`translate(${(x-1.5).toFixed(1)}px,${(y-h).toFixed(1)}px) rotate(${i*10}deg)`,
+            transformOrigin:`1.5px ${h}px`,
+          }}>
+            <div style={{
+              width:"100%", height:"100%", borderRadius:2,
+              background:`rgba(212,133,60,${(0.42+Math.abs(Math.sin(i*0.7))*0.42).toFixed(2)})`,
+              transformOrigin:"center bottom",
+              animation: playing ? `vizBar ${spd}s ease-in-out infinite ${dly}s` : "none",
+              opacity: playing ? undefined : 0.1,
+              transition:"opacity 1.4s ease",
+              boxShadow: playing ? "0 0 4px rgba(212,133,60,0.35)" : "none",
+            }}/>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ── Daily Intention Splash (shows once per calendar day) ──
+const INTENTIONS = [
+  { sk:"सर्वे भवन्तु सुखिनः", en:"May all beings be happy, may all be free from suffering" },
+  { sk:"तमसो मा ज्योतिर्गमय", en:"Lead me from darkness into light, from ignorance into wisdom" },
+  { sk:"ॐ शान्तिः शान्तिः शान्तिः", en:"Om — peace in body, peace in mind, peace in spirit" },
+  { sk:"अहं ब्रह्मास्मि", en:"I am Brahman — the consciousness that pervades all creation" },
+  { sk:"यत्र योगेश्वरः कृष्णः", en:"Where there is Krishna, there is victory, wisdom, and prosperity" },
+  { sk:"मातृदेवो भव", en:"Honor your mother as a deity — she is the first sacred ground" },
+  { sk:"सत्यं शिवं सुन्दरम्", en:"Truth is auspicious, auspiciousness is beauty itself" },
+];
+const DailyIntention = ({ onClose }) => {
+  const panchang = getHinduPanchang();
+  const today = new Date();
+  const shloka = INTENTIONS[today.getDate() % INTENTIONS.length];
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:9998,
+      background:`radial-gradient(ellipse at 50% 35%,${hsl(30,55,10)},${hsl(350,45,5)} 65%,${hsl(30,30,3)})`,
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+      padding:"40px 32px", textAlign:"center",
+      animation:"intentionIn 0.7s cubic-bezier(.22,1,.36,1) both",
+    }}>
+      {/* Ambient glow */}
+      <div style={{position:"absolute",top:"30%",left:"50%",width:320,height:320,borderRadius:"50%",
+        background:"radial-gradient(circle,rgba(212,133,60,0.12),transparent 65%)",
+        transform:"translate(-50%,-50%)",filter:"blur(60px)",pointerEvents:"none"}}/>
+      {/* Om */}
+      <div style={{fontFamily:"'Noto Serif Devanagari', serif",fontSize:72,color:C.saffron,
+        animation:"omGlow 4s ease-in-out infinite",lineHeight:1,marginBottom:24,position:"relative",zIndex:2}}>ॐ</div>
+      {/* Panchang */}
+      <div style={{display:"flex",gap:16,marginBottom:32,position:"relative",zIndex:2}}>
+        {[{l:"Tithi",v:panchang.tithi},{l:"Nakshatra",v:panchang.nakshatra},{l:"Vara",v:panchang.vara.split("a")[0]+"a"}].map(p => (
+          <div key={p.l} style={{textAlign:"center"}}>
+            <div style={{fontSize:8,color:"rgba(212,133,60,0.5)",fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:4}}>{p.l}</div>
+            <div style={{fontFamily:FD,fontSize:13,color:C.creamM}}>{p.v}</div>
+          </div>
+        ))}
+      </div>
+      {/* Shloka */}
+      <div style={{position:"relative",zIndex:2,maxWidth:300}}>
+        <div style={{fontFamily:"'Noto Serif Devanagari', serif",fontSize:22,color:C.saffron,lineHeight:1.5,marginBottom:14}}>{shloka.sk}</div>
+        <div style={{fontFamily:FD,fontSize:14,color:C.creamD,lineHeight:1.8,fontStyle:"italic",marginBottom:36}}>{shloka.en}</div>
+      </div>
+      {/* CTA */}
+      <button className="t" onClick={onClose} style={{
+        padding:"14px 44px",borderRadius:100,
+        background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,
+        color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",
+        fontFamily:FB,letterSpacing:.5,
+        boxShadow:`0 6px 32px rgba(212,133,60,0.4)`,
+        position:"relative",zIndex:2,
+      }}>Begin the Journey</button>
+      <div style={{marginTop:20,fontSize:10,color:C.textDD,letterSpacing:1,position:"relative",zIndex:2}}>
+        {today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}
+      </div>
+    </div>
+  );
+};
+
+// ── Voice Search Button ──
+const VoiceSearch = ({ onResult }) => {
+  const [listening, setListening] = useState(false);
+  const recRef = useRef(null);
+  const SR = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  if (!SR) return null;
+  const start = () => {
+    if (listening) { recRef.current?.stop(); return; }
+    const r = new SR();
+    recRef.current = r;
+    r.lang = 'en-IN'; r.continuous = false; r.interimResults = false;
+    r.onresult = e => { onResult(e.results[0][0].transcript); setListening(false); };
+    r.onerror = () => setListening(false);
+    r.onend = () => setListening(false);
+    r.start();
+    setListening(true);
+    haptic(15);
+  };
+  return (
+    <button aria-label={listening ? "Stop listening" : "Search by voice"} className="t" onClick={start} style={{
+      background:"none", border:"none", cursor:"pointer",
+      color: listening ? C.saffron : C.textD,
+      fontSize:17, padding:"4px 6px", lineHeight:1,
+      animation: listening ? "breathe 0.9s ease-in-out infinite" : "none",
+    }}>🎙</button>
+  );
+};
+
 /* Slot-machine digit roller — one column per digit */
 const OdometerDigit = ({ digit, size = 28, color, delay = 0, triggered }) => {
   const rowH = Math.ceil(size * 1.3);
@@ -1177,6 +1363,7 @@ const Odometer = ({ value, size = 28, color, triggered }) => (
 
 const SacredCircuits = ({nav, isDark}) => {
   const [triggered, setTriggered] = useState(false);
+  const [visitCounts, setVisitCounts] = useState({});
   const stripRef = useRef(null);
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
@@ -1185,11 +1372,19 @@ const SacredCircuits = ({nav, isDark}) => {
     if (stripRef.current) obs.observe(stripRef.current);
     return () => obs.disconnect();
   }, []);
+  useEffect(() => {
+    setVisitCounts({
+      Jyotirlingas: cpGet("jyotirlingas").length,
+      "Shakti Peethas": cpGet("shakti_peethas").length,
+      "Divya Desams": cpGet("divya_desams").length,
+      "Char Dhams": cpGet("char_dham").length,
+    });
+  }, []);
   const circuits = [
-    {v:12,  l:"Jyotirlingas",   icon:"☽", h:350},
-    {v:51,  l:"Shakti Peethas", icon:"✦", h:280},
-    {v:108, l:"Divya Desams",   icon:"☸", h:215},
-    {v:4,   l:"Char Dhams",     icon:"◎", h:140},
+    {v:12,  l:"Jyotirlingas",   icon:"☽", h:350, id:"jyotirlingas"},
+    {v:51,  l:"Shakti Peethas", icon:"✦", h:280, id:"shakti_peethas"},
+    {v:108, l:"Divya Desams",   icon:"☸", h:215, id:"divya_desams"},
+    {v:4,   l:"Char Dhams",     icon:"◎", h:140, id:"char_dham"},
   ];
   return (
     <Reveal delay={0}>
@@ -1206,6 +1401,7 @@ const SacredCircuits = ({nav, isDark}) => {
               animation:`circuitGlow 4s ease-in-out infinite ${i*.8}s`,
             }}>
               <div style={{position:"absolute",top:0,left:"-100%",width:"45%",height:"100%",background:`linear-gradient(105deg,transparent,${hsl(c.h,60,70,0.07)},transparent)`,animation:`premiumSheen 5s ease-in-out infinite ${i*0.9+1}s`,pointerEvents:"none"}}/>
+              <ProgressArc visited={visitCounts[c.l]||0} total={c.v} hue={c.h}/>
               <div style={{fontSize:20,marginBottom:8,filter:`drop-shadow(0 0 6px ${hsl(c.h,60,55,0.5)})`}}>{c.icon}</div>
               <Odometer value={c.v} size={28} color={hsl(c.h,55,isDark?68:42)} triggered={triggered}/>
               <div style={{fontSize:11,color:C.textM,fontWeight:600,letterSpacing:.3,marginTop:6}}>{c.l}</div>
@@ -1214,6 +1410,60 @@ const SacredCircuits = ({nav, isDark}) => {
         </div>
       </div>
     </Reveal>
+  );
+};
+
+// ── Circuit card with 3D tilt ──
+const CircuitCard = ({ c, i, onCircuit, isDark }) => {
+  const { ref: tiltRef, tilt, onMove, onLeave } = useTilt();
+  const [visited, setVisited] = useState(() => cpGet(c.id).length);
+  const isSettled = tilt.x === 0 && tilt.y === 0;
+  const b1 = hsl(c.hue,35,isDark?13:90), b2 = hsl(c.hue,42,isDark?6:96);
+  return (
+    <div className="rv" onClick={() => onCircuit(c)} style={{
+      borderRadius:24,overflow:"hidden",marginBottom:14,cursor:"pointer",
+      background:`linear-gradient(135deg,${b1},${b2})`,
+      border:`1px solid ${hsl(c.hue,30,isDark?20:78,0.15)}`,
+      boxShadow:`0 6px 32px ${hsl(c.hue,30,5,0.3)}`,
+      animationDelay:`${i*.08}s`,position:"relative",
+    }}>
+      <div ref={tiltRef} onMouseMove={onMove} onTouchMove={onMove} onMouseLeave={onLeave} onTouchEnd={onLeave}
+        style={{
+          transform:`perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transition: isSettled ? 'transform 0.5s cubic-bezier(.16,1,.3,1)' : 'none',
+          transformOrigin:'center center', willChange:'transform',
+        }}>
+        <div style={{position:"absolute",top:"-20%",right:"-5%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,50,40,0.06)},transparent 60%)`,filter:"blur(40px)",pointerEvents:"none"}}/>
+        {/* Progress arc overlay */}
+        {visited > 0 && (
+          <div style={{position:"absolute",top:16,right:16,zIndex:3}}>
+            <ProgressArc visited={visited} total={c.count} hue={c.hue} size={40}/>
+          </div>
+        )}
+        <div style={{padding:"22px",position:"relative",zIndex:2}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+            <div>
+              <div style={{fontSize:9,color:hsl(c.hue,50,55,0.7),fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{c.deity}</div>
+              <h3 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,lineHeight:1.15}}>{c.name}</h3>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+              <div style={{fontFamily:FD,fontSize:32,fontWeight:500,color:hsl(c.hue,50,55,0.6),lineHeight:1}}>{c.count}</div>
+              <div style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:3}}>Sites</div>
+            </div>
+          </div>
+          <p style={{fontSize:13,color:C.creamD,lineHeight:1.7,fontFamily:FD,fontStyle:"italic",marginBottom:14}}>{c.essence.slice(0,110)}…</p>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",gap:6}}>
+              {c.pacing.map(p => (
+                <div key={p.days} style={{padding:"4px 11px",borderRadius:100,background:"rgba(255,255,255,0.05)",fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>{p.days}d</div>
+              ))}
+            </div>
+            {visited > 0 && <div style={{fontSize:10,color:hsl(c.hue,55,60,0.8),fontWeight:700}}>{visited}/{c.count} visited</div>}
+            <span style={{color:"rgba(255,255,255,0.2)",fontSize:16}}>→</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -1235,47 +1485,23 @@ const CircuitsPage = ({onCircuit, isDark}) => (
     </div>
     <div style={{padding:"32px 24px 0"}}>
       <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:20}}>The Four Sacred Circuits</div>
-      {CIRCUITS.map((c,i) => {
-        const b1 = hsl(c.hue,35,isDark?13:90), b2 = hsl(c.hue,42,isDark?6:96);
-        return (
-          <div key={c.id} className="t rv" onClick={() => onCircuit(c)} style={{
-            borderRadius:24,overflow:"hidden",marginBottom:14,cursor:"pointer",
-            background:`linear-gradient(135deg,${b1},${b2})`,
-            border:`1px solid ${hsl(c.hue,30,isDark?20:78,0.15)}`,
-            boxShadow:`0 6px 32px ${hsl(c.hue,30,5,0.3)}`,
-            animationDelay:`${i*.08}s`,position:"relative",
-          }}>
-            <div style={{position:"absolute",top:"-20%",right:"-5%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,50,40,0.06)},transparent 60%)`,filter:"blur(40px)",pointerEvents:"none"}}/>
-            <div style={{padding:"22px",position:"relative",zIndex:2}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:9,color:hsl(c.hue,50,55,0.7),fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{c.deity}</div>
-                  <h3 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,lineHeight:1.15}}>{c.name}</h3>
-                </div>
-                <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-                  <div style={{fontFamily:FD,fontSize:32,fontWeight:500,color:hsl(c.hue,50,55,0.6),lineHeight:1}}>{c.count}</div>
-                  <div style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:3}}>Sites</div>
-                </div>
-              </div>
-              <p style={{fontSize:13,color:C.creamD,lineHeight:1.7,fontFamily:FD,fontStyle:"italic",marginBottom:14}}>{c.essence.slice(0,110)}…</p>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{display:"flex",gap:6}}>
-                  {c.pacing.map(p => (
-                    <div key={p.days} style={{padding:"4px 11px",borderRadius:100,background:"rgba(255,255,255,0.05)",fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>{p.days}d</div>
-                  ))}
-                </div>
-                <span style={{color:"rgba(255,255,255,0.2)",fontSize:16}}>→</span>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {CIRCUITS.map((c,i) => (
+        <CircuitCard key={c.id} c={c} i={i} onCircuit={onCircuit} isDark={isDark}/>
+      ))}
     </div>
   </div>
 );
 
 const CircuitDetail = ({circuit: c, onBack, isDark}) => {
   const [tab, setTab] = useState("overview");
+  const [visited, setVisited] = useState(() => new Set(cpGet(c.id)));
+  const toggleVisited = (idx) => setVisited(prev => {
+    const next = new Set(prev);
+    next.has(idx) ? next.delete(idx) : next.add(idx);
+    cpSet(c.id, [...next]);
+    haptic(20);
+    return next;
+  });
   const b1 = hsl(c.hue,38,isDark?15:88), b2 = hsl(c.hue,44,isDark?7:94), b3 = hsl(c.hue,50,isDark?3:97);
   return (
     <div className="fi" style={{paddingBottom:44}}>
@@ -1314,7 +1540,7 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
         </div>
       </div>
       <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50,overflowX:"auto"}}>
-        {["overview","temples","pacing","wisdom"].map(tb => (
+        {["overview","temples","pacing","wisdom","map"].map(tb => (
           <button key={tb} className="t" onClick={() => setTab(tb)} style={{padding:"15px 16px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s",whiteSpace:"nowrap"}}>{tb}</button>
         ))}
       </div>
@@ -1342,13 +1568,16 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
           </div>
         </div>}
         {tab === "temples" && <div className="fi">
-          <div style={{fontSize:12,color:C.textD,marginBottom:14}}>Key sites · {c.count} total in complete circuit</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <div style={{fontSize:12,color:C.textD}}>Key sites · {c.count} total in complete circuit</div>
+            {visited.size > 0 && <div style={{fontSize:11,color:hsl(c.hue,55,60),fontWeight:700}}>{visited.size} visited</div>}
+          </div>
           {c.temples.map((t,i) => (
             <div key={i} className="rv" style={{padding:"14px 0",borderBottom:`1px solid ${C.divL}`,animationDelay:`${i*.04}s`}}>
               <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-                <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(145deg,${hsl(c.hue,35,16)},${hsl(c.hue,45,8)})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,color:hsl(c.hue,50,55,0.7),fontWeight:700,fontFamily:FD}}>{i+1}</div>
+                <button className="t" onClick={() => toggleVisited(i)} aria-label={visited.has(i) ? "Mark not visited" : "Mark visited"} style={{width:34,height:34,borderRadius:11,background:visited.has(i)?`linear-gradient(145deg,${hsl(c.hue,55,30)},${hsl(c.hue,60,20)})`:`linear-gradient(145deg,${hsl(c.hue,35,16)},${hsl(c.hue,45,8)})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:visited.has(i)?14:11,color:visited.has(i)?hsl(c.hue,70,75):hsl(c.hue,50,55,0.7),fontWeight:700,fontFamily:FD,border:`1px solid ${visited.has(i)?hsl(c.hue,50,35,0.5):"transparent"}`,cursor:"pointer",transition:"all .3s cubic-bezier(.22,1,.36,1)",boxShadow:visited.has(i)?`0 0 12px ${hsl(c.hue,50,40,0.25)}`:"none"}}>{visited.has(i) ? "✓" : i+1}</button>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:15,fontWeight:600,color:C.cream,fontFamily:FD,marginBottom:3}}>{t.n}</div>
+                  <div style={{fontSize:15,fontWeight:600,color:visited.has(i)?hsl(c.hue,50,70):C.cream,fontFamily:FD,marginBottom:3,transition:"color .3s"}}>{t.n}</div>
                   <div style={{fontSize:11.5,color:C.textD,marginBottom:5,display:"flex",alignItems:"center",gap:4}}><div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.loc}</div>
                   {t.note && <div style={{fontSize:12,color:C.creamD,lineHeight:1.6,fontStyle:"italic"}}>{t.note}</div>}
                 </div>
@@ -1384,6 +1613,46 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
             </div>
           ))}
         </div>}
+        {tab === "map" && (() => {
+          const pts = CIRCUIT_COORDS[c.id] || [];
+          if (!pts.length) return <div style={{padding:40,textAlign:"center",color:C.textD,fontStyle:"italic",fontFamily:FD}}>Map not available for this circuit.</div>;
+          const xs = pts.map(p=>p[0]), ys = pts.map(p=>p[1]);
+          const minX = Math.min(...xs)-14, maxX = Math.max(...xs)+14;
+          const minY = Math.min(...ys)-14, maxY = Math.max(...ys)+14;
+          const vw = maxX - minX, vh = maxY - minY;
+          const routeD = pts.map((p,i) => `${i===0?"M":"L"}${p[0]},${p[1]}`).join(" ");
+          const routeLen = pts.length * 28;
+          return (
+            <div className="fi" style={{paddingBottom:24}}>
+              <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Pilgrimage Route Map</div>
+              <div style={{borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,padding:12}}>
+                <svg viewBox={`${minX} ${minY} ${vw} ${vh}`} style={{width:"100%",height:"auto",display:"block"}} aria-label={`${c.name} pilgrimage route map`}>
+                  {/* route path */}
+                  <path d={routeD} fill="none" stroke={hsl(c.hue,55,50,0.22)} strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/>
+                  <path d={routeD} fill="none" stroke={hsl(c.hue,65,60)} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round"
+                    strokeDasharray={routeLen} style={{"--route-len":routeLen,strokeDashoffset:routeLen,animation:`routeDash 2.4s cubic-bezier(.22,1,.36,1) 0.3s forwards`}}/>
+                  {/* dots */}
+                  {pts.map((p,i) => {
+                    const isV = visited.has(i % c.temples.length);
+                    return (
+                      <g key={i}>
+                        <circle cx={p[0]} cy={p[1]} r="5.5" fill={hsl(c.hue,40,18)} stroke={hsl(c.hue,50,35,0.3)} strokeWidth="0.8"/>
+                        <circle cx={p[0]} cy={p[1]} r={isV ? 3.5 : 2.8} fill={isV ? hsl(c.hue,70,65) : hsl(c.hue,55,52,0.75)}
+                          style={{animation:`dotPulse ${1.6+i*0.1}s ease-in-out infinite ${i*0.12}s`}}/>
+                        <text x={p[0]} y={p[1]-8} textAnchor="middle" fontSize="3.8" fill={hsl(c.hue,50,70,0.7)} fontFamily="serif" style={{pointerEvents:"none"}}>{p[2]}</text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:16,marginTop:14,padding:"12px 0",borderTop:`1px solid ${C.divL}`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:10,height:10,borderRadius:"50%",background:hsl(c.hue,70,65)}}/><span style={{fontSize:11,color:C.textD}}>Visited</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:10,height:10,borderRadius:"50%",background:hsl(c.hue,55,52,0.75)}}/><span style={{fontSize:11,color:C.textD}}>Remaining</span></div>
+                <div style={{marginLeft:"auto",fontSize:11,color:hsl(c.hue,55,60),fontWeight:700}}>{visited.size}/{c.temples.length} marked</div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -1562,6 +1831,8 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
           </svg>
         </div>
 
+        {/* OM audio visualizer — circular waveform bars */}
+        <OmVisualizer playing={playing}/>
         {/* OM glyph */}
         <OmSymbol size={168} />
         {/* Golden ring flash on chant tap */}
@@ -2076,7 +2347,7 @@ const Search = ({oT, oF, onBack, temples}) => {
         <div style={{flex:1,padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`2px solid ${C.saffron}`,boxShadow:`0 0 0 4px ${C.saffronDim}`}}>
           <span style={{fontSize:15,color:C.saffron}}>⌕</span>
           <input autoFocus type="search" aria-label="Search temples" placeholder="Temple, deity, city, state…" value={q} onChange={e => { setQ(e.target.value); }} onKeyDown={e => e.key==='Enter' && saveHistory(q)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
-          {q && <button aria-label="Clear search" className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button>}
+          {q ? <button aria-label="Clear search" className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button> : <VoiceSearch onResult={term => { setQ(term); saveHistory(term); }}/>}
         </div>
       </div>
       {!q ? <div style={{padding:"18px 24px"}}>
@@ -3486,6 +3757,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') !== 'light');
+  const [sunrising, setSunrising] = useState(false);
+  const [showIntention, setShowIntention] = useState(() => {
+    const today = new Date().toDateString();
+    return localStorage.getItem('intentionDate') !== today;
+  });
   const [navDir, setNavDir] = useState('none');
   const [pageKey, setPageKey] = useState(0);
   const [toast, setToast] = useState({msg:'',icon:'✓',visible:false});
@@ -3511,6 +3787,7 @@ export default function App() {
     setIsDark(v => {
       const next = !v;
       localStorage.setItem('theme', next ? 'dark' : 'light');
+      if (!next) { setSunrising(true); setTimeout(() => setSunrising(false), 2200); }
       return next;
     });
   }, []);
@@ -3611,6 +3888,14 @@ export default function App() {
         <main id="main-content" ref={ref} role="main" style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
           <div key={pageKey} className={transitionClass}>{page}</div>
         </main>
+        {/* Sunrise sweep — triggers on dark→light toggle */}
+        {sunrising && (
+          <div aria-hidden="true" style={{position:"absolute",inset:0,zIndex:200,pointerEvents:"none",background:"linear-gradient(135deg,rgba(255,200,80,0.72) 0%,rgba(255,160,40,0.55) 40%,rgba(255,220,120,0.38) 100%)",animation:"sunriseSweep 2.1s cubic-bezier(.22,1,.36,1) both"}}/>
+        )}
+        {/* Daily intention splash */}
+        {showIntention && (
+          <DailyIntention onClose={() => { const today = new Date().toDateString(); localStorage.setItem('intentionDate', today); setShowIntention(false); }}/>
+        )}
         <Toast msg={toast.msg} icon={toast.icon} visible={toast.visible}/>
         {/* Sarathi FAB — floats above BNav */}
         {showNav && (
