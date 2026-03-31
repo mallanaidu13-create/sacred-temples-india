@@ -267,22 +267,27 @@ const OmSvg = ({ size = 28, color }) => {
 };
 
 /* Large Om symbol — uses actual ॐ Unicode glyph with Noto Serif Devanagari */
-const OmSymbol = ({ size = 160, style = {} }) => (
-  <span style={{
-    display: "inline-block",
-    position: "relative",
-    zIndex: 2,
-    fontFamily: "'Noto Serif Devanagari', serif",
-    fontSize: size,
-    lineHeight: 1,
-    color: C.saffron,
-    animation: "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
-    userSelect: "none",
-    ...style,
-  }}>
-    ॐ
-  </span>
-);
+const OmSymbol = ({ size = 160, style = {} }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t); }, []);
+  return (
+    <span style={{
+      display: "inline-block", position: "relative", zIndex: 2,
+      opacity: mounted ? 1 : 0,
+      transform: mounted ? "scale(1) rotate(0deg)" : "scale(0.45) rotate(-20deg)",
+      transition: "opacity 1.1s cubic-bezier(.22,1,.36,1), transform 1.2s cubic-bezier(.22,1,.36,1)",
+      ...style,
+    }}>
+      <span style={{
+        display: "inline-block",
+        fontFamily: "'Noto Serif Devanagari', serif",
+        fontSize: size, lineHeight: 1, color: C.saffron,
+        animation: "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
+        userSelect: "none",
+      }}>ॐ</span>
+    </span>
+  );
+};
 
 const getCss = (theme) => `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Serif+Devanagari:wght@400;700&display=swap');
@@ -328,6 +333,9 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes sarathiRingPulse{0%{transform:translate(-50%,-50%) scale(.6);opacity:.6;border-color:rgba(212,133,60,.4)}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0;border-color:rgba(212,133,60,0)}}
 @keyframes sarathiChipIn{from{opacity:0;transform:translateY(8px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes sarathiThinking{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes goldenRing{0%{transform:translate(-50%,-50%) scale(1);opacity:0.85;border-color:rgba(212,133,60,0.9)}100%{transform:translate(-50%,-50%) scale(2.8);opacity:0;border-color:rgba(212,133,60,0)}}
+@keyframes borderDraw{from{stroke-dashoffset:var(--bd-len,100)}to{stroke-dashoffset:0}}
+@keyframes cardSlideIn{from{opacity:0;transform:translateY(28px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -1134,24 +1142,54 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
+/* Slot-machine digit roller — one column per digit */
+const OdometerDigit = ({ digit, size = 28, color, delay = 0, triggered }) => {
+  const rowH = Math.ceil(size * 1.3);
+  const colW = Math.ceil(size * 0.68);
+  return (
+    <div style={{ overflow: "hidden", height: rowH, width: colW, display: "inline-block" }}>
+      <div style={{
+        transform: `translateY(${triggered ? -digit * rowH : 0}px)`,
+        transition: triggered
+          ? `transform 0.9s ${delay}ms cubic-bezier(.25,.46,.45,.94)`
+          : "none",
+      }}>
+        {[0,1,2,3,4,5,6,7,8,9].map(n => (
+          <div key={n} style={{
+            height: rowH,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: FD, fontSize: size, fontWeight: 500, color, lineHeight: 1,
+          }}>{n}</div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Odometer = ({ value, size = 28, color, triggered }) => (
+  <div style={{ display: "inline-flex", lineHeight: 1, overflow: "hidden" }}>
+    {String(value).split("").map((d, i) => (
+      <OdometerDigit key={i} digit={Number(d)} size={size} color={color}
+        delay={i * 110} triggered={triggered} />
+    ))}
+  </div>
+);
+
 const SacredCircuits = ({nav, isDark}) => {
-  const [c1, t1] = useCountUp(12,  900);
-  const [c2, t2] = useCountUp(51,  1100);
-  const [c3, t3] = useCountUp(108, 1400);
-  const [c4, t4] = useCountUp(4,   700);
+  const [triggered, setTriggered] = useState(false);
   const stripRef = useRef(null);
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { t1(); t2(); t3(); t4(); obs.disconnect(); }
+      if (e.isIntersecting) { setTriggered(true); obs.disconnect(); }
     }, {threshold: 0.35});
     if (stripRef.current) obs.observe(stripRef.current);
     return () => obs.disconnect();
-  }, [t1, t2, t3, t4]);
+  }, []);
   const circuits = [
-    {n:c1, l:"Jyotirlingas",   icon:"☽", h:350},
-    {n:c2, l:"Shakti Peethas", icon:"✦", h:280},
-    {n:c3, l:"Divya Desams",   icon:"☸", h:215},
-    {n:c4, l:"Char Dhams",     icon:"◎", h:140},
+    {v:12,  l:"Jyotirlingas",   icon:"☽", h:350},
+    {v:51,  l:"Shakti Peethas", icon:"✦", h:280},
+    {v:108, l:"Divya Desams",   icon:"☸", h:215},
+    {v:4,   l:"Char Dhams",     icon:"◎", h:140},
   ];
   return (
     <Reveal delay={0}>
@@ -1169,8 +1207,8 @@ const SacredCircuits = ({nav, isDark}) => {
             }}>
               <div style={{position:"absolute",top:0,left:"-100%",width:"45%",height:"100%",background:`linear-gradient(105deg,transparent,${hsl(c.h,60,70,0.07)},transparent)`,animation:`premiumSheen 5s ease-in-out infinite ${i*0.9+1}s`,pointerEvents:"none"}}/>
               <div style={{fontSize:20,marginBottom:8,filter:`drop-shadow(0 0 6px ${hsl(c.h,60,55,0.5)})`}}>{c.icon}</div>
-              <div style={{fontFamily:FD,fontSize:28,fontWeight:500,color:hsl(c.h,55,isDark?68:42),lineHeight:1,marginBottom:6}}>{c.n}</div>
-              <div style={{fontSize:11,color:C.textM,fontWeight:600,letterSpacing:.3}}>{c.l}</div>
+              <Odometer value={c.v} size={28} color={hsl(c.h,55,isDark?68:42)} triggered={triggered}/>
+              <div style={{fontSize:11,color:C.textM,fontWeight:600,letterSpacing:.3,marginTop:6}}>{c.l}</div>
             </div>
           ))}
         </div>
@@ -1242,6 +1280,21 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
   return (
     <div className="fi" style={{paddingBottom:44}}>
       <div style={{height:300,position:"relative",overflow:"hidden",background:`linear-gradient(178deg,${b1},${b2} 50%,${b3})`}}>
+        {/* SVG corner border-draw — traces golden corners on mount */}
+        <svg aria-hidden="true" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:6}} viewBox="0 0 100 100" preserveAspectRatio="none">
+          {/* top-left */}
+          <path d="M12,0.5 L0.5,0.5 L0.5,12" fill="none" stroke={`${hsl(c.hue,60,55,0.55)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.25s both"}}/>
+          {/* top-right */}
+          <path d="M88,0.5 L99.5,0.5 L99.5,12" fill="none" stroke={`${hsl(c.hue,60,55,0.55)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.45s both"}}/>
+          {/* bottom-left */}
+          <path d="M0.5,88 L0.5,99.5 L12,99.5" fill="none" stroke={`${hsl(c.hue,60,55,0.4)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.65s both"}}/>
+          {/* bottom-right */}
+          <path d="M99.5,88 L99.5,99.5 L88,99.5" fill="none" stroke={`${hsl(c.hue,60,55,0.4)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.85s both"}}/>
+        </svg>
         <div style={{position:"absolute",top:"10%",right:"0",width:250,height:250,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,55,45,0.06)},transparent 55%)`,filter:"blur(50px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:"18%",left:"50%",animation:"drift 10s ease-in-out infinite",pointerEvents:"none"}}>
           <span style={{fontFamily:FD,fontSize:64,color:hsl(c.hue,30,50,0.025),userSelect:"none"}}>{c.sk}</span>
@@ -1338,6 +1391,8 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
 
 const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[]}) => {
   const { playing, toggle } = useOmChant();
+  const [chantFlash, setChantFlash] = useState(0);
+  const handleChantToggle = () => { haptic(playing ? 20 : 40); toggle(); setChantFlash(f => f + 1); };
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
   // Animated stats counters
@@ -1509,9 +1564,19 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
 
         {/* OM glyph */}
         <OmSymbol size={168} />
+        {/* Golden ring flash on chant tap */}
+        {chantFlash > 0 && (
+          <div key={chantFlash} aria-hidden="true" style={{
+            position:"absolute",top:"50%",left:"50%",
+            width:180,height:180,borderRadius:"50%",
+            border:"2.5px solid rgba(212,133,60,0.9)",
+            animation:"goldenRing 0.7s ease-out both",
+            pointerEvents:"none",zIndex:10,
+          }}/>
+        )}
         {/* Om chant button */}
         <div style={{position:"absolute",bottom:-14,left:"50%",transform:"translateX(-50%)",zIndex:3}}>
-          <button className="t" onClick={toggle} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 22px",borderRadius:100,background:playing?"rgba(212,133,60,0.9)":"rgba(212,133,60,0.12)",border:`1.5px solid ${playing?C.saffron:"rgba(212,133,60,0.3)"}`,cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:playing?`0 4px 28px rgba(212,133,60,0.4)`:"none"}}>
+          <button className="t" onClick={handleChantToggle} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 22px",borderRadius:100,background:playing?"rgba(212,133,60,0.9)":"rgba(212,133,60,0.12)",border:`1.5px solid ${playing?C.saffron:"rgba(212,133,60,0.3)"}`,cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:playing?`0 4px 28px rgba(212,133,60,0.4)`:"none"}}>
             {/* Sound wave bars */}
             <div style={{display:"flex",alignItems:"center",gap:2,height:14}}>
               {[1,1.8,1.3,2,1.5,1.1,1.7].map((h,i) => (
