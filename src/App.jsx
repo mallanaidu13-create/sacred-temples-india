@@ -158,97 +158,148 @@ const PANCHANG = {
 
 const CIRCUITS = [
   {id:"jyotirlingas",name:"Dvādasha Jyotirlinga Circuit",shortName:"12 Jyotirlingas",sk:"ज्योतिर्लिङ्ग",deity:"Shiva",count:12,hue:350,
-    essence:"Twelve pillars of primordial light where Śiva blazes self-revealed — swayambhu lingas radiating the absolute consciousness that pierces time itself.",
-    significance:"The twelve Jyotirlingas map a sacred geography of Shiva's self-manifestation. Each site marks where the column of fire became visible to Brahma and Vishnu in their cosmic contest. Together they constitute the complete body of Shaiva pilgrimage.",
+    essence:"Twelve pillars of primordial fire where Śiva blazes as self-revealed light — swayambhu lingas that erupted from the earth without human hands, radiating the absolute consciousness that pierces time, death, and the illusion of separateness. To stand before each is to stand before the column of light that has no beginning and no end.",
+    significance:"When Brahma and Vishnu contested supremacy, Shiva manifested as an infinite column of fire — the Jyotirlinga. Brahma lied about reaching its top; Vishnu surrendered. Shiva cursed Brahma and blessed Vishnu, establishing the supreme nature of conscious surrender. The twelve Jyotirlingas mark the twelve points where this cosmic fire touched the earth and remains eternally accessible. The Shiva Purana declares that even the sight of these lingas burns accumulated karma across seven lifetimes. Each linga is swayambhu — self-arisen — not made by hands but condensed from the divine will of Maheshvara. Completing the circuit is described as equal to completing a thousand Ashwamedha yagnas.",
     temples:[
-      {n:"Somnath",loc:"Prabhās Pātan, Gujarat",note:"First Jyotirlinga · Faces the Arabian Sea · Rebuilt 17 times"},
-      {n:"Mallikārjuna",loc:"Srisailam, Andhra Pradesh",note:"Only site where both Jyotirlinga and Shakti Peetha coincide"},
-      {n:"Mahākāleshwar",loc:"Ujjain, Madhya Pradesh",note:"The only Dakshinamukhi Jyotirlinga · Lord of Time"},
-      {n:"Omkāreshwar",loc:"Mandhata Island, MP",note:"Island shaped like Aum · Two lingas share one sanctum"},
-      {n:"Kedārnāth",loc:"Rudraprayag, Uttarakhand",note:"3,583m · Pancha Kedar crown · Open May–Nov"},
-      {n:"Bhīmāshankar",loc:"Pune district, Maharashtra",note:"Source of the Bhima River · Dense forest sanctuary"},
-      {n:"Vishvanāth",loc:"Kāshi, Varanasi, UP",note:"Lord of the Universe · Central pillar of Shaiva cosmos"},
-      {n:"Tryambakeshwar",loc:"Nashik, Maharashtra",note:"Three-faced linga · Source of the Godavari"},
-      {n:"Vaidyanāth",loc:"Deoghar, Jharkhand",note:"Healing deity · Shravan month draws millions"},
-      {n:"Nāgeshwar",loc:"Dwarka coast, Gujarat",note:"Lord of Serpents · Near Char Dham site of Dwarka"},
-      {n:"Rāmeshwar",loc:"Rameswaram, Tamil Nadu",note:"Char Dham · Ram installed this linga · 22 sacred wells"},
-      {n:"Ghrishneshwar",loc:"Ellora, Maharashtra",note:"Near Ajanta-Ellora · Final Jyotirlinga in sacred sequence"},
+      {n:"Somnath",loc:"Prabhāsa Pātan, Saurashtra, Gujarat",note:"First & most ancient Jyotirlinga · Faces the Arabian Sea · Rebuilt 17 times after invasions · Moon (Chandra) installed the original · Massive 49m spire rebuilt in 1951 under Sardar Patel · Darshan: 6 AM–9:30 PM"},
+      {n:"Mallikārjuna",loc:"Srisailam, Nandyal district, Andhra Pradesh",note:"Second Jyotirlinga · Also a Shakti Peetha (neck of Sati) · Deep gorge of Krishna River · 2,000-year-old temple · Shiva and Parvati dwell as Mallikarjuna and Bhramaramba · Accessible by ropeway · Open 5:30 AM–10 PM"},
+      {n:"Mahākāleshwar",loc:"Ujjain, Madhya Pradesh",note:"Third Jyotirlinga · Only south-facing (Dakshinamukhi) Jyotirlinga · Lord of Time and Death · Famous Bhasma Aarti at 4 AM uses ash from cremation grounds · Temple has five floors · City of Kumbh Mela every 12 years · Darshan 4 AM–11 PM"},
+      {n:"Omkāreshwar",loc:"Mandhata Island (Shivapuri), Khandwa district, MP",note:"Fourth Jyotirlinga · Island shaped like the sacred syllable Aum when seen from air · Two lingas — Omkareshwar and Mamleshwar — on same island · Narmada encircles the island · 1,000-year-old Paramara dynasty temple · Rope bridge + boat access"},
+      {n:"Kedārnāth",loc:"Rudraprayag district, Uttarakhand — 3,583m altitude",note:"Fifth Jyotirlinga · Highest Jyotirlinga in the Himalayas · Part of Pancha Kedar · Linga is a natural hump-shaped rock (Shiva as a bull) · 16km trek from Gaurikund · Open only May–November · Uttarakhand glacier backdrop · One of the 64 Shaiva sites of liberation"},
+      {n:"Bhīmāshankar",loc:"Sahyadri hills, Pune district, Maharashtra — 3,250ft",note:"Sixth Jyotirlinga · Source of the Bhima River · Dense Sahyadri forest sanctuary with rare wildlife · Shiva slew the demon Bhima here · Wildlife Sanctuary surrounds the temple · Trek or road access from Pune (110km) · Pre-dawn aarti at 4:30 AM"},
+      {n:"Kāshi Vishvanāth",loc:"Dashashvamedha Ghat area, Varanasi, Uttar Pradesh",note:"Seventh Jyotirlinga · Lord of the Universe (Vishveshvara) · Varanasi is the city where Shiva whispers the Taraka mantra into the ear of the dying — guaranteeing liberation · New Corridor (2022) restored ancient views · Ganges flows north here — rarest cosmic alignment · Darshan 3 AM–11 PM · Shringara Aarti at sunrise is transcendent"},
+      {n:"Tryambakeshwar",loc:"Nashik, Maharashtra — on Brahmagiri mountain",note:"Eighth Jyotirlinga · Three-faced linga representing Brahma, Vishnu, Shiva · Source of the sacred Godavari River · Kumbh Mela held every 12 years at Nashik · Panchavati (Rama's exile site) is 30km away · Ancient black stone linga barely visible in silver crown · Non-Hindus have limited sanctum access"},
+      {n:"Vaidyanāth (Baidyanath)",loc:"Deoghar, Santhal Pargana, Jharkhand",note:"Ninth Jyotirlinga · The Healing God (Vaidya = physician) · Ravana installed this linga after severe penance · Also a Shakti Peetha · Shravan month: millions carry sacred Gangajal from Sultanganj (108km) on foot — world's largest annual pilgrimage walk · 22 temples in the complex · Open 4 AM–3:30 PM, 6 PM–9 PM"},
+      {n:"Nāgeshwar",loc:"Dwarka coast, Saurashtra, Gujarat",note:"Tenth Jyotirlinga · Lord of Serpents (Naga = serpent) · Massive 25m Shiva statue outside · Located 17km from Dwarka (Char Dham) — visit both in one day · Ancient mythology: Shiva appeared here to free devotee Supriya from demon Daruka · Also called Nagnathaswami"},
+      {n:"Rāmanathaswamy",loc:"Rameswaram Island, Tamil Nadu — Indian Ocean junction",note:"Eleventh Jyotirlinga · Also a Char Dham site · Sri Rama installed this linga to expiate Brahmahatya after killing Ravana · Longest temple corridor in the world — 1,220 metres · 22 sacred teerthams (wells) in the complex — each with unique mineral composition · Linked to mainland by Pamban Bridge · Also revered by Muslims and Christians"},
+      {n:"Ghrishneshwar",loc:"Verul, Aurangabad district, Maharashtra — near Ellora",note:"Twelfth and final Jyotirlinga · Goddess Ghushma's devotion moved Shiva to appear here as the Compassionate Lord · Situated 1km from Ellora Caves (UNESCO World Heritage) · 18th-century temple rebuilt by Ahilyabai Holkar · Red-stone architecture · Completes the sacred circuit — arriving here signals full completion of the Dvādasha yatra"},
     ],
     pacing:[
-      {days:30,label:"Complete Circuit",desc:"Full 30-day pilgrimage traversing all 12 Jyotirlingas in sacred sequence. Begin Somnath at dawn, close at Ghrishneshwar."},
-      {days:18,label:"Dedicated Pilgrim",desc:"18-day focused circuit combining regional clusters with efficient routing. Four regional hubs."},
-      {days:10,label:"Essential Journey",desc:"10-day sprint covering the most geographically accessible Jyotirlingas: Varanasi, Ujjain, Nashik, Somnath, Rameswaram."},
+      {days:30,label:"Complete Sacred Circuit",desc:"The traditional 30-day pilgrimage traversing all 12 Jyotirlingas in the sequence prescribed by the Shiva Purana. Begin at Somnath (Gujarat) at the Arabian Sea at dawn. Move south to Rameswaram, then north through the Deccan, climb to Kedarnath, descend through the Gangetic plains, and close at Ghrishneshwar beside Ellora. Budget ₹60,000–₹1.2 lakh. Includes time for overnight rituals at Kashi and the Kedarnath trek. Best: October–November (Kedarnath still open, South comfortable)."},
+      {days:18,label:"Dedicated Pilgrim",desc:"An 18-day focused circuit combining regional clusters with efficient routing. Four geographic hubs: Gujarat cluster (Somnath, Nageshwar, Omkareshwar), Maharashtra cluster (Tryambakeshwar, Bhimashankar, Ghrishneshwar), South (Mallikarjuna, Rameswaram), North (Varanasi, Ujjain, Vaidyanath, Kedarnath). Fly between clusters. Budget ₹45,000–₹80,000. Requires pre-booked trains/flights. Kedarnath needs 2 dedicated days for trek."},
+      {days:10,label:"Essential Journey",desc:"A spiritually meaningful 10-day sprint covering the most accessible Jyotirlingas by air and train: Day 1–2 Varanasi (Kashi Vishvanath), Day 3 Ujjain (Mahakaleshwar), Day 4–5 Somnath + Nageshwar (Gujarat), Day 6–7 Nashik (Tryambakeshwar), Day 8–9 Rameswaram, Day 10 Omkareshwar. Skip Kedarnath (seasonal) and Vaidyanath (remote). Budget ₹25,000–₹45,000."},
     ],
-    season:"Oct–Mar · Avoid Sāvan for Varanasi crowds · Kedarnath open May–Nov only",
-    bestFor:"Shaiva devotees · Maha Shivaratri pilgrims · Seekers of liberation",
-    tips:["Begin at Somnath facing the Arabian Sea at dawn — stand where there is no land between you and the South Pole","Kedarnath requires 16km trek — begin physical conditioning 3 months ahead","Varanasi Kashi Vishvanath: darshan flows best 3–5 AM before crowds","Visit Ujjain during Simhastha Kumbh for a once-in-12-year spiritual amplification","The Dvādasha Jyotirlinga Stotram recited daily throughout the circuit transforms the journey"],
-    stotram:"Saurāṣhṭre Somanāthaṃ ca Śrīsaile Mallikārjunam\nUjjayinyāṃ Mahākālaṃ Oṃkāre Parameśvaram\nKedāre Kedarīśaṃ ca Ḍākinī Bhīmaśaṅkaram\nVārāṇasyāṃ tu Viśveśaṃ Tryambake Gautamīṭaṭe"},
+    season:"Oct–Mar best overall · Sāvan (Jul–Aug) for spiritual intensity at Varanasi though very crowded · Kedarnath open only May–Nov · Mahashivaratri (Feb/Mar) transforms every Jyotirlinga site · Avoid Shravan Mondays at Varanasi and Deoghar — millions on foot",
+    bestFor:"Shaiva devotees · Maha Shivaratri pilgrims · Seekers of moksha and liberation · Pancha Kedar mountaineers · Philosophers of Advaita Vedanta · Those seeking healing (Vaidyanath) · Shiva-bhaktas undertaking lifetime pilgrimage",
+    tips:[
+      "Begin at Somnath at sunrise facing the Arabian Sea — there is no land between you and the South Pole. Stand in that vastness and chant the Mahamrityunjaya Mantra before entering.",
+      "Kashi Vishvanath at 3 AM: arrive at Dashashvamedha Ghat, watch the Ganga Aarti at dusk the night before, then queue for the pre-dawn darshan. The Bhasma Aarti (4 AM, by advance booking) is one of the most sacred rituals in India.",
+      "Kedarnath: begin 3 months of walking 5km daily as physical preparation. The 16km trek from Gaurikund (1,982m) to Kedarnath (3,583m) gains 1,600m altitude. Hire a pony or palanquin only if medically needed — the walk itself is the tapasya.",
+      "Mahakala Ujjain Bhasma Aarti: the ash (bhasma) from actual cremation grounds is applied to the linga at 4 AM — attendance requires online registration. This darshan is worth a 3-day Ujjain stay alone.",
+      "Omkareshwar: take the parikrama (circumambulation) of the island — 7km walk that passes through fields, ghats, and ancient temples. The experience of seeing the Aum-shaped island from the bridge at sunset is unforgettable.",
+      "Vaidyanath / Deoghar in Shravan month: if you undertake the Kanwar Yatra (carrying Gangajal from Sultanganj 108km on foot), you will walk alongside 30 million pilgrims. The spiritual electricity is unlike anything else on earth — but book accommodation 3 months ahead.",
+      "Rameswaram: bathe in each of the 22 teerthams (wells) in the prescribed sequence before entering the inner sanctum. Each teerth has a different mineral taste. The priest at each will pour the water over you. Allow 3 hours for this ritual.",
+      "Recite the Dvādasha Jyotirlinga Stotram at each temple — the 12-verse hymn naming all lingas. Singing it at each site creates an energetic circuit that links all 12 and amplifies the darshan of each subsequent Jyotirlinga.",
+      "Simhastha Kumbh at Ujjain (every 12 years, next 2028): if your circuit coincides, restructure everything to be in Ujjain during the main bathing date — it is a once-in-a-lifetime multiplication of merit.",
+      "Ghrishneshwar: arrive last, after completing all other 11. Perform a final abhishekam and sit in contemplation in the courtyard — the feeling of completion is unlike anything a mere tourist could understand.",
+    ],
+    stotram:"Saurāṣhṭre Somanāthaṃ ca Śrīsaile Mallikārjunam\nUjjayinyāṃ Mahākālaṃ Oṃkāre Parameśhvaram\nKedāre Kedarīśhaṃ ca Ḍākinī Bhīmashaṅkaram\nVārāṇasyāṃ tu Vishveśhaṃ Tryambake Gautamītaṭe\nHimālaye tu Vaidyānātham Āmrājādye tu Nāgeshvaram\nCitābhoome tu Rāmesham Śhivalaye Ghrishneshvaram\nDvādaśhaitāni nāmāni prātarutthāya yaḥ paṭhet\nSarvapāpavinirmukto Śhivaloke mahīyate"},
   {id:"shakti_peethas",name:"Shakti Peetha Circuit",shortName:"51 Shakti Peethas",sk:"शक्तिपीठ",deity:"Devi",count:51,hue:280,
-    essence:"Fifty-one seats of power where the body of Satī fell — each fragment became a vortex of divine feminine energy that still pulses across the subcontinent.",
-    significance:"When Sati's body fell in 51 fragments as Vishnu's Sudarshana Chakra severed her grief-struck form, each piece consecrated the earth beneath it. Every peetha has a presiding goddess form and a Bhairava guardian. Together they form the cosmic body of the Divine Mother spread across Bhārata.",
+    essence:"Fifty-one seats of power where the body of Satī fell — each fragment became a vortex of divine feminine energy that still pulses across the subcontinent. Together they form the living body of the Goddess herself, distributed across Bhārata so that no corner of the sacred land remains without her presence. To visit them is to walk inside the body of the Mother.",
+    significance:"The myth: Sati's father Daksha insulted her husband Shiva by excluding him from the great Yajna. Sati entered the sacred fire and died. Shiva, inconsolable, wandered the cosmos carrying her body. To release him from grief, Vishnu used the Sudarshana Chakra to sever the body into 51 (some texts say 108) pieces. Wherever a fragment fell, the earth became a Shakti Peetha — a throne of the Goddess. Each peetha has a specific presiding goddess name, a specific body-part of Sati, and a Bhairava (Shiva) guardian. The Peethas span from Kamakhya in Assam to Kanyakumari at the southern tip, from Dwarka on the Arabian Sea to Tarapith in Bengal. Together they form the complete cosmic body of Shakti — every devotee visiting all 51 symbolically reconstitutes the wholeness of the Divine Mother. The Tantric tradition holds the Peethas as the highest concentration of Shakti energy on earth.",
     temples:[
-      {n:"Kamakhya",loc:"Nilachal Hill, Guwahati, Assam",note:"Yoni peetha · Ambubachi Mela · Highest Tantric seat"},
-      {n:"Kalighat",loc:"Kolkata, West Bengal",note:"Right toes of Sati · 10-armed Kali · Ramakrishna's temple"},
-      {n:"Jwāla Devī",loc:"Kangra, Himachal Pradesh",note:"Nine eternal flames burn without oil — pure shakti"},
-      {n:"Vaishnodevi",loc:"Trikuta Hills, J&K",note:"Most visited peetha · 14km yatra · Three natural rocks"},
-      {n:"Nainā Devī",loc:"Bilaspur, Himachal Pradesh",note:"Eyes of Sati · Ancient hilltop sanctuary"},
-      {n:"Kanyākumāri",loc:"Cape Comorin, Tamil Nadu",note:"Right shoulder · Where three oceans meet · Unmarried Devi"},
-      {n:"Mahālakshmī",loc:"Kolhapur, Maharashtra",note:"Ambabai · Satvic seat · One of 18 Mahashakti Peethas"},
-      {n:"Tulajā Bhavāni",loc:"Osmanabad, Maharashtra",note:"Kuldevi of Maratha clan · Shivaji's protective deity"},
-      {n:"Mānasā Devī",loc:"Haridwar, Uttarakhand",note:"Mind of Sati · Ropeway access to hilltop shrine"},
-      {n:"Tarapith",loc:"Birbhum, West Bengal",note:"Third eye of Sati · Cremation ground · Tantric seat of Tara"},
+      {n:"Kamakhya",loc:"Nilachal Hill, Guwahati, Assam",note:"Supreme Shakti Peetha — yoni (womb) of Sati fell here · No idol — a natural stone yoni-kund filled with sacred spring · Ambubachi Mela (June): Goddess 'menstruates' — temple closed 3 days, then thousands receive the red cloth · Greatest Tantric seat in India · Umananda island temple on Brahmaputra nearby · Bhairava: Umananda"},
+      {n:"Kalighat",loc:"South Kolkata, West Bengal",note:"Right toes of Sati · 10-armed Kali in gold · Ramakrishna Paramahamsa attained samadhi here · Adjacent to the burning ghats of Adi Ganga · One of the 4 Adi Peethas (original seats) · The fish-shaped tongue of Kali is a highlight · Ancient 200-year-old temple in its current form · Bhairava: Nakulesh"},
+      {n:"Jwālā Devī",loc:"Kangra district, Himachal Pradesh",note:"Nine eternal blue flames emerge from rock without fuel — pure Shakti fire · Tongue of Sati fell here · Akbar tried to extinguish the flames with water — failed and offered a golden umbrella in awe · Natural gas seeps are geologically unique · Himachal hilltop with stunning views · Bhairava: Unmatta · Darshan 5 AM–8 PM"},
+      {n:"Vaishnodevi",loc:"Trikuta Hills, Reasi, J&K — 5,200ft altitude",note:"Vaishno Devi (right arm) · Most visited peetha — 8 million pilgrims annually · 13km trek from Katra (helicopter available) · Three natural pindiis (rock formations) represent Maha Kali, Maha Lakshmi, Maha Saraswati · Bhairon temple visit after peetha darshan is mandatory — 3km return trek · Bhairava: Bhairon Nath"},
+      {n:"Nainā Devī",loc:"Bilaspur district, Himachal Pradesh — hilltop shrine",note:"Eyes of Sati fell here · Ancient shrine with spectacular views of Gobind Sagar Lake · Ropeway from base · The eyes are represented by two silver eyes in the sanctum · Chintpurni peetha (feet of Sati) is 65km away — often visited together · Navratri draws hundreds of thousands · Bhairava: Kruddha"},
+      {n:"Kanyākumāri (Śhri Bhagavatī)",loc:"Cape Comorin, Tamil Nadu — India's southernmost tip",note:"Right shoulder of Sati · Where Arabian Sea, Indian Ocean, and Bay of Bengal meet · Goddess is unmarried — still awaiting Shiva · Viveka Ananda Rock Memorial 200m offshore · Sunrise over three oceans from the temple steps is a transformative sight · Bhairava: Nimisha · Sunset and sunrise are both special here"},
+      {n:"Mahālakshmī (Ambabai)",loc:"Kolhapur, Maharashtra",note:"Eyes of Sati fell here (some texts: right breast) · One of 18 Mahashakti Peethas and Shakta equivalent of the 12 Jyotirlingas in importance · Magnificent black stone idol · The sun's rays fall directly on the idol during two specific days of the year · Satvic seat — no blood sacrifice · Bhairava: Kruddha Bhairava"},
+      {n:"Tulajā Bhavāni",loc:"Tuljapur, Osmanabad, Maharashtra",note:"Right shoulder or feet (texts vary) · Kuldevi (clan goddess) of the Maratha clan · Chhatrapati Shivaji's protective deity — he received the sacred sword Bhavani from her · Massive complex atop a hill · Navratri is extraordinary here — 9-day celebration involving the entire region · Bhairava: Kala Bhairava"},
+      {n:"Mānasā Devī (Chanda Devi)",loc:"Mansa Devi Hill & Chanda Devi Hill, Haridwar, Uttarakhand",note:"Mind of Sati · Two separate peethas near Haridwar — both visited as a pair · Mansa Devi ropeway has stunning Ganga views · Har Ki Pauri Ganga Aarti at dusk below completes the visit · Navratri: massive crowds · Bhairava: Kapalish Bhairava"},
+      {n:"Tarapith",loc:"Birbhum district, West Bengal — beside the Dwarka river",note:"Third eye of Sati · Cremation ground (Mahāśmaśāna) adjacent to the temple — still active · Tantric seat of Tara (fierce form of Durga) · Bamakhyapa, the great 19th-century Tantric saint, attained liberation here · The idol is mother Tara nursing a child Shiva · Jackals and vultures sacred here · Not for the faint-hearted · Bhairava: Tara Bhairava"},
+      {n:"Dakshina Kālī (Dakshineshwar)",loc:"Dakshineswar, Kolkata, West Bengal",note:"Toes of Sati · Sri Ramakrishna Paramahamsa was the priest here for 30 years and attained God-realization · 12 Shiva temples surrounding the main shrine · Vivekananda visited daily as a youth · On the east bank of Ganga · Accessible by river ferry from Belur Math · The garden and riverside atmosphere are extraordinary"},
+      {n:"Biraja (Bimala)",loc:"Jajpur, Odisha",note:"Navel of Sati · One of 4 Adi Peethas · Located inside the Jagannath Puri temple complex — only peetha inside a Vaishnava temple · Bimala Devi receives offering of fish and meat which is then consecrated into prasad for Jagannath · Unique theological synthesis of Shakta and Vaishnava traditions"},
+      {n:"Daksha Prajāpati (Sati Kund)",loc:"Kankhal, Haridwar, Uttarakhand",note:"Where Sati immolated herself in Daksha's Yajna fire · This is the origin-point of the entire Shakti Peetha tradition · Ancient Daksha Mahadev temple · On the banks of Ganga · Sacred but often overlooked by pilgrims focused on Haridwar's main ghats · Historically, this is where the story begins"},
+      {n:"Shārada Peetha",loc:"Sharada, PoK (now inaccessible from India)",note:"Right hand · One of the most sacred and now tragically inaccessible peethas · The legendary Shārada University near Kashmir was the Oxford of ancient India · The site draws profound longing among pilgrims · Proxy worship performed at surrogate temples in Kashmir · A peetha that carries the grief of partition"},
     ],
     pacing:[
-      {days:90,label:"Complete Pilgrimage",desc:"Full 90-day journey visiting all 51 Shakti Peethas across India, Nepal, and Bangladesh in five geographic arcs."},
-      {days:45,label:"Major Peethas",desc:"45-day circuit of the 18 Mahashakti Peethas — the most powerful seats of the Divine Mother."},
-      {days:21,label:"Regional Arc",desc:"21-day focused circuit of one geographic arc: North Himalayan, East Bengali, West Deccan, or South Dravidian."},
+      {days:90,label:"Complete Pilgrimage",desc:"The full 90-day circuit of all 51 Shakti Peethas spans India, Nepal (Guhyeshwari, Ugratara, Manakamana), and Bangladesh (Jashoreshwari, Sugandha). Five geographic arcs: North Himalayan (Vaishno Devi, Jwala Devi, Naina Devi, Mansa Devi — 15 days), East Bengali Arc (Kamakhya, Kalighat, Tarapith, Biraja — 20 days), West Deccan (Mahalakshmi, Tuljapur, Mahur, Aundha — 15 days), South (Kanyakumari, Madurai, Chamundi — 15 days), Central (Prayagraj, Varanasi, Vindhyavasini — 10 days) plus 15 days travel. Budget ₹1.5–₹2.5 lakh. Arrange Bangladesh and Nepal peethas with advance visa planning."},
+      {days:45,label:"18 Mahāshakti Peethas",desc:"The 18 Mahashakti Peethas (Ashtadasha Peethas) are the highest-ranked among the 51 — the spines of the Goddess's cosmic body. These include: Kamakhya, Kalighat, Jwala Devi, Vaishno Devi, Mahalakshmi (Kolhapur), Kanyakumari, Vindhyavasini (Mirzapur), Ambaji (Gujarat), Chamundeshwari (Mysore), Bhramaramba (Srisailam), Hinglaj (Balochistan — by proxy), Mahur (Maharashtra), and others. 45 days, 4 clusters, 2 flights. Budget ₹70,000–₹1.2 lakh."},
+      {days:21,label:"Regional Arc — Your Choice",desc:"21-day immersion in one geographic arc of Shakti Peethas. North Arc: Vaishno Devi → Jwala Devi → Naina Devi → Mansa Devi → Chintpurni — all in Himachal and J&K. East Arc: Kamakhya → Kalighat → Tarapith → Bakreshwar → Biraja. West Arc: Mahalakshmi Kolhapur → Tuljapur → Mahur → Ambaji. South Arc: Kanyakumari → Madurai Meenakshi → Chamundeshwari. Each arc is complete, spiritually coherent, and deeply rewarding."},
     ],
-    season:"Oct–Mar · Navratri (Sep/Oct and Mar/Apr) for heightened divine energy",
-    bestFor:"Shakta devotees · Tantric practitioners · Navratri pilgrims · Seekers of Devi's grace",
-    tips:["Kamakhya during Ambubachi Mela (June) — when the earth menstruates — is a once-in-a-year transformation","Vaishno Devi: start the yatra by 2 AM to reach Bhawan at sunrise for magical experience","Observe silence at cremation-ground peethas like Tarapith","The Ten Mahavidyas curriculum: begin with Kali at Kalighat, Tara at Tarapith, Tripura Sundari at Tripura"],
-    stotram:"Mahākālī Mahālakshmī Mahāsarasvatī namostute\nĀdishakti Parāshakti Māheshvarī namostute\nJagadambā Jagaddhātrī Nityā Śuddhā namostute"},
+    season:"Oct–Mar best overall · Navratri (Ashvin: Sep/Oct, Chaitra: Mar/Apr) — both Navratris are peak spiritual time at all peethas · Ambubachi Mela at Kamakhya (June): extraordinary but very crowded · Avoid monsoon at Himalayan peethas · Shravan (Jul–Aug) at Vaishno Devi is sacred but overcrowded · Diwali at Kalighat is unique",
+    bestFor:"Shakta devotees and Devi worshippers · Tantric practitioners and initiates · Navratri pilgrims · Those seeking Devi's protective grace (kavacha) · Women pilgrims (Devi peethas are especially women-honoring) · Artists, poets, and creators seeking the Goddess of creation · Those in grief — Devi as mother is the most accessible form of the divine",
+    tips:[
+      "Kamakhya during Ambubachi Mela (June 21–25): the Goddess is in her period — the temple closes for 3 days, then opens to give the red cloth (rakta vastra). Sitting in the courtyard during these 3 days in silence while thousands of Tantrics meditate is an experience with no parallel in the world.",
+      "Vaishno Devi: leave Katra by 2 AM to arrive at Bhawan for sunrise darshan. The atmosphere inside the cave at dawn — when natural light filters in and the three pindis glow — is the closest thing to seeing the Goddess face to face. Return via the Bhairon temple — tradition holds that the pilgrimage is incomplete without Bhairon darshan.",
+      "Tarapith: if you are prepared spiritually, visit at night. The cremation ground adjacent to the temple is one of the most powerful Tantric spaces in India. Bamakhyapa's samadhi is beside the Dwarka river. The ash and bones are not morbid — they are the dissolution of ego that the Goddess requires.",
+      "Jwala Devi: stand before the nine eternal flames and understand that fire without fuel is the Goddess herself — pure consciousness without cause. Pour ghee into the flames and observe how they accept and transcend. Even Akbar was humbled here.",
+      "Kalighat at 4 AM: join the antara darshan (inner darshan) — a 10-minute experience of seeing the 10-armed Kali at very close proximity. The wooden tongue with silver eyes and golden arms in the red oil-lamp light is something the mind can never un-see.",
+      "Learn the Mahishasura Mardini Stotram before the circuit — 21 verses by Adi Shankaracharya describing the Goddess in her victory over the buffalo demon. Reciting it at each peetha links your mind to the Goddess in her most powerful aspect.",
+      "At Kanyakumari, wake before sunrise and position yourself at the temple steps facing east. On Vaikuntha Ekadashi and Shivratri, the sunrise and the setting moon align with the idol's eyes — the single most celebrated optical miracle in South Indian Devi worship.",
+      "The 18 Mahashakti Peethas include peethas in current Pakistan (Hinglaj, Balochistan) and Bangladesh (Jashoreshwari). Arrange proxy puja at local surrogate temples and acknowledge these geopolitically inaccessible sacred sites in your prayers — this acknowledgement itself is considered auspicious.",
+      "Biraja Peetha (Jajpur, Odisha) is inside the Jagannath Puri complex — the only Shakti Peetha inside a Vaishnava temple. What Jagannath receives as prasad is first offered to Bimala Devi. This theological unity of Shakta and Vaishnava is one of India's most profound spiritual achievements.",
+      "If you visit during Navratri, fast on the Ashtami (8th day) and break it only with prasad from the Devi peetha. The fast throughout the 9 nights while moving between peethas is one of the most transformative spiritual practices available to a pilgrim.",
+    ],
+    stotram:"Mahālakshmī cha Kāmākhyā Tullā Caṇḍī Sarasvatī\nDurgā Kātyāyanī Gauri Revatī Lalitā Śhivā\nMaheshvarī Mahāmāyā Bhavānī Bhairavī tathā\nViṣhṇumāyā Śhivādūtī Sarvamaṅgalā tathā ca\nEtāni Śhakti pīṭhāni nāmāni prātar utthāya\nYaḥ paṭhet sarvapāpebhyo mucyate nātra saṃśhayaḥ"},
   {id:"divya_desams",name:"Divya Desam Circuit",shortName:"108 Divya Desams",sk:"दिव्यदेशम्",deity:"Vishnu",count:108,hue:215,
-    essence:"One hundred and eight abodes where Vishnu dwells as perceived by the twelve Alvars — every verse of the Divya Prabandham is a living key that unlocks the gates of these sacred precincts.",
-    significance:"The 108 Divya Desams were sung into sacred existence by the twelve Alvar poet-saints (600–900 CE). The Nalayira Divya Prabandham's 4,000 Tamil verses map a divine geography that transforms pilgrimage into bhakti yoga. Temple #108 — Thirupparamapadham — is transcendent Vaikuntham itself.",
+    essence:"One hundred and eight abodes where Vishnu dwells in forms perceived and sung by the twelve Alvar poet-saints — every verse of the Nalayira Divya Prabandham is a living key unlocking the deepest gates of these sacred precincts. The Alvars did not describe temples — they described God, and the temples grew around their vision.",
+    significance:"Between 600 and 900 CE, twelve Tamil poet-saints — the Alvars — entered states of divine absorption before 108 Vishnu temples and poured out the Nalayira Divya Prabandham: 4,000 Tamil verses of such concentrated devotion that Vaishnavism in South India was forever transformed. Nammalvar alone composed 1,102 verses. Andal composed the Thiruppavai (30 verses) which is sung daily at every Divya Desam. The tradition teaches that the Alvars were liberated souls sent by Vishnu himself to sing his glories and show humanity the path of prapatti (total surrender). Ramanuja (11th century) compiled and systematized the Prabandham, which now has equal status with the Sanskrit Vedas in Sri Vaishnava tradition — called the 'Dravida Veda.' Temple #108 is Thirupparamapadham — Vaikuntham itself, the transcendent abode that no living pilgrim can physically reach but which every completed circuit symbolically enters.",
     temples:[
-      {n:"Tirumala Venkateswara",loc:"Tirupati, Andhra Pradesh",note:"Wealthiest temple on Earth · 50,000 pilgrims daily · Book 45+ days ahead"},
-      {n:"Srirangam Ranganātha",loc:"Tiruchirappalli, Tamil Nadu",note:"Largest functioning temple · Island of the Lord · 156 acres"},
-      {n:"Badrinath",loc:"Chamoli, Uttarakhand",note:"Badri Vishal · Char Dham · Where Vishnu meditates eternally"},
-      {n:"Dwaraka",loc:"Gujarat",note:"Original Krishna city submerged · Char Dham · Bet Dwarka island"},
-      {n:"Kanchipuram Varadarāja",loc:"Kanchipuram, Tamil Nadu",note:"City of thousand temples · Sri Vaishnava capital"},
-      {n:"Thiruvananthapuram Padmanābha",loc:"Kerala",note:"Ananta Shayana · Padmanabhaswamy · Immense wealth temple"},
-      {n:"Guruvāyur",loc:"Thrissur, Kerala",note:"Dwarka of the South · Elephants carry the Lord"},
-      {n:"Muktinath",loc:"Mustang, Nepal",note:"Only Vishnu temple in Himalayan Nepal · 108 sacred springs"},
-      {n:"Ayodhya",loc:"Uttar Pradesh",note:"Birthplace of Rama · Ram Lalla · On the Sarayu River"},
-      {n:"Mathurā",loc:"Uttar Pradesh",note:"Birthplace of Krishna · Keshavarāya temple"},
+      {n:"Tirumala Venkateswara",loc:"Tirumala hills, Tirupati, Andhra Pradesh — 853m",note:"Desam #1 in common sequence · Wealthiest religious institution on Earth (₹50,000 crore+ endowment) · 50,000–100,000 pilgrims daily · Seven hills (Saptagiri) as the serpent Adishesha's hoods · The idol's third eye reveals itself only to the deserving · Laddu prasadam is GI-tagged · Book special darshan (₹300) 45+ days online · Tirupati airport nearby"},
+      {n:"Srirangam Ranganātha",loc:"Srirangam Island, Tiruchirappalli, Tamil Nadu",note:"The greatest Divya Desam · Largest functioning temple complex in the world (156 acres, 21 gopurams) · Vishnu reclines on Adishesha on the Kaveri island · 7 enclosures (prakarams) — outer ones allow all · Inner sanctum: Vishnu asleep in eternal yoga nidra · Vaikunta Ekadashi: Paramapada Vasal (Gateway to Vaikuntham) opens once per year at midnight · Ramanujacharya's body preserved here"},
+      {n:"Badrinath (Badrī Nārāyaṇa)",loc:"Chamoli, Uttarakhand — 3,133m altitude",note:"North India's only Divya Desam · Char Dham site · Vishnu meditates here in the form of a black stone Shaligrama under Badri trees · Adi Shankaracharya established the puja system here in 8th century · Nar-Narayana peaks behind the temple · Open May–November · First darshan of the season (Kapat Utsav) is sacred beyond description"},
+      {n:"Dwaraka (Dvarakā Nārāyaṇa)",loc:"Dwarka, Gujarat — on Arabian Sea",note:"Char Dham and Divya Desam · Original Dwaraka is submerged (marine archaeology confirms structures at 40m depth) · Krishna's capital · 72-pillar temple with 5-story tower visible from the sea · Bet Dwarka island 30km away has the original dwelling of Krishna · Gomti River joins sea here — sacred bath prescribed · Also Nageshwar Jyotirlinga 17km away"},
+      {n:"Varadarāja Perumal",loc:"Kanchipuram, Tamil Nadu",note:"City of a thousand temples · Sri Vaishnava capital · Varadaraja ('giver of boons') Vishnu on an elephant (Hastagiri) · 100-pillar mandapam has 14th-century Hoysala sculpture · The gold and silver idols alternate in their appearance every 40 years — visible only during special festivals · Adjacent to Kamakshi Amman (Shakti Peetha)"},
+      {n:"Padmanābhaswamy",loc:"Thiruvananthapuram, Kerala",note:"Vishnu reclining on Ananta Shesha spanning three chambers · Supreme Court order (2011) revealed six vaults worth estimated ₹1.2 lakh crore · Vault B remains sealed — considered by some as protected by divine serpent Naga · Only Hindus allowed inside · Entry requires traditional Kerala dress (dhoti for men, saree/mundu-blouse for women) · One of the 108 Divya Desams and wealthiest in Kerala"},
+      {n:"Guruvāyurappan",loc:"Guruvayur, Thrissur, Kerala",note:"'Dwarka of the South' · Krishna as a child (Bala Krishna / Unnikrishnan) is the presiding deity · The black Vishnu idol brought by Brahma was installed by Guru (Brihaspati) and Vayu (wind) — hence Guruvayur · 60+ elephants live in the temple's elephant sanctuary (Punnathur Kotta) · Devotees donate elephants — temple owns most elephants in the world · No cameras inside · Prasad: a specific sweet rice pudding unlike any other"},
+      {n:"Muktināth",loc:"Mustang district, Nepal — 3,710m altitude",note:"Only Divya Desam outside India · 108 sacred springs flow from 108 stone waterspouts around the sanctum · Natural eternal flame burns from a rock · Avalokitesvara Buddhist shrine adjacent — unique Hindu-Buddhist sacred coexistence · Accessible from Pokhara via Jomsom (flight + road/trek) · Pilgrimage season: May–October · Altitude sickness preparation essential"},
+      {n:"Ayodhyā (Rāma)",loc:"Ayodhya, Uttar Pradesh — on Sarayu River",note:"Birthplace of Rama (Ram Lalla) · New Ram Mandir consecrated January 2024 — historic moment · Sarayu River ghats for ritual bath prescribed before darshan · 14 Kosa Parikrama of the entire city is the traditional circuit · Kanak Bhawan (palace where Sita and Rama lived) · Hanuman Garhi temple guards the way · Valmiki Ramayan was composed here · City of 7 sacred forests"},
+      {n:"Mathurā & Vrindāvan",loc:"Mathura and Vrindavan, Uttar Pradesh — on Yamuna",note:"Birthplace of Krishna · Keshavarāya temple at the exact birthspot (Krishna Janmabhoomi) · Vrindavan: 5,000 temples in a 10km radius — Banke Bihari, Iskcon, Prem Mandir, Radha Raman · Govardhan Puja (parikrama of Govardhan Hill — 21km circumambulation) · Yamuna: sacred bath before visiting Mathura · Braj region (40km radius) has 84 forests (vans) associated with Krishna's childhood · Holi in Braj — 7-day celebration across different villages — is life-altering"},
+      {n:"Srivilliputtūr Āṇḍāl",loc:"Srivilliputtur, Virudhunagar district, Tamil Nadu",note:"Temple of Andal — the only female Alvar saint · The 72m gopuram visible for miles · Andal composed the Thiruppavai (30 verses) and the Nachiyar Tirumozhi · The entire story of Andal's divine marriage to Vishnu happened here · Andal was found as an infant in the temple garden · Her image stands beside Ranganatha everywhere in Sri Vaishnava temples · Tamil Nadu government's official emblem is this gopuram"},
+      {n:"Tirukkuṛungudi Nambī",loc:"Tirunelveli district, Tamil Nadu",note:"Vishnu stands facing south (extremely rare — south is the direction of death, conquered by Vishnu here) · One of the 32 standing Vishnu forms in the Divya Desam canon · Close to Kanyakumari · Nammalvar sang several verses here · Surrounded by beautiful paddy fields of southern Tamil Nadu · Less visited — more peaceful than the major Desams · Pre-dawn aarti at 5:30 AM is particularly atmospheric"},
+      {n:"Tiru Nāṅgūr group",loc:"Nagapattinam district, Tamil Nadu — Cauvery delta",note:"Eleven small Divya Desams clustered in the Nangur area — all visitable in one day by car · Tiny village temples with extraordinary Chola-period sculpture · The Nangur group represents the 'hidden treasury' of the Divya Desam circuit — pilgrims who complete these feel they have found the secret heart of the tradition · Paddy fields, coconut groves, and ancient stone corridors"},
     ],
     pacing:[
-      {days:60,label:"Complete Yatra",desc:"Full 60-day circuit visiting all 108 Divya Desams across Tamil Nadu, Kerala, and North India in canonical Alvar sequence."},
-      {days:30,label:"Tamil Nadu Focus",desc:"30-day deep immersion in the 84 Tamil Nadu Desams — the heart of the Alvar tradition."},
-      {days:15,label:"Essential 12",desc:"15-day journey to the 12 most spiritually significant Desams: Tirumala, Srirangam, Badrinath, Dwaraka, Kanchipuram, and others."},
+      {days:60,label:"Complete Circuit (108 Desams)",desc:"The full circuit visits all 108 Divya Desams in the canonical Alvar order. 84 are in Tamil Nadu (concentrated in Kaveri delta and Pallava/Chola heartland), 11 in Kerala, 2 in UP (Mathura, Ayodhya), 1 in Gujarat (Dwarka), 1 in Uttarakhand (Badrinath), 1 in Nepal (Muktinath), 1 in Andhra (Tirumala), and 1 transcendent (Vaikuntham). 60-day plan: Tamil Nadu in 30 days (rent a car, base in Kumbakonam/Trichy/Madurai), Kerala in 8 days, North India + Badrinath in 12 days, Andhra in 4 days, Nepal in 6 days. Budget ₹1.5–₹2.5 lakh. Carry Divya Prabandham booklet to recite Pasuram at each."},
+      {days:30,label:"Tamil Nadu Deep Immersion",desc:"30 days, 84 Tamil Nadu Divya Desams — the heart of the Alvar tradition. Base cities: Kanchipuram (north cluster, 5 desams), Chidambaram (east cluster), Kumbakonam (Kaveri delta — 40+ desams within 60km radius), Trichy/Srirangam (central), Madurai (south cluster), Tirunelveli (far south cluster). Rent a self-drive car from Chennai. The Kaveri delta cluster alone has 40 Desams within a 50km radius — this is the spiritual heartland of Sri Vaishnavism. Stay in temple towns and wake at 4 AM for pre-dawn aarti."},
+      {days:15,label:"Essential 12 Desams",desc:"15-day curated journey of the 12 spiritually paramount Desams: Tirumala (2 days, Andhra), Srirangam (2 days, Tamil Nadu), Kanchipuram Varadaraja (1 day), Thiruvananthapuram Padmanabha (1 day), Guruvayur (1 day), Badrinath (3 days including travel and trek, Uttarakhand), Dwarka (1 day, Gujarat), Mathura-Vrindavan (2 days, UP), Ayodhya (1 day). Connects all four directions of India. Budget ₹35,000–₹60,000. Fly between clusters. This itinerary alone covers the most celebrated forms of Vishnu from Ananta Shayana to Bala Krishna."},
     ],
-    season:"Nov–Mar for Tamil Nadu · May–Jun for Badrinath · Year-round for most Kerala desams",
-    bestFor:"Vaishnava devotees · Sri Vaishnava tradition · Bhakti yoga seekers · Alvar enthusiasts",
-    tips:["Learn the Thiruppalliezhuchi (wake-up hymn) to sing at Srirangam at dawn","Book Tirumala darshan 45+ days ahead — or join the free queue with full surrender","Undergo Panchasamskara initiation to complete the Sri Vaishnava pilgrimage properly","Vaikunta Ekadashi at Srirangam: the Paramapada Vasal opens once yearly at midnight"],
-    stotram:"Śrīman Nārāyaṇa caraṇau śaraṇaṃ prapadye\nŚrīmate Nārāyaṇāya namaḥ\nŚrīmate Rāmānujāya namaḥ\nŚrī Vaishṇavebhyo namaḥ"},
+    season:"Nov–Mar for Tamil Nadu and Kerala (pleasant, festivals) · May–Jun for Badrinath and Muktinath · Vaikunta Ekadashi (Dec/Jan) at Srirangam — once-per-year cosmic event · Thai Pongal (Jan) at Tamil Desams — extremely auspicious · Karthigai Deepam (Nov) for northern Tamil Nadu · Brahmotsavam at Tirumala (Sep) — 9-day festival, world's largest religious gathering",
+    bestFor:"Sri Vaishnava devotees and initiates · Bhakti yoga practitioners · Students of Tamil Sangam literature · Temple architecture enthusiasts (Chola, Pallava, Hoysala masterpieces) · Those seeking prapatti (total surrender to Vishnu) · Devotees of Rama, Krishna, and the various forms of Vishnu · Serious pilgrims who want depth over breadth",
+    tips:[
+      "Recite the Thiruppavai (Andal's 30 verses) in its entirety before your circuit begins — each verse was composed before a specific Desam and becomes intelligible only when you stand before it. Learn at minimum Pasuram 1, 11, and 30.",
+      "At Tirumala: book Special Entry Darshan (SED, ₹300) online at ttdsevaonline.com at least 45 days ahead. Arrive 1 hour before your slot. Alternatively, join the Sarva Darshan (free queue) with true surrender — average wait 6–8 hours. The Lord's choice of who enters easily is itself a teaching.",
+      "Srirangam on Vaikunta Ekadashi (Dec/Jan Ekadashi): the Paramapada Vasal (Gate of Vaikuntham) opens at midnight. Stepping through it is symbolically stepping into the abode of Vishnu — liberation in a single step. Arrive 24 hours early and spend the night in the outer prakarams listening to Prabandham recitation.",
+      "Undergo Panchasamskara (5-fold initiation into Sri Vaishnavism) from an authorized Acharya before the full circuit. The 5 rites — Tāpa (brand marks of conch and disc), Pundra (urdhva pundra tilak), Nāma (initiation of the mūla mantra), Mantra (Ashtakshara — Om Namo Narayanaya), and Yāga (daily worship) — transform pilgrimage from tourism into genuine spiritual practice.",
+      "The Kaveri Delta cluster of 40+ Desams (within 50km of Kumbakonam) is the hidden heart of the circuit. Rent a car and driver for 4–5 days, staying in temple town dharmashalas. Villages like Thirucherai, Sirkazhi, Thirunangur, and Papanasam have extraordinary Chola-period architecture in almost no crowds.",
+      "Guruvayur: witness the elephant procession (Thidambu Nritham) at 6 PM when the idol is placed on the lead elephant and paraded around the temple. The synchrony of elephants, musicians, and lamplight makes this one of the most visually overwhelming experiences in India.",
+      "At Muktinath, pour water from all 108 stone waterspouts over yourself in sequence at dawn in the Himalayan cold. This is a ritual purification that the tradition says is equivalent to bathing in all sacred rivers of India simultaneously. The eternal flame from the rock — a natural gas seep — represents Vishnu's permanence.",
+      "Padmanabhaswamy: wear traditional Kerala dress (men: mundu without shirt, women: saree). Entry is restricted to Hindus. Go at 3:30 AM for the first darshan of the day (Nirmalya Darsanam) when the idol is shown with previous day's flowers still on — this first glimpse in candlelight of the massive reclining Vishnu is something the mind cannot prepare for.",
+      "The Alvar connection: at each temple, read the specific Pasuram (verse) composed for that Desam. The Arayar Sevai (performance of Prabandham verses through classical dance-drama) happens at Srirangam and Alwar Thirunagari — witnessing one is to understand how sacred literature becomes living devotion.",
+      "Complete your circuit at Srirangam with the Sathumaurai (special offering) in which the Nalayira Divya Prabandham is recited in full. If you can arrange for a Vedaparayana and Prabandha Parayana simultaneously — the Tamil and Sanskrit traditions harmonizing — you will hear what Bharat's greatest spiritual synthesis sounds like.",
+    ],
+    stotram:"Śhrīman Nārāyaṇa caraṇau śharaṇaṃ prapadye\nŚhrīmate Nārāyaṇāya namaḥ · Śhrīmate Rāmānujāya namaḥ\nSarvān parityajya māmēkaṃ śharaṇaṃ vraja\nAhaṃ tvāṃ sarvapāpebhyo mokṣhayiṣhyāmi mā śhucaḥ\nKaṇṇinuṇ śirutthāmbu — Nammālvār\nThiruppāvai — Āṇḍāḷ: Mārgazhi Thingal Madhi Nirainda Nannāḷal"},
   {id:"char_dham",name:"Char Dham Circuit",shortName:"4 Sacred Dhams",sk:"चारधाम",deity:"Vishnu · Shiva · Devi",count:4,hue:42,
-    essence:"Four corners of the sacred cosmos — Badrinath in the north, Puri in the east, Rameswaram in the south, Dwarka in the west — together they circumambulate the entire body of Bhārata.",
-    significance:"Adi Shankaracharya established the four Dhams in the 8th century to unify the spiritual geography of India. Completing all four is said to grant moksha — liberation from the cycle of birth. Each Dham corresponds to one of his four maths, one of the four Vedas, and one of the four cardinal Mahavakyas.",
+    essence:"Four corners of the sacred cosmos — Badrinath to the north where Vishnu meditates eternally, Puri to the east where Jagannath dances in ecstasy, Rameswaram to the south where Shiva blesses Ram's devotion, Dwarka to the west where Krishna ruled as king. Together they circumambulate the entire body of Bhārata, mapping the subcontinent as a single sacred mandala. To complete the four is to walk the entire body of India as a living deity.",
+    significance:"Adi Shankaracharya (788–820 CE) walked barefoot across India four times, establishing four maths and four Dhams at the cardinal directions to unify the fractured spiritual geography of post-Buddhist India. His genius: each Dham enshrines a different deity (Vishnu, Jagannath, Shiva-as-Ram's-devotion, Krishna) yet together they dissolve sectarian boundaries. Each Dham corresponds to: one of his four maths (Jyotirmath, Govardhana Math, Shringeri Math, Sharda Peeth), one of the four Vedas (Atharva, Rig, Yajur, Sama), one of the four Mahavakyas ('Ayam ātmā Brahma,' 'Prajñānaṃ Brahma,' 'Ahaṃ Brahmāsmi,' 'Tat tvam asi'), and one of the four directions. The circuit is called the most complete single pilgrimage a householder can undertake — it is said to wash away the karma of all previous lives and guarantee liberation (moksha) from the cycle of birth and death.",
     temples:[
-      {n:"Badrinath (Badrīnārāyaṇa)",loc:"Chamoli, Uttarakhand — 3,133m",note:"North Dham · Atharva Veda · 'Ayam ātmā Brahma' · Jyotirmath"},
-      {n:"Jagannath Puri",loc:"Puri, Odisha — Bay of Bengal",note:"East Dham · Rig Veda · 'Prajñānaṃ Brahma' · Govardhana Math"},
-      {n:"Rāmanathaswamy",loc:"Rameswaram, Tamil Nadu — Indian Ocean",note:"South Dham · Also a Jyotirlinga · 22 sacred wells · 1,220m corridor"},
-      {n:"Dwarkadhish (Dvārakādhīsha)",loc:"Dwarka, Gujarat — Arabian Sea",note:"West Dham · Sama Veda · 'Tat tvam asi' · Sharda Peeth"},
+      {n:"Badrinath (Badrī Nārāyaṇa)",loc:"Chamoli, Uttarakhand — 3,133m altitude, 301km from Rishikesh",note:"North Dham · Atharva Veda · Mahavakya: 'Ayam ātmā Brahma' · Jyotirmath (Shankaracharya's northern monastery) · Vishnu meditates in the form of a black stone Shaligrama installed by Shankaracharya himself · Flanked by Nar (human) and Narayana (divine) peaks · Brahma Kapal ghat: perform pitru (ancestor) shraddha here — believed to liberate ancestors instantly · Tapt Kund hot spring: mandatory bath at 45°C before darshan · Mata Murti temple: Vishnu's mother at a bend in Alaknanda · Open May–November · The silence of the high Himalayas around this temple is itself a teaching"},
+      {n:"Jagannāth (Purushottama)",loc:"Puri, Odisha — Bay of Bengal coast",note:"East Dham · Rig Veda · Mahavakya: 'Prajñānaṃ Brahma' · Govardhana Math (Shankaracharya's eastern monastery) · The three wooden idols — Jagannath, Balabhadra, Subhadra — have no hands or feet, representing the formless absolute beyond anthropomorphism · Rath Yatra (June/July): the three deities ride giant chariots through the city — 10 lakh pilgrims · Non-Hindus cannot enter · The 'Mahaprasad' of Jagannath is cooked in 750 pots in the world's largest temple kitchen — 56 dishes offered daily · The Sudarshan chakra on top rotates against the wind — observed by pilgrims daily"},
+      {n:"Rāmanathaswamy",loc:"Rameswaram Island, Tamil Nadu — Indian Ocean",note:"South Dham · Yajur Veda · Mahavakya: 'Ahaṃ Brahmāsmi' · Also the 11th Jyotirlinga · Shringeri Math connection · Rama installed the Shiva linga here to expiate the Brahmahatya (sin of killing Ravana, a Brahmin) on Vibhishana's advice — unique instance of Vishnu's avatar worshipping Shiva, reconciling Shaiva and Vaishnava traditions · Longest temple corridor in the world: 1,220m with 1,212 columns · 22 sacred teerthams (wells): priests pour water from each sequentially over pilgrims — allow 2–3 hours · Pamban Bridge (1914) to the mainland · Adam's Bridge (Ram Setu) ruins visible from Dhanushkodi tip · Agni Teertham at sunrise: bathe in the sea where Agni (fire) is said to dwell · Dhanushkodi ghost town: Ram's army crossed here"},
+      {n:"Dwarkadhish (Dvārakādhīsha)",loc:"Dwarka, Saurashtra, Gujarat — Arabian Sea",note:"West Dham · Sama Veda · Mahavakya: 'Tat tvam asi' · Sharda Peeth (Shankaracharya's western monastery, now in Pakistan — surrogate at Dwarka) · Krishna ruled Dwarka for 100 years before the Mahabharata war, then submerged it himself before departing · 5-story, 72-pillar temple with 43m spire visible from the sea · The Dwarka Sharada Peeth: Shankaracharya defeated Mandana Mishra's wife Ubhaya Bharati here in debate — establishing Advaita Vedanta as the supreme philosophy · Gomti River sacred bath before temple entry · Bet Dwarka island (30km): Krishna's actual residence — ferry crossing is itself a pilgrimage · Nageshwar Jyotirlinga is 17km from Dwarka — visit on same day"},
     ],
     pacing:[
-      {days:35,label:"Complete Yatra",desc:"Full 35-day clockwise circuit: Badrinath → Puri → Rameswaram → Dwarka. One week per Dham with travel."},
-      {days:21,label:"Focused Journey",desc:"21-day immersive circuit with 4–5 days at each Dham for full ritual completion."},
-      {days:14,label:"Essential Dham",desc:"14-day efficient circuit with 3 days at each sacred site — sufficient for primary darshan and rituals."},
+      {days:35,label:"Complete Yatra — Clockwise Circuit",desc:"The traditional 35-day circuit follows the clockwise (pradakshina) direction: Begin at Badrinath (North, May–June or Sept–Oct), then Jagannath Puri (East), then Rameswaram (South), close at Dwarka (West). This clockwise direction — moving sun-wise — is considered the auspicious direction for completing a sacred circumambulation of India. Week 1: Badrinath (fly Delhi → Dehradun → drive to Joshimath → Badrinath, 4 days at Badrinath + Hemkund, Mana village, Valley of Flowers). Week 2: Puri by flight (Dehradun → Delhi → Bhubaneswar → Puri), 4–5 days (Jagannath, Konark Sun Temple, Chilika Lake). Weeks 3–4: Rameswaram (flight Chennai, 4 days — Rameswaram, Dhanushkodi, Madurai nearby). Week 5: Dwarka (flight Mumbai, 3 days — Dwarka, Bet Dwarka, Nageshwar). Budget ₹80,000–₹1.5 lakh."},
+      {days:21,label:"Immersive 4-Dham Journey",desc:"21 days gives 4–5 days at each Dham for ritual completeness. Badrinath: 5 days — morning puja, Brahmakund bath, Mana village (last Indian village), Satopanth Lake trek. Puri: 5 days — Rath Yatra season if possible, attend all 56-dish bhog times, Puri beach sunrise, Konark. Rameswaram: 5 days — all 22 teerthams on arrival day, lingabhishekam early morning, Dhanushkodi trip, day at Madurai. Dwarka: 4 days — Dwarkadhish, Nageshwar, Bet Dwarka, sunset at Gomti. Budget ₹60,000–₹1 lakh."},
+      {days:14,label:"Essential Dham — Focused Darshan",desc:"14 days, 3 days per Dham. Sufficient for the most essential rituals at each site. Badrinath: Tapt Kund bath + main darshan + Brahma Kapal shraddha. Puri: Jagannath main darshan + Mahaprasad + Konark. Rameswaram: Agni Teertham bath + 22 teerthams + sanctum + Dhanushkodi. Dwarka: Dwarkadhish + Bet Dwarka + Nageshwar. Use flights between locations to save time. Best for working pilgrims who cannot take a month off. Budget ₹40,000–₹70,000. Ideal months: September–October (Badrinath still open, Puri and South comfortable, monsoon ending)."},
     ],
-    season:"May–Jun (Badrinath opens) then South/West/East dhams Oct–Mar",
-    bestFor:"Householders seeking moksha · Complete pilgrims · Shankaracharya tradition followers",
-    tips:["Badrinath: arrive on Kapat Utsav opening day (late April/May) for the first abhishekam of the season","Rameswaram: bathe in all 22 teerthams before entering the main sanctum — each has a different taste","Puri: Jagannath grants darshan to those He chooses — arrive with complete surrender, not entitlement","Dwarka: ferry to Bet Dwarka island for the original Krishna dwelling before the main temple"],
-    stotram:"Badaryāśhrama vāsī tvaṃ Viṣṇo purīpate\nDvārakādhīśha namaste Rāmanāthāya te namaḥ\nJagannātha svāmī nayana patha gāmī bhava tume"},
+    season:"May–June: Badrinath opens (Kapat Utsav, usually late April/early May) — optimal window before monsoon · October–November: Badrinath closing season (Kapat Closing) — emotional and very sacred · November–March: Puri, Rameswaram, Dwarka (South and West India) optimal · Rath Yatra (June/July, Puri): the most sacred Puri time — months in advance planning needed · Avoid: Badrinath in August (peak monsoon, landslides), Puri in peak summer (April–May, extreme heat)",
+    bestFor:"Householders and families seeking moksha (liberation) · Those completing a lifetime pilgrimage · Shankaracharya tradition followers and Advaita Vedanta seekers · Pilgrims who want to experience all four directional deities of Bhārata · Those performing pitru shraddha (ancestor rites) at Brahmakund, Badrinath · Devotees of Vishnu in his varied forms — meditating, dancing, protective, royal · Anyone seeking to understand the complete sacred geography of India in a single journey",
+    tips:[
+      "Begin at Badrinath on Kapat Utsav (opening day of the season, late April/early May) if possible — the first abhishekam of the year after 6 months of closure is performed in the presence of priests and a few thousand pilgrims. The emotion in the air is palpable — people weep at the first sight of the idol.",
+      "Brahma Kapal at Badrinath: this flat riverside ghat is believed to be where even Brahma performed shraddha. Hindus perform their ancestral rites (pind dan) here with the belief that it grants instant liberation to departed souls. If you have lost parents or ancestors, make time for this ritual — arrange a pandit the evening before.",
+      "Rameswaram: the 22 teerthams ritual requires you to stand still while a priest pours water from each tirtham over you in sequence. Wear clothes you don't mind getting completely drenched. Allow 2.5 hours. After the final tirtham (Kotiteertham), proceed directly to the inner sanctum — you enter 'washed clean' in a literal and spiritual sense.",
+      "Puri Jagannath: non-Hindus cannot enter the temple. The solution: climb to the rooftop of the Raghunandan Library across the street — from there you can see the Sudarshana Chakra spinning on the summit. Also: the Mahaprasad (56-dish offering) is available for purchase by all in the outer marketplace — this is considered the most sacred food on earth and equalizes all who eat it.",
+      "Rath Yatra at Puri: book accommodation 6 months ahead. The three chariots (Nandighosa, Taladhwaja, Darpadalana) take 2–3 hours to build. They weigh thousands of tons and are pulled by thousands of devotees with thick ropes. To pull the rope even once is considered equivalent to performing 100 Ashwamedha yagnas. Arrive the night before and sleep in the panda area near the Gundicha temple.",
+      "Dwarka Bet Dwarka ferry: the ferry is a 30-minute boat ride on the Arabian Sea. On the island, the atmosphere is more intimate than the main Dwarkadhish temple — smaller, quieter, more ancient. The Ranchhod Rai temple here has the original 2,500-year-old black stone idol. Sit on the roof at sunset and watch Dwarka's lights appear across the sea, as Krishna once watched from here.",
+      "The four Vedas and four Mahavakyas of Shankaracharya: before the circuit, study one Mahavakya for each Dham. 'Ayam ātmā Brahma' (This self is Brahman — Mandukya Upanishad) for Badrinath. 'Prajñānaṃ Brahma' (Consciousness is Brahman — Aitareya Upanishad) for Puri. 'Ahaṃ Brahmāsmi' (I am Brahman — Brihadaranyaka Upanishad) for Rameswaram. 'Tat tvam asi' (Thou art That — Chandogya Upanishad) for Dwarka. Contemplate the assigned Mahavakya at each Dham for maximum depth.",
+      "Completing the Char Dham grants moksha according to tradition. At your final Dham, perform a formal completion ritual — offer flowers at the sanctum, sit in the outer courtyard, and write in a diary or speak aloud what the circuit has meant to you. This act of witness and gratitude seals the pilgrimage in your consciousness.",
+      "Tapt Kund, Badrinath: the hot spring at 43–45°C beside the Alaknanda River. Bathing before dawn darshan is mandatory by tradition. Local priests say the spring never loses its temperature regardless of snowfall or season — it has been flowing since Shankaracharya's time. The contrast of bathing in hot spring water with snow on the peaks above is uniquely Himalayan.",
+      "The combined circuit — visiting all Jyotirlingas and Char Dham together — is called the Saptapuri-Dham-Jyotirlinga Maha Yatra and is considered the highest single pilgrimage achievement in the Shaiva-Vaishnava tradition. Very few complete it in a lifetime — but to complete even Char Dham alone is a watershed moment in a spiritual life.",
+    ],
+    stotram:"Badaryāśhrama vāsī tvaṃ Viṣhṇo purīpate\nDvārakādhīśha namaste Rāmanāthāya te namaḥ\nJagannātha svāmī nayana patha gāmī bhava tume\nCaturdhāma parikramā phalam yaḥ paṭhet nityaśhaḥ\nSarvapāpa vinirmuktaḥ Viṣhṇuloke mahīyate\nĀdi Śhaṅkarācārya pranītaṃ dharma saṃsthāpanāya\nCatvāri dhāmāni namāmaḥ — mokṣha pradāyakāni"},
 ];
 
 const FD = "'EB Garamond',Georgia,serif";
@@ -267,22 +318,27 @@ const OmSvg = ({ size = 28, color }) => {
 };
 
 /* Large Om symbol — uses actual ॐ Unicode glyph with Noto Serif Devanagari */
-const OmSymbol = ({ size = 160, style = {} }) => (
-  <span style={{
-    display: "inline-block",
-    position: "relative",
-    zIndex: 2,
-    fontFamily: "'Noto Serif Devanagari', serif",
-    fontSize: size,
-    lineHeight: 1,
-    color: C.saffron,
-    animation: "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
-    userSelect: "none",
-    ...style,
-  }}>
-    ॐ
-  </span>
-);
+const OmSymbol = ({ size = 160, style = {} }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t); }, []);
+  return (
+    <span style={{
+      display: "inline-block", position: "relative", zIndex: 2,
+      opacity: mounted ? 1 : 0,
+      transform: mounted ? "scale(1) rotate(0deg)" : "scale(0.45) rotate(-20deg)",
+      transition: "opacity 1.1s cubic-bezier(.22,1,.36,1), transform 1.2s cubic-bezier(.22,1,.36,1)",
+      ...style,
+    }}>
+      <span style={{
+        display: "inline-block",
+        fontFamily: "'Noto Serif Devanagari', serif",
+        fontSize: size, lineHeight: 1, color: C.saffron,
+        animation: "omLive 5s ease-in-out infinite, omGlow 5s ease-in-out infinite",
+        userSelect: "none",
+      }}>ॐ</span>
+    </span>
+  );
+};
 
 const getCss = (theme) => `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Serif+Devanagari:wght@400;700&display=swap');
@@ -328,6 +384,14 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes sarathiRingPulse{0%{transform:translate(-50%,-50%) scale(.6);opacity:.6;border-color:rgba(212,133,60,.4)}100%{transform:translate(-50%,-50%) scale(1.8);opacity:0;border-color:rgba(212,133,60,0)}}
 @keyframes sarathiChipIn{from{opacity:0;transform:translateY(8px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes sarathiThinking{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes goldenRing{0%{transform:translate(-50%,-50%) scale(1);opacity:0.85;border-color:rgba(212,133,60,0.9)}100%{transform:translate(-50%,-50%) scale(2.8);opacity:0;border-color:rgba(212,133,60,0)}}
+@keyframes borderDraw{from{stroke-dashoffset:var(--bd-len,100)}to{stroke-dashoffset:0}}
+@keyframes cardSlideIn{from{opacity:0;transform:translateY(28px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes vizBar{0%,100%{transform:scaleY(0.15);opacity:0.12}50%{transform:scaleY(1);opacity:0.88}}
+@keyframes sunriseSweep{0%{clip-path:inset(0 100% 0 0);opacity:1}65%{clip-path:inset(0 0% 0 0);opacity:0.88}100%{clip-path:inset(0 0% 0 0);opacity:0}}
+@keyframes intentionIn{0%{opacity:0;transform:scale(0.96) translateY(16px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes routeDash{from{stroke-dashoffset:var(--route-len,800)}to{stroke-dashoffset:0}}
+@keyframes dotPulse{0%,100%{r:4;opacity:0.8}50%{r:6;opacity:1}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -896,6 +960,8 @@ const FCard = memo(({t, onClick, onFav, d=0}) => {
 // ── List Card ──
 const LCard = memo(({t, onClick, onFav, d=0}) => {
   const imgSrc = `https://source.unsplash.com/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const [burst, setBurst] = useState(0);
+  const DEGS = [0,45,90,135,180,225,270,315];
   return (
     <div className="t rv" onClick={() => onClick(t)} style={{
       display:"flex",gap:0,padding:0,margin:"0 24px 12px",borderRadius:20,
@@ -920,7 +986,12 @@ const LCard = memo(({t, onClick, onFav, d=0}) => {
             </span>
           </div>
         </div>
-        <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" onClick={e => { e.stopPropagation(); onFav?.(t.id, t.isFavorite); }} style={{display:"flex",alignItems:"center",fontSize:15,color:t.isFavorite?C.red:C.textDD,padding:"8px 4px",cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
+        <div style={{position:"relative",display:"flex",alignItems:"center",padding:"8px 4px"}}>
+          {burst > 0 && DEGS.map((deg,i) => (
+            <div key={`hb-${burst}-${i}`} aria-hidden="true" style={{position:"absolute",top:"50%",left:"50%",width:6,height:6,borderRadius:"50%",background:C.red,pointerEvents:"none",zIndex:10,"--hb-deg":`${deg}deg`,animation:"heartBurst 0.65s ease-out both",animationDelay:`${i*0.04}s`}}/>
+          ))}
+          <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" onClick={e => { e.stopPropagation(); if (!t.isFavorite) { setBurst(b => b+1); haptic(30); } onFav?.(t.id, t.isFavorite); }} style={{fontSize:15,color:t.isFavorite?C.red:C.textDD,cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
+        </div>
       </div>
     </div>
   );
@@ -1134,24 +1205,237 @@ const BNav = ({a, on, savedCount=0}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━ PAGES ━━━━━━━━━━━━━━━━━━━━━━━
 
+// ── Circuit progress helpers ──
+const cpGet = id => { try { return JSON.parse(localStorage.getItem(`cp_${id}`) || '[]'); } catch { return []; } };
+const cpSet = (id, arr) => localStorage.setItem(`cp_${id}`, JSON.stringify(arr));
+
+// ── Geographic coordinates for pilgrimage route map ──
+// [x, y] in SVG viewBox (0 0 210 265) where x=(lon-68)*7, y=(37-lat)*8
+const CIRCUIT_COORDS = {
+  jyotirlingas: [
+    [17,129,"Somnath"],[8,118,"Nageshwar"],[38,136,"Tryambakeshwar"],[38,143,"Bhimashankar"],
+    [50,136,"Grishneshwar"],[57,119,"Omkareshwar"],[55,110,"Mahakaleshwar"],
+    [78,50,"Kedarnath"],[105,94,"Kashi"],[131,100,"Vaidyanath"],
+    [76,167,"Mallikarjuna"],[79,221,"Rameshwaram"],
+  ],
+  shakti_peethas: [
+    [14,72,"Mansa Devi"],[8,80,"Jwala Devi"],[46,136,"Kolhapur"],
+    [109,88,"Varanasi"],[140,124,"Tarapith"],[140,117,"Dakshineswar"],
+    [160,91,"Kamakhya"],[8,167,"Kanyakumari"],[14,96,"Naina Devi"],
+    [60,80,"Vaishnodevi"],[84,192,"Chennai"],[60,136,"Tulja Bhavani"],
+  ],
+  divya_desams: [
+    [82,159,"Tirumala"],[75,182,"Srirangam"],[78,50,"Badrinath"],[8,136,"Dwarka"],
+    [84,185,"Kanchipuram"],[75,200,"Kumbakonam"],[72,196,"Thanjavur"],
+    [84,192,"Chennai"],[79,221,"Rameswaram"],[70,229,"Kanyakumari"],
+    [56,216,"Thiruvananthapuram"],[49,208,"Guruvayur"],[62,200,"Madurai"],
+    [77,188,"Tirupati"],[98,168,"Srisailam"],[105,94,"Mathura"],
+    [90,157,"Ahobilam"],[47,179,"Mangalore"],[55,110,"Ujjain"],
+    [82,66,"Haridwar"],
+  ],
+  char_dham: [
+    [73,48,"Yamunotri"],[76,49,"Gangotri"],[78,50,"Kedarnath"],[81,50,"Badrinath"],
+  ],
+};
+
+// ── SVG Progress Arc ──
+const ProgressArc = ({ visited, total, hue, size = 38 }) => {
+  const pct = total > 0 ? Math.min(1, visited / total) : 0;
+  const r = 14, circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct);
+  if (visited === 0) return null;
+  return (
+    <svg width={size} height={size} viewBox="0 0 36 36" style={{position:"absolute",top:10,right:10}}>
+      <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3"/>
+      <circle cx="18" cy="18" r={r} fill="none"
+        stroke={hsl(hue,60,58)} strokeWidth="3" strokeLinecap="round"
+        strokeDasharray={circ.toFixed(1)} strokeDashoffset={offset.toFixed(1)}
+        transform="rotate(-90 18 18)"
+        style={{transition:"stroke-dashoffset 0.7s cubic-bezier(.22,1,.36,1)"}}/>
+      <text x="18" y="22" textAnchor="middle" fontSize="7.5" fontWeight="700"
+        fill={hsl(hue,60,65)} style={{fontFamily:FB}}>{visited}</text>
+    </svg>
+  );
+};
+
+// ── Om Circular Visualizer ──
+const OmVisualizer = ({ playing }) => {
+  const HEIGHTS = [14,22,12,28,16,24,10,26,18,30,12,22,28,14,24,18,32,14,20,26,10,28,16,22,30,12,26,18,22,28,14,20,16,24,20,18];
+  const R = 158;
+  return (
+    <div aria-hidden="true" style={{position:"absolute",top:"50%",left:"50%",width:0,height:0,pointerEvents:"none",zIndex:1}}>
+      {HEIGHTS.map((h,i) => {
+        const rad = (i * 10 - 90) * Math.PI / 180;
+        const x = Math.cos(rad) * R;
+        const y = Math.sin(rad) * R;
+        const spd = (0.62 + Math.abs(Math.sin(i * 0.8)) * 0.52).toFixed(2);
+        const dly = (i * 0.042 % 0.72).toFixed(3);
+        return (
+          <div key={i} style={{
+            position:"absolute", width:3, height:h,
+            transform:`translate(${(x-1.5).toFixed(1)}px,${(y-h).toFixed(1)}px) rotate(${i*10}deg)`,
+            transformOrigin:`1.5px ${h}px`,
+          }}>
+            <div style={{
+              width:"100%", height:"100%", borderRadius:2,
+              background:`rgba(212,133,60,${(0.42+Math.abs(Math.sin(i*0.7))*0.42).toFixed(2)})`,
+              transformOrigin:"center bottom",
+              animation: playing ? `vizBar ${spd}s ease-in-out infinite ${dly}s` : "none",
+              opacity: playing ? undefined : 0.1,
+              transition:"opacity 1.4s ease",
+              boxShadow: playing ? "0 0 4px rgba(212,133,60,0.35)" : "none",
+            }}/>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ── Daily Intention Splash (shows once per calendar day) ──
+const INTENTIONS = [
+  { sk:"सर्वे भवन्तु सुखिनः", en:"May all beings be happy, may all be free from suffering" },
+  { sk:"तमसो मा ज्योतिर्गमय", en:"Lead me from darkness into light, from ignorance into wisdom" },
+  { sk:"ॐ शान्तिः शान्तिः शान्तिः", en:"Om — peace in body, peace in mind, peace in spirit" },
+  { sk:"अहं ब्रह्मास्मि", en:"I am Brahman — the consciousness that pervades all creation" },
+  { sk:"यत्र योगेश्वरः कृष्णः", en:"Where there is Krishna, there is victory, wisdom, and prosperity" },
+  { sk:"मातृदेवो भव", en:"Honor your mother as a deity — she is the first sacred ground" },
+  { sk:"सत्यं शिवं सुन्दरम्", en:"Truth is auspicious, auspiciousness is beauty itself" },
+];
+const DailyIntention = ({ onClose }) => {
+  const panchang = getHinduPanchang();
+  const today = new Date();
+  const shloka = INTENTIONS[today.getDate() % INTENTIONS.length];
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:9998,
+      background:`radial-gradient(ellipse at 50% 35%,${hsl(30,55,10)},${hsl(350,45,5)} 65%,${hsl(30,30,3)})`,
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+      padding:"40px 32px", textAlign:"center",
+      animation:"intentionIn 0.7s cubic-bezier(.22,1,.36,1) both",
+    }}>
+      {/* Ambient glow */}
+      <div style={{position:"absolute",top:"30%",left:"50%",width:320,height:320,borderRadius:"50%",
+        background:"radial-gradient(circle,rgba(212,133,60,0.12),transparent 65%)",
+        transform:"translate(-50%,-50%)",filter:"blur(60px)",pointerEvents:"none"}}/>
+      {/* Om */}
+      <div style={{fontFamily:"'Noto Serif Devanagari', serif",fontSize:72,color:C.saffron,
+        animation:"omGlow 4s ease-in-out infinite",lineHeight:1,marginBottom:24,position:"relative",zIndex:2}}>ॐ</div>
+      {/* Panchang */}
+      <div style={{display:"flex",gap:16,marginBottom:32,position:"relative",zIndex:2}}>
+        {[{l:"Tithi",v:panchang.tithi},{l:"Nakshatra",v:panchang.nakshatra},{l:"Vara",v:panchang.vara.split("a")[0]+"a"}].map(p => (
+          <div key={p.l} style={{textAlign:"center"}}>
+            <div style={{fontSize:8,color:"rgba(212,133,60,0.5)",fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:4}}>{p.l}</div>
+            <div style={{fontFamily:FD,fontSize:13,color:C.creamM}}>{p.v}</div>
+          </div>
+        ))}
+      </div>
+      {/* Shloka */}
+      <div style={{position:"relative",zIndex:2,maxWidth:300}}>
+        <div style={{fontFamily:"'Noto Serif Devanagari', serif",fontSize:22,color:C.saffron,lineHeight:1.5,marginBottom:14}}>{shloka.sk}</div>
+        <div style={{fontFamily:FD,fontSize:14,color:C.creamD,lineHeight:1.8,fontStyle:"italic",marginBottom:36}}>{shloka.en}</div>
+      </div>
+      {/* CTA */}
+      <button className="t" onClick={onClose} style={{
+        padding:"14px 44px",borderRadius:100,
+        background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,
+        color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",
+        fontFamily:FB,letterSpacing:.5,
+        boxShadow:`0 6px 32px rgba(212,133,60,0.4)`,
+        position:"relative",zIndex:2,
+      }}>Begin the Journey</button>
+      <div style={{marginTop:20,fontSize:10,color:C.textDD,letterSpacing:1,position:"relative",zIndex:2}}>
+        {today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}
+      </div>
+    </div>
+  );
+};
+
+// ── Voice Search Button ──
+const VoiceSearch = ({ onResult }) => {
+  const [listening, setListening] = useState(false);
+  const recRef = useRef(null);
+  const SR = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  if (!SR) return null;
+  const start = () => {
+    if (listening) { recRef.current?.stop(); return; }
+    const r = new SR();
+    recRef.current = r;
+    r.lang = 'en-IN'; r.continuous = false; r.interimResults = false;
+    r.onresult = e => { onResult(e.results[0][0].transcript); setListening(false); };
+    r.onerror = () => setListening(false);
+    r.onend = () => setListening(false);
+    r.start();
+    setListening(true);
+    haptic(15);
+  };
+  return (
+    <button aria-label={listening ? "Stop listening" : "Search by voice"} className="t" onClick={start} style={{
+      background:"none", border:"none", cursor:"pointer",
+      color: listening ? C.saffron : C.textD,
+      fontSize:17, padding:"4px 6px", lineHeight:1,
+      animation: listening ? "breathe 0.9s ease-in-out infinite" : "none",
+    }}>🎙</button>
+  );
+};
+
+/* Slot-machine digit roller — one column per digit */
+const OdometerDigit = ({ digit, size = 28, color, delay = 0, triggered }) => {
+  const rowH = Math.ceil(size * 1.3);
+  const colW = Math.ceil(size * 0.68);
+  return (
+    <div style={{ overflow: "hidden", height: rowH, width: colW, display: "inline-block" }}>
+      <div style={{
+        transform: `translateY(${triggered ? -digit * rowH : 0}px)`,
+        transition: triggered
+          ? `transform 0.9s ${delay}ms cubic-bezier(.25,.46,.45,.94)`
+          : "none",
+      }}>
+        {[0,1,2,3,4,5,6,7,8,9].map(n => (
+          <div key={n} style={{
+            height: rowH,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: FD, fontSize: size, fontWeight: 500, color, lineHeight: 1,
+          }}>{n}</div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Odometer = ({ value, size = 28, color, triggered }) => (
+  <div style={{ display: "inline-flex", lineHeight: 1, overflow: "hidden" }}>
+    {String(value).split("").map((d, i) => (
+      <OdometerDigit key={i} digit={Number(d)} size={size} color={color}
+        delay={i * 110} triggered={triggered} />
+    ))}
+  </div>
+);
+
 const SacredCircuits = ({nav, isDark}) => {
-  const [c1, t1] = useCountUp(12,  900);
-  const [c2, t2] = useCountUp(51,  1100);
-  const [c3, t3] = useCountUp(108, 1400);
-  const [c4, t4] = useCountUp(4,   700);
+  const [triggered, setTriggered] = useState(false);
+  const [visitCounts, setVisitCounts] = useState({});
   const stripRef = useRef(null);
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { t1(); t2(); t3(); t4(); obs.disconnect(); }
+      if (e.isIntersecting) { setTriggered(true); obs.disconnect(); }
     }, {threshold: 0.35});
     if (stripRef.current) obs.observe(stripRef.current);
     return () => obs.disconnect();
-  }, [t1, t2, t3, t4]);
+  }, []);
+  useEffect(() => {
+    setVisitCounts({
+      Jyotirlingas: cpGet("jyotirlingas").length,
+      "Shakti Peethas": cpGet("shakti_peethas").length,
+      "Divya Desams": cpGet("divya_desams").length,
+      "Char Dhams": cpGet("char_dham").length,
+    });
+  }, []);
   const circuits = [
-    {n:c1, l:"Jyotirlingas",   icon:"☽", h:350},
-    {n:c2, l:"Shakti Peethas", icon:"✦", h:280},
-    {n:c3, l:"Divya Desams",   icon:"☸", h:215},
-    {n:c4, l:"Char Dhams",     icon:"◎", h:140},
+    {v:12,  l:"Jyotirlingas",   icon:"☽", h:350, id:"jyotirlingas"},
+    {v:51,  l:"Shakti Peethas", icon:"✦", h:280, id:"shakti_peethas"},
+    {v:108, l:"Divya Desams",   icon:"☸", h:215, id:"divya_desams"},
+    {v:4,   l:"Char Dhams",     icon:"◎", h:140, id:"char_dham"},
   ];
   return (
     <Reveal delay={0}>
@@ -1168,14 +1452,69 @@ const SacredCircuits = ({nav, isDark}) => {
               animation:`circuitGlow 4s ease-in-out infinite ${i*.8}s`,
             }}>
               <div style={{position:"absolute",top:0,left:"-100%",width:"45%",height:"100%",background:`linear-gradient(105deg,transparent,${hsl(c.h,60,70,0.07)},transparent)`,animation:`premiumSheen 5s ease-in-out infinite ${i*0.9+1}s`,pointerEvents:"none"}}/>
+              <ProgressArc visited={visitCounts[c.l]||0} total={c.v} hue={c.h}/>
               <div style={{fontSize:20,marginBottom:8,filter:`drop-shadow(0 0 6px ${hsl(c.h,60,55,0.5)})`}}>{c.icon}</div>
-              <div style={{fontFamily:FD,fontSize:28,fontWeight:500,color:hsl(c.h,55,isDark?68:42),lineHeight:1,marginBottom:6}}>{c.n}</div>
-              <div style={{fontSize:11,color:C.textM,fontWeight:600,letterSpacing:.3}}>{c.l}</div>
+              <Odometer value={c.v} size={28} color={hsl(c.h,55,isDark?68:42)} triggered={triggered}/>
+              <div style={{fontSize:11,color:C.textM,fontWeight:600,letterSpacing:.3,marginTop:6}}>{c.l}</div>
             </div>
           ))}
         </div>
       </div>
     </Reveal>
+  );
+};
+
+// ── Circuit card with 3D tilt ──
+const CircuitCard = ({ c, i, onCircuit, isDark }) => {
+  const { ref: tiltRef, tilt, onMove, onLeave } = useTilt();
+  const [visited, setVisited] = useState(() => cpGet(c.id).length);
+  const isSettled = tilt.x === 0 && tilt.y === 0;
+  const b1 = hsl(c.hue,35,isDark?13:90), b2 = hsl(c.hue,42,isDark?6:96);
+  return (
+    <div className="rv" onClick={() => onCircuit(c)} style={{
+      borderRadius:24,overflow:"hidden",marginBottom:14,cursor:"pointer",
+      background:`linear-gradient(135deg,${b1},${b2})`,
+      border:`1px solid ${hsl(c.hue,30,isDark?20:78,0.15)}`,
+      boxShadow:`0 6px 32px ${hsl(c.hue,30,5,0.3)}`,
+      animationDelay:`${i*.08}s`,position:"relative",
+    }}>
+      <div ref={tiltRef} onMouseMove={onMove} onTouchMove={onMove} onMouseLeave={onLeave} onTouchEnd={onLeave}
+        style={{
+          transform:`perspective(900px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transition: isSettled ? 'transform 0.5s cubic-bezier(.16,1,.3,1)' : 'none',
+          transformOrigin:'center center', willChange:'transform',
+        }}>
+        <div style={{position:"absolute",top:"-20%",right:"-5%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,50,40,0.06)},transparent 60%)`,filter:"blur(40px)",pointerEvents:"none"}}/>
+        {/* Progress arc overlay */}
+        {visited > 0 && (
+          <div style={{position:"absolute",top:16,right:16,zIndex:3}}>
+            <ProgressArc visited={visited} total={c.count} hue={c.hue} size={40}/>
+          </div>
+        )}
+        <div style={{padding:"22px",position:"relative",zIndex:2}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+            <div>
+              <div style={{fontSize:9,color:hsl(c.hue,50,55,0.7),fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{c.deity}</div>
+              <h3 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,lineHeight:1.15}}>{c.name}</h3>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+              <div style={{fontFamily:FD,fontSize:32,fontWeight:500,color:hsl(c.hue,50,55,0.6),lineHeight:1}}>{c.count}</div>
+              <div style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:3}}>Sites</div>
+            </div>
+          </div>
+          <p style={{fontSize:13,color:C.creamD,lineHeight:1.7,fontFamily:FD,fontStyle:"italic",marginBottom:14}}>{c.essence.slice(0,110)}…</p>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",gap:6}}>
+              {c.pacing.map(p => (
+                <div key={p.days} style={{padding:"4px 11px",borderRadius:100,background:"rgba(255,255,255,0.05)",fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>{p.days}d</div>
+              ))}
+            </div>
+            {visited > 0 && <div style={{fontSize:10,color:hsl(c.hue,55,60,0.8),fontWeight:700}}>{visited}/{c.count} visited</div>}
+            <span style={{color:"rgba(255,255,255,0.2)",fontSize:16}}>→</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -1197,51 +1536,42 @@ const CircuitsPage = ({onCircuit, isDark}) => (
     </div>
     <div style={{padding:"32px 24px 0"}}>
       <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:20}}>The Four Sacred Circuits</div>
-      {CIRCUITS.map((c,i) => {
-        const b1 = hsl(c.hue,35,isDark?13:90), b2 = hsl(c.hue,42,isDark?6:96);
-        return (
-          <div key={c.id} className="t rv" onClick={() => onCircuit(c)} style={{
-            borderRadius:24,overflow:"hidden",marginBottom:14,cursor:"pointer",
-            background:`linear-gradient(135deg,${b1},${b2})`,
-            border:`1px solid ${hsl(c.hue,30,isDark?20:78,0.15)}`,
-            boxShadow:`0 6px 32px ${hsl(c.hue,30,5,0.3)}`,
-            animationDelay:`${i*.08}s`,position:"relative",
-          }}>
-            <div style={{position:"absolute",top:"-20%",right:"-5%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,50,40,0.06)},transparent 60%)`,filter:"blur(40px)",pointerEvents:"none"}}/>
-            <div style={{padding:"22px",position:"relative",zIndex:2}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:9,color:hsl(c.hue,50,55,0.7),fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{c.deity}</div>
-                  <h3 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,lineHeight:1.15}}>{c.name}</h3>
-                </div>
-                <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
-                  <div style={{fontFamily:FD,fontSize:32,fontWeight:500,color:hsl(c.hue,50,55,0.6),lineHeight:1}}>{c.count}</div>
-                  <div style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:3}}>Sites</div>
-                </div>
-              </div>
-              <p style={{fontSize:13,color:C.creamD,lineHeight:1.7,fontFamily:FD,fontStyle:"italic",marginBottom:14}}>{c.essence.slice(0,110)}…</p>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{display:"flex",gap:6}}>
-                  {c.pacing.map(p => (
-                    <div key={p.days} style={{padding:"4px 11px",borderRadius:100,background:"rgba(255,255,255,0.05)",fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>{p.days}d</div>
-                  ))}
-                </div>
-                <span style={{color:"rgba(255,255,255,0.2)",fontSize:16}}>→</span>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {CIRCUITS.map((c,i) => (
+        <CircuitCard key={c.id} c={c} i={i} onCircuit={onCircuit} isDark={isDark}/>
+      ))}
     </div>
   </div>
 );
 
 const CircuitDetail = ({circuit: c, onBack, isDark}) => {
   const [tab, setTab] = useState("overview");
+  const [visited, setVisited] = useState(() => new Set(cpGet(c.id)));
+  const toggleVisited = (idx) => setVisited(prev => {
+    const next = new Set(prev);
+    next.has(idx) ? next.delete(idx) : next.add(idx);
+    cpSet(c.id, [...next]);
+    haptic(20);
+    return next;
+  });
   const b1 = hsl(c.hue,38,isDark?15:88), b2 = hsl(c.hue,44,isDark?7:94), b3 = hsl(c.hue,50,isDark?3:97);
   return (
     <div className="fi" style={{paddingBottom:44}}>
       <div style={{height:300,position:"relative",overflow:"hidden",background:`linear-gradient(178deg,${b1},${b2} 50%,${b3})`}}>
+        {/* SVG corner border-draw — traces golden corners on mount */}
+        <svg aria-hidden="true" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:6}} viewBox="0 0 100 100" preserveAspectRatio="none">
+          {/* top-left */}
+          <path d="M12,0.5 L0.5,0.5 L0.5,12" fill="none" stroke={`${hsl(c.hue,60,55,0.55)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.25s both"}}/>
+          {/* top-right */}
+          <path d="M88,0.5 L99.5,0.5 L99.5,12" fill="none" stroke={`${hsl(c.hue,60,55,0.55)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.45s both"}}/>
+          {/* bottom-left */}
+          <path d="M0.5,88 L0.5,99.5 L12,99.5" fill="none" stroke={`${hsl(c.hue,60,55,0.4)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.65s both"}}/>
+          {/* bottom-right */}
+          <path d="M99.5,88 L99.5,99.5 L88,99.5" fill="none" stroke={`${hsl(c.hue,60,55,0.4)}`} strokeWidth="0.6" strokeLinecap="round"
+            style={{"--bd-len":"24",strokeDasharray:"24",strokeDashoffset:"24",animation:"borderDraw 0.75s cubic-bezier(.22,1,.36,1) 0.85s both"}}/>
+        </svg>
         <div style={{position:"absolute",top:"10%",right:"0",width:250,height:250,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,55,45,0.06)},transparent 55%)`,filter:"blur(50px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:"18%",left:"50%",animation:"drift 10s ease-in-out infinite",pointerEvents:"none"}}>
           <span style={{fontFamily:FD,fontSize:64,color:hsl(c.hue,30,50,0.025),userSelect:"none"}}>{c.sk}</span>
@@ -1261,7 +1591,7 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
         </div>
       </div>
       <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50,overflowX:"auto"}}>
-        {["overview","temples","pacing","wisdom"].map(tb => (
+        {["overview","temples","pacing","wisdom","map"].map(tb => (
           <button key={tb} className="t" onClick={() => setTab(tb)} style={{padding:"15px 16px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s",whiteSpace:"nowrap"}}>{tb}</button>
         ))}
       </div>
@@ -1289,13 +1619,16 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
           </div>
         </div>}
         {tab === "temples" && <div className="fi">
-          <div style={{fontSize:12,color:C.textD,marginBottom:14}}>Key sites · {c.count} total in complete circuit</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <div style={{fontSize:12,color:C.textD}}>Key sites · {c.count} total in complete circuit</div>
+            {visited.size > 0 && <div style={{fontSize:11,color:hsl(c.hue,55,60),fontWeight:700}}>{visited.size} visited</div>}
+          </div>
           {c.temples.map((t,i) => (
             <div key={i} className="rv" style={{padding:"14px 0",borderBottom:`1px solid ${C.divL}`,animationDelay:`${i*.04}s`}}>
               <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-                <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(145deg,${hsl(c.hue,35,16)},${hsl(c.hue,45,8)})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,color:hsl(c.hue,50,55,0.7),fontWeight:700,fontFamily:FD}}>{i+1}</div>
+                <button className="t" onClick={() => toggleVisited(i)} aria-label={visited.has(i) ? "Mark not visited" : "Mark visited"} style={{width:34,height:34,borderRadius:11,background:visited.has(i)?`linear-gradient(145deg,${hsl(c.hue,55,30)},${hsl(c.hue,60,20)})`:`linear-gradient(145deg,${hsl(c.hue,35,16)},${hsl(c.hue,45,8)})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:visited.has(i)?14:11,color:visited.has(i)?hsl(c.hue,70,75):hsl(c.hue,50,55,0.7),fontWeight:700,fontFamily:FD,border:`1px solid ${visited.has(i)?hsl(c.hue,50,35,0.5):"transparent"}`,cursor:"pointer",transition:"all .3s cubic-bezier(.22,1,.36,1)",boxShadow:visited.has(i)?`0 0 12px ${hsl(c.hue,50,40,0.25)}`:"none"}}>{visited.has(i) ? "✓" : i+1}</button>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:15,fontWeight:600,color:C.cream,fontFamily:FD,marginBottom:3}}>{t.n}</div>
+                  <div style={{fontSize:15,fontWeight:600,color:visited.has(i)?hsl(c.hue,50,70):C.cream,fontFamily:FD,marginBottom:3,transition:"color .3s"}}>{t.n}</div>
                   <div style={{fontSize:11.5,color:C.textD,marginBottom:5,display:"flex",alignItems:"center",gap:4}}><div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.loc}</div>
                   {t.note && <div style={{fontSize:12,color:C.creamD,lineHeight:1.6,fontStyle:"italic"}}>{t.note}</div>}
                 </div>
@@ -1331,6 +1664,46 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
             </div>
           ))}
         </div>}
+        {tab === "map" && (() => {
+          const pts = CIRCUIT_COORDS[c.id] || [];
+          if (!pts.length) return <div style={{padding:40,textAlign:"center",color:C.textD,fontStyle:"italic",fontFamily:FD}}>Map not available for this circuit.</div>;
+          const xs = pts.map(p=>p[0]), ys = pts.map(p=>p[1]);
+          const minX = Math.min(...xs)-14, maxX = Math.max(...xs)+14;
+          const minY = Math.min(...ys)-14, maxY = Math.max(...ys)+14;
+          const vw = maxX - minX, vh = maxY - minY;
+          const routeD = pts.map((p,i) => `${i===0?"M":"L"}${p[0]},${p[1]}`).join(" ");
+          const routeLen = pts.length * 28;
+          return (
+            <div className="fi" style={{paddingBottom:24}}>
+              <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Pilgrimage Route Map</div>
+              <div style={{borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,padding:12}}>
+                <svg viewBox={`${minX} ${minY} ${vw} ${vh}`} style={{width:"100%",height:"auto",display:"block"}} aria-label={`${c.name} pilgrimage route map`}>
+                  {/* route path */}
+                  <path d={routeD} fill="none" stroke={hsl(c.hue,55,50,0.22)} strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/>
+                  <path d={routeD} fill="none" stroke={hsl(c.hue,65,60)} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round"
+                    strokeDasharray={routeLen} style={{"--route-len":routeLen,strokeDashoffset:routeLen,animation:`routeDash 2.4s cubic-bezier(.22,1,.36,1) 0.3s forwards`}}/>
+                  {/* dots */}
+                  {pts.map((p,i) => {
+                    const isV = visited.has(i % c.temples.length);
+                    return (
+                      <g key={i}>
+                        <circle cx={p[0]} cy={p[1]} r="5.5" fill={hsl(c.hue,40,18)} stroke={hsl(c.hue,50,35,0.3)} strokeWidth="0.8"/>
+                        <circle cx={p[0]} cy={p[1]} r={isV ? 3.5 : 2.8} fill={isV ? hsl(c.hue,70,65) : hsl(c.hue,55,52,0.75)}
+                          style={{animation:`dotPulse ${1.6+i*0.1}s ease-in-out infinite ${i*0.12}s`}}/>
+                        <text x={p[0]} y={p[1]-8} textAnchor="middle" fontSize="3.8" fill={hsl(c.hue,50,70,0.7)} fontFamily="serif" style={{pointerEvents:"none"}}>{p[2]}</text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:16,marginTop:14,padding:"12px 0",borderTop:`1px solid ${C.divL}`}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:10,height:10,borderRadius:"50%",background:hsl(c.hue,70,65)}}/><span style={{fontSize:11,color:C.textD}}>Visited</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:10,height:10,borderRadius:"50%",background:hsl(c.hue,55,52,0.75)}}/><span style={{fontSize:11,color:C.textD}}>Remaining</span></div>
+                <div style={{marginLeft:"auto",fontSize:11,color:hsl(c.hue,55,60),fontWeight:700}}>{visited.size}/{c.temples.length} marked</div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -1338,6 +1711,8 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
 
 const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[]}) => {
   const { playing, toggle } = useOmChant();
+  const [chantFlash, setChantFlash] = useState(0);
+  const handleChantToggle = () => { haptic(playing ? 20 : 40); toggle(); setChantFlash(f => f + 1); };
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify','1'); setNotified(true); };
   // Animated stats counters
@@ -1507,11 +1882,23 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
           </svg>
         </div>
 
+        {/* OM audio visualizer — circular waveform bars */}
+        <OmVisualizer playing={playing}/>
         {/* OM glyph */}
         <OmSymbol size={168} />
+        {/* Golden ring flash on chant tap */}
+        {chantFlash > 0 && (
+          <div key={chantFlash} aria-hidden="true" style={{
+            position:"absolute",top:"50%",left:"50%",
+            width:180,height:180,borderRadius:"50%",
+            border:"2.5px solid rgba(212,133,60,0.9)",
+            animation:"goldenRing 0.7s ease-out both",
+            pointerEvents:"none",zIndex:10,
+          }}/>
+        )}
         {/* Om chant button */}
         <div style={{position:"absolute",bottom:-14,left:"50%",transform:"translateX(-50%)",zIndex:3}}>
-          <button className="t" onClick={toggle} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 22px",borderRadius:100,background:playing?"rgba(212,133,60,0.9)":"rgba(212,133,60,0.12)",border:`1.5px solid ${playing?C.saffron:"rgba(212,133,60,0.3)"}`,cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:playing?`0 4px 28px rgba(212,133,60,0.4)`:"none"}}>
+          <button className="t" onClick={handleChantToggle} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 22px",borderRadius:100,background:playing?"rgba(212,133,60,0.9)":"rgba(212,133,60,0.12)",border:`1.5px solid ${playing?C.saffron:"rgba(212,133,60,0.3)"}`,cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .3s cubic-bezier(.16,1,.3,1)",boxShadow:playing?`0 4px 28px rgba(212,133,60,0.4)`:"none"}}>
             {/* Sound wave bars */}
             <div style={{display:"flex",alignItems:"center",gap:2,height:14}}>
               {[1,1.8,1.3,2,1.5,1.1,1.7].map((h,i) => (
@@ -2011,7 +2398,7 @@ const Search = ({oT, oF, onBack, temples}) => {
         <div style={{flex:1,padding:"13px 18px",borderRadius:16,background:C.card,display:"flex",alignItems:"center",gap:12,border:`2px solid ${C.saffron}`,boxShadow:`0 0 0 4px ${C.saffronDim}`}}>
           <span style={{fontSize:15,color:C.saffron}}>⌕</span>
           <input autoFocus type="search" aria-label="Search temples" placeholder="Temple, deity, city, state…" value={q} onChange={e => { setQ(e.target.value); }} onKeyDown={e => e.key==='Enter' && saveHistory(q)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:FB,color:C.cream,background:"transparent"}}/>
-          {q && <button aria-label="Clear search" className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button>}
+          {q ? <button aria-label="Clear search" className="t" onClick={() => setQ("")} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:C.textD}}>✕</button> : <VoiceSearch onResult={term => { setQ(term); saveHistory(term); }}/>}
         </div>
       </div>
       {!q ? <div style={{padding:"18px 24px"}}>
@@ -3421,6 +3808,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') !== 'light');
+  const [sunrising, setSunrising] = useState(false);
+  const [showIntention, setShowIntention] = useState(() => {
+    const today = new Date().toDateString();
+    return localStorage.getItem('intentionDate') !== today;
+  });
   const [navDir, setNavDir] = useState('none');
   const [pageKey, setPageKey] = useState(0);
   const [toast, setToast] = useState({msg:'',icon:'✓',visible:false});
@@ -3446,6 +3838,7 @@ export default function App() {
     setIsDark(v => {
       const next = !v;
       localStorage.setItem('theme', next ? 'dark' : 'light');
+      if (!next) { setSunrising(true); setTimeout(() => setSunrising(false), 2200); }
       return next;
     });
   }, []);
@@ -3546,6 +3939,14 @@ export default function App() {
         <main id="main-content" ref={ref} role="main" style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
           <div key={pageKey} className={transitionClass}>{page}</div>
         </main>
+        {/* Sunrise sweep — triggers on dark→light toggle */}
+        {sunrising && (
+          <div aria-hidden="true" style={{position:"absolute",inset:0,zIndex:200,pointerEvents:"none",background:"linear-gradient(135deg,rgba(255,200,80,0.72) 0%,rgba(255,160,40,0.55) 40%,rgba(255,220,120,0.38) 100%)",animation:"sunriseSweep 2.1s cubic-bezier(.22,1,.36,1) both"}}/>
+        )}
+        {/* Daily intention splash */}
+        {showIntention && (
+          <DailyIntention onClose={() => { const today = new Date().toDateString(); localStorage.setItem('intentionDate', today); setShowIntention(false); }}/>
+        )}
         <Toast msg={toast.msg} icon={toast.icon} visible={toast.visible}/>
         {/* Sarathi FAB — floats above BNav */}
         {showNav && (
