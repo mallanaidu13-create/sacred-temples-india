@@ -156,6 +156,101 @@ const PANCHANG = {
   vara: "Ravivara (Sunday)",
 };
 
+const CIRCUITS = [
+  {id:"jyotirlingas",name:"Dvādasha Jyotirlinga Circuit",shortName:"12 Jyotirlingas",sk:"ज्योतिर्लिङ्ग",deity:"Shiva",count:12,hue:350,
+    essence:"Twelve pillars of primordial light where Śiva blazes self-revealed — swayambhu lingas radiating the absolute consciousness that pierces time itself.",
+    significance:"The twelve Jyotirlingas map a sacred geography of Shiva's self-manifestation. Each site marks where the column of fire became visible to Brahma and Vishnu in their cosmic contest. Together they constitute the complete body of Shaiva pilgrimage.",
+    temples:[
+      {n:"Somnath",loc:"Prabhās Pātan, Gujarat",note:"First Jyotirlinga · Faces the Arabian Sea · Rebuilt 17 times"},
+      {n:"Mallikārjuna",loc:"Srisailam, Andhra Pradesh",note:"Only site where both Jyotirlinga and Shakti Peetha coincide"},
+      {n:"Mahākāleshwar",loc:"Ujjain, Madhya Pradesh",note:"The only Dakshinamukhi Jyotirlinga · Lord of Time"},
+      {n:"Omkāreshwar",loc:"Mandhata Island, MP",note:"Island shaped like Aum · Two lingas share one sanctum"},
+      {n:"Kedārnāth",loc:"Rudraprayag, Uttarakhand",note:"3,583m · Pancha Kedar crown · Open May–Nov"},
+      {n:"Bhīmāshankar",loc:"Pune district, Maharashtra",note:"Source of the Bhima River · Dense forest sanctuary"},
+      {n:"Vishvanāth",loc:"Kāshi, Varanasi, UP",note:"Lord of the Universe · Central pillar of Shaiva cosmos"},
+      {n:"Tryambakeshwar",loc:"Nashik, Maharashtra",note:"Three-faced linga · Source of the Godavari"},
+      {n:"Vaidyanāth",loc:"Deoghar, Jharkhand",note:"Healing deity · Shravan month draws millions"},
+      {n:"Nāgeshwar",loc:"Dwarka coast, Gujarat",note:"Lord of Serpents · Near Char Dham site of Dwarka"},
+      {n:"Rāmeshwar",loc:"Rameswaram, Tamil Nadu",note:"Char Dham · Ram installed this linga · 22 sacred wells"},
+      {n:"Ghrishneshwar",loc:"Ellora, Maharashtra",note:"Near Ajanta-Ellora · Final Jyotirlinga in sacred sequence"},
+    ],
+    pacing:[
+      {days:30,label:"Complete Circuit",desc:"Full 30-day pilgrimage traversing all 12 Jyotirlingas in sacred sequence. Begin Somnath at dawn, close at Ghrishneshwar."},
+      {days:18,label:"Dedicated Pilgrim",desc:"18-day focused circuit combining regional clusters with efficient routing. Four regional hubs."},
+      {days:10,label:"Essential Journey",desc:"10-day sprint covering the most geographically accessible Jyotirlingas: Varanasi, Ujjain, Nashik, Somnath, Rameswaram."},
+    ],
+    season:"Oct–Mar · Avoid Sāvan for Varanasi crowds · Kedarnath open May–Nov only",
+    bestFor:"Shaiva devotees · Maha Shivaratri pilgrims · Seekers of liberation",
+    tips:["Begin at Somnath facing the Arabian Sea at dawn — stand where there is no land between you and the South Pole","Kedarnath requires 16km trek — begin physical conditioning 3 months ahead","Varanasi Kashi Vishvanath: darshan flows best 3–5 AM before crowds","Visit Ujjain during Simhastha Kumbh for a once-in-12-year spiritual amplification","The Dvādasha Jyotirlinga Stotram recited daily throughout the circuit transforms the journey"],
+    stotram:"Saurāṣhṭre Somanāthaṃ ca Śrīsaile Mallikārjunam\nUjjayinyāṃ Mahākālaṃ Oṃkāre Parameśvaram\nKedāre Kedarīśaṃ ca Ḍākinī Bhīmaśaṅkaram\nVārāṇasyāṃ tu Viśveśaṃ Tryambake Gautamīṭaṭe"},
+  {id:"shakti_peethas",name:"Shakti Peetha Circuit",shortName:"51 Shakti Peethas",sk:"शक्तिपीठ",deity:"Devi",count:51,hue:280,
+    essence:"Fifty-one seats of power where the body of Satī fell — each fragment became a vortex of divine feminine energy that still pulses across the subcontinent.",
+    significance:"When Sati's body fell in 51 fragments as Vishnu's Sudarshana Chakra severed her grief-struck form, each piece consecrated the earth beneath it. Every peetha has a presiding goddess form and a Bhairava guardian. Together they form the cosmic body of the Divine Mother spread across Bhārata.",
+    temples:[
+      {n:"Kamakhya",loc:"Nilachal Hill, Guwahati, Assam",note:"Yoni peetha · Ambubachi Mela · Highest Tantric seat"},
+      {n:"Kalighat",loc:"Kolkata, West Bengal",note:"Right toes of Sati · 10-armed Kali · Ramakrishna's temple"},
+      {n:"Jwāla Devī",loc:"Kangra, Himachal Pradesh",note:"Nine eternal flames burn without oil — pure shakti"},
+      {n:"Vaishnodevi",loc:"Trikuta Hills, J&K",note:"Most visited peetha · 14km yatra · Three natural rocks"},
+      {n:"Nainā Devī",loc:"Bilaspur, Himachal Pradesh",note:"Eyes of Sati · Ancient hilltop sanctuary"},
+      {n:"Kanyākumāri",loc:"Cape Comorin, Tamil Nadu",note:"Right shoulder · Where three oceans meet · Unmarried Devi"},
+      {n:"Mahālakshmī",loc:"Kolhapur, Maharashtra",note:"Ambabai · Satvic seat · One of 18 Mahashakti Peethas"},
+      {n:"Tulajā Bhavāni",loc:"Osmanabad, Maharashtra",note:"Kuldevi of Maratha clan · Shivaji's protective deity"},
+      {n:"Mānasā Devī",loc:"Haridwar, Uttarakhand",note:"Mind of Sati · Ropeway access to hilltop shrine"},
+      {n:"Tarapith",loc:"Birbhum, West Bengal",note:"Third eye of Sati · Cremation ground · Tantric seat of Tara"},
+    ],
+    pacing:[
+      {days:90,label:"Complete Pilgrimage",desc:"Full 90-day journey visiting all 51 Shakti Peethas across India, Nepal, and Bangladesh in five geographic arcs."},
+      {days:45,label:"Major Peethas",desc:"45-day circuit of the 18 Mahashakti Peethas — the most powerful seats of the Divine Mother."},
+      {days:21,label:"Regional Arc",desc:"21-day focused circuit of one geographic arc: North Himalayan, East Bengali, West Deccan, or South Dravidian."},
+    ],
+    season:"Oct–Mar · Navratri (Sep/Oct and Mar/Apr) for heightened divine energy",
+    bestFor:"Shakta devotees · Tantric practitioners · Navratri pilgrims · Seekers of Devi's grace",
+    tips:["Kamakhya during Ambubachi Mela (June) — when the earth menstruates — is a once-in-a-year transformation","Vaishno Devi: start the yatra by 2 AM to reach Bhawan at sunrise for magical experience","Observe silence at cremation-ground peethas like Tarapith","The Ten Mahavidyas curriculum: begin with Kali at Kalighat, Tara at Tarapith, Tripura Sundari at Tripura"],
+    stotram:"Mahākālī Mahālakshmī Mahāsarasvatī namostute\nĀdishakti Parāshakti Māheshvarī namostute\nJagadambā Jagaddhātrī Nityā Śuddhā namostute"},
+  {id:"divya_desams",name:"Divya Desam Circuit",shortName:"108 Divya Desams",sk:"दिव्यदेशम्",deity:"Vishnu",count:108,hue:215,
+    essence:"One hundred and eight abodes where Vishnu dwells as perceived by the twelve Alvars — every verse of the Divya Prabandham is a living key that unlocks the gates of these sacred precincts.",
+    significance:"The 108 Divya Desams were sung into sacred existence by the twelve Alvar poet-saints (600–900 CE). The Nalayira Divya Prabandham's 4,000 Tamil verses map a divine geography that transforms pilgrimage into bhakti yoga. Temple #108 — Thirupparamapadham — is transcendent Vaikuntham itself.",
+    temples:[
+      {n:"Tirumala Venkateswara",loc:"Tirupati, Andhra Pradesh",note:"Wealthiest temple on Earth · 50,000 pilgrims daily · Book 45+ days ahead"},
+      {n:"Srirangam Ranganātha",loc:"Tiruchirappalli, Tamil Nadu",note:"Largest functioning temple · Island of the Lord · 156 acres"},
+      {n:"Badrinath",loc:"Chamoli, Uttarakhand",note:"Badri Vishal · Char Dham · Where Vishnu meditates eternally"},
+      {n:"Dwaraka",loc:"Gujarat",note:"Original Krishna city submerged · Char Dham · Bet Dwarka island"},
+      {n:"Kanchipuram Varadarāja",loc:"Kanchipuram, Tamil Nadu",note:"City of thousand temples · Sri Vaishnava capital"},
+      {n:"Thiruvananthapuram Padmanābha",loc:"Kerala",note:"Ananta Shayana · Padmanabhaswamy · Immense wealth temple"},
+      {n:"Guruvāyur",loc:"Thrissur, Kerala",note:"Dwarka of the South · Elephants carry the Lord"},
+      {n:"Muktinath",loc:"Mustang, Nepal",note:"Only Vishnu temple in Himalayan Nepal · 108 sacred springs"},
+      {n:"Ayodhya",loc:"Uttar Pradesh",note:"Birthplace of Rama · Ram Lalla · On the Sarayu River"},
+      {n:"Mathurā",loc:"Uttar Pradesh",note:"Birthplace of Krishna · Keshavarāya temple"},
+    ],
+    pacing:[
+      {days:60,label:"Complete Yatra",desc:"Full 60-day circuit visiting all 108 Divya Desams across Tamil Nadu, Kerala, and North India in canonical Alvar sequence."},
+      {days:30,label:"Tamil Nadu Focus",desc:"30-day deep immersion in the 84 Tamil Nadu Desams — the heart of the Alvar tradition."},
+      {days:15,label:"Essential 12",desc:"15-day journey to the 12 most spiritually significant Desams: Tirumala, Srirangam, Badrinath, Dwaraka, Kanchipuram, and others."},
+    ],
+    season:"Nov–Mar for Tamil Nadu · May–Jun for Badrinath · Year-round for most Kerala desams",
+    bestFor:"Vaishnava devotees · Sri Vaishnava tradition · Bhakti yoga seekers · Alvar enthusiasts",
+    tips:["Learn the Thiruppalliezhuchi (wake-up hymn) to sing at Srirangam at dawn","Book Tirumala darshan 45+ days ahead — or join the free queue with full surrender","Undergo Panchasamskara initiation to complete the Sri Vaishnava pilgrimage properly","Vaikunta Ekadashi at Srirangam: the Paramapada Vasal opens once yearly at midnight"],
+    stotram:"Śrīman Nārāyaṇa caraṇau śaraṇaṃ prapadye\nŚrīmate Nārāyaṇāya namaḥ\nŚrīmate Rāmānujāya namaḥ\nŚrī Vaishṇavebhyo namaḥ"},
+  {id:"char_dham",name:"Char Dham Circuit",shortName:"4 Sacred Dhams",sk:"चारधाम",deity:"Vishnu · Shiva · Devi",count:4,hue:42,
+    essence:"Four corners of the sacred cosmos — Badrinath in the north, Puri in the east, Rameswaram in the south, Dwarka in the west — together they circumambulate the entire body of Bhārata.",
+    significance:"Adi Shankaracharya established the four Dhams in the 8th century to unify the spiritual geography of India. Completing all four is said to grant moksha — liberation from the cycle of birth. Each Dham corresponds to one of his four maths, one of the four Vedas, and one of the four cardinal Mahavakyas.",
+    temples:[
+      {n:"Badrinath (Badrīnārāyaṇa)",loc:"Chamoli, Uttarakhand — 3,133m",note:"North Dham · Atharva Veda · 'Ayam ātmā Brahma' · Jyotirmath"},
+      {n:"Jagannath Puri",loc:"Puri, Odisha — Bay of Bengal",note:"East Dham · Rig Veda · 'Prajñānaṃ Brahma' · Govardhana Math"},
+      {n:"Rāmanathaswamy",loc:"Rameswaram, Tamil Nadu — Indian Ocean",note:"South Dham · Also a Jyotirlinga · 22 sacred wells · 1,220m corridor"},
+      {n:"Dwarkadhish (Dvārakādhīsha)",loc:"Dwarka, Gujarat — Arabian Sea",note:"West Dham · Sama Veda · 'Tat tvam asi' · Sharda Peeth"},
+    ],
+    pacing:[
+      {days:35,label:"Complete Yatra",desc:"Full 35-day clockwise circuit: Badrinath → Puri → Rameswaram → Dwarka. One week per Dham with travel."},
+      {days:21,label:"Focused Journey",desc:"21-day immersive circuit with 4–5 days at each Dham for full ritual completion."},
+      {days:14,label:"Essential Dham",desc:"14-day efficient circuit with 3 days at each sacred site — sufficient for primary darshan and rituals."},
+    ],
+    season:"May–Jun (Badrinath opens) then South/West/East dhams Oct–Mar",
+    bestFor:"Householders seeking moksha · Complete pilgrims · Shankaracharya tradition followers",
+    tips:["Badrinath: arrive on Kapat Utsav opening day (late April/May) for the first abhishekam of the season","Rameswaram: bathe in all 22 teerthams before entering the main sanctum — each has a different taste","Puri: Jagannath grants darshan to those He chooses — arrive with complete surrender, not entitlement","Dwarka: ferry to Bet Dwarka island for the original Krishna dwelling before the main temple"],
+    stotram:"Badaryāśhrama vāsī tvaṃ Viṣṇo purīpate\nDvārakādhīśha namaste Rāmanāthāya te namaḥ\nJagannātha svāmī nayana patha gāmī bhava tume"},
+];
+
 const FD = "'EB Garamond',Georgia,serif";
 const FB = "'DM Sans',system-ui,sans-serif";
 const FE = FD; // alias — serif display font
@@ -989,13 +1084,13 @@ const NavSvg = ({name, col}) => {
   const s = {width:22,height:22,display:"block"};
   if (name === "home") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10L12 3l9 7v10h-5v-6h-8v6H3z"/></svg>;
   if (name === "explore") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" fill={col} stroke="none"/></svg>;
-  if (name === "nearby") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>;
+  if (name === "circuits") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>;
   if (name === "saved") return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
   return <svg {...s} fill="none" stroke={col} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>;
 };
 
 const BNav = ({a, on, savedCount=0}) => {
-  const items = [{k:"home",l:"Home"},{k:"explore",l:"Explore"},{k:"nearby",l:"Nearby"},{k:"saved",l:"Saved"},{k:"profile",l:"Profile"}];
+  const items = [{k:"home",l:"Home"},{k:"explore",l:"Explore"},{k:"circuits",l:"Circuits"},{k:"saved",l:"Saved"},{k:"profile",l:"Profile"}];
   return (
     <nav role="navigation" aria-label="Main navigation" style={{position:"relative",bottom:0,zIndex:100,background:C.glass,backdropFilter:"blur(28px) saturate(160%)",borderTop:`1px solid ${C.div}`,padding:"6px 0 20px"}}>
       {/* Single sliding indicator pill */}
@@ -1064,7 +1159,7 @@ const SacredCircuits = ({nav, isDark}) => {
         <SH title="Sacred Circuits" sub="Complete pilgrimage networks of Bhārata"/>
         <div ref={stripRef} style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
           {circuits.map((c,i) => (
-            <div key={c.l} className="t" onClick={() => nav("explore")} style={{
+            <div key={c.l} className="t" onClick={() => nav("circuits")} style={{
               padding:"18px 16px",borderRadius:20,cursor:"pointer",
               background:`linear-gradient(140deg,${hsl(c.h,35,isDark?11:92)},${C.card})`,
               border:`1px solid ${hsl(c.h,30,isDark?20:78,0.25)}`,
@@ -1081,6 +1176,163 @@ const SacredCircuits = ({nav, isDark}) => {
         </div>
       </div>
     </Reveal>
+  );
+};
+
+const CircuitsPage = ({onCircuit, isDark}) => (
+  <div className="fi" style={{paddingBottom:24}}>
+    <div style={{background:`linear-gradient(175deg,${hsl(28,35,isDark?13:90)},${hsl(28,40,isDark?6:96)} 55%,${C.bg})`,padding:"26px 24px 36px",borderRadius:"0 0 34px 34px",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:"-10%",right:"-5%",width:240,height:240,borderRadius:"50%",background:"radial-gradient(circle,rgba(196,162,78,0.06),transparent 60%)",filter:"blur(50px)",animation:"breathe 10s ease-in-out infinite",pointerEvents:"none"}}/>
+      <div style={{fontSize:9,color:"rgba(196,162,78,0.5)",fontWeight:800,letterSpacing:5,textTransform:"uppercase",marginBottom:10,position:"relative",zIndex:2}}>Pilgrim's Atlas</div>
+      <h1 style={{fontFamily:FD,fontSize:36,color:C.cream,fontWeight:500,lineHeight:.96,letterSpacing:-.4,position:"relative",zIndex:2}}>Sacred<br/>Circuits</h1>
+      <p style={{fontFamily:FD,fontSize:14,color:C.textDD,marginTop:10,fontStyle:"italic",position:"relative",zIndex:2}}>of Bhārata</p>
+      <div style={{display:"flex",justifyContent:"center",gap:40,marginTop:28,position:"relative",zIndex:2}}>
+        {[{v:"175",l:"Sacred Sites"},{v:"4",l:"Circuits"},{v:"∞",l:"Lifetimes"}].map(s => (
+          <div key={s.l} style={{textAlign:"center"}}>
+            <div style={{fontFamily:FD,fontSize:20,fontWeight:500,color:C.cream}}>{s.v}</div>
+            <div style={{fontSize:9,color:C.textDD,fontWeight:700,letterSpacing:1.2,marginTop:4,textTransform:"uppercase"}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div style={{padding:"32px 24px 0"}}>
+      <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:20}}>The Four Sacred Circuits</div>
+      {CIRCUITS.map((c,i) => {
+        const b1 = hsl(c.hue,35,isDark?13:90), b2 = hsl(c.hue,42,isDark?6:96);
+        return (
+          <div key={c.id} className="t rv" onClick={() => onCircuit(c)} style={{
+            borderRadius:24,overflow:"hidden",marginBottom:14,cursor:"pointer",
+            background:`linear-gradient(135deg,${b1},${b2})`,
+            border:`1px solid ${hsl(c.hue,30,isDark?20:78,0.15)}`,
+            boxShadow:`0 6px 32px ${hsl(c.hue,30,5,0.3)}`,
+            animationDelay:`${i*.08}s`,position:"relative",
+          }}>
+            <div style={{position:"absolute",top:"-20%",right:"-5%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,50,40,0.06)},transparent 60%)`,filter:"blur(40px)",pointerEvents:"none"}}/>
+            <div style={{padding:"22px",position:"relative",zIndex:2}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:9,color:hsl(c.hue,50,55,0.7),fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{c.deity}</div>
+                  <h3 style={{fontFamily:FD,fontSize:22,fontWeight:500,color:C.cream,lineHeight:1.15}}>{c.name}</h3>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0,marginLeft:12}}>
+                  <div style={{fontFamily:FD,fontSize:32,fontWeight:500,color:hsl(c.hue,50,55,0.6),lineHeight:1}}>{c.count}</div>
+                  <div style={{fontSize:9,color:C.textD,fontWeight:700,letterSpacing:1,textTransform:"uppercase",marginTop:3}}>Sites</div>
+                </div>
+              </div>
+              <p style={{fontSize:13,color:C.creamD,lineHeight:1.7,fontFamily:FD,fontStyle:"italic",marginBottom:14}}>{c.essence.slice(0,110)}…</p>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",gap:6}}>
+                  {c.pacing.map(p => (
+                    <div key={p.days} style={{padding:"4px 11px",borderRadius:100,background:"rgba(255,255,255,0.05)",fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>{p.days}d</div>
+                  ))}
+                </div>
+                <span style={{color:"rgba(255,255,255,0.2)",fontSize:16}}>→</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const CircuitDetail = ({circuit: c, onBack, isDark}) => {
+  const [tab, setTab] = useState("overview");
+  const b1 = hsl(c.hue,38,isDark?15:88), b2 = hsl(c.hue,44,isDark?7:94), b3 = hsl(c.hue,50,isDark?3:97);
+  return (
+    <div className="fi" style={{paddingBottom:44}}>
+      <div style={{height:300,position:"relative",overflow:"hidden",background:`linear-gradient(178deg,${b1},${b2} 50%,${b3})`}}>
+        <div style={{position:"absolute",top:"10%",right:"0",width:250,height:250,borderRadius:"50%",background:`radial-gradient(circle,${hsl(c.hue,55,45,0.06)},transparent 55%)`,filter:"blur(50px)",animation:"breathe 9s ease-in-out infinite",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",top:"18%",left:"50%",animation:"drift 10s ease-in-out infinite",pointerEvents:"none"}}>
+          <span style={{fontFamily:FD,fontSize:64,color:hsl(c.hue,30,50,0.025),userSelect:"none"}}>{c.sk}</span>
+        </div>
+        <div style={{position:"absolute",top:18,left:18,zIndex:5}}>
+          <BackBtn onClick={onBack} glass/>
+        </div>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"100px 24px 22px",background:`linear-gradient(transparent,${b3}bb 30%,${b3} 100%)`}}>
+          <div style={{display:"flex",gap:8,marginBottom:10}}>
+            <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"4px 13px",borderRadius:100,background:"rgba(255,255,255,0.07)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.05)"}}>
+              <div style={{width:5,height:5,borderRadius:"50%",background:C.saffronH,boxShadow:`0 0 8px ${C.saffron}`}}/><span style={{fontSize:11,color:"rgba(255,255,255,0.85)",fontWeight:700,letterSpacing:.6}}>{c.deity}</span>
+            </div>
+            <div style={{padding:"4px 12px",borderRadius:100,background:"rgba(255,255,255,0.04)",fontSize:11,color:"rgba(255,255,255,0.35)",fontWeight:700}}>{c.count} sacred sites</div>
+          </div>
+          <h1 style={{fontFamily:FD,fontSize:26,fontWeight:500,color:C.cream,lineHeight:1.1}}>{c.name}</h1>
+          <div style={{marginTop:6,fontFamily:FD,fontSize:12,color:"rgba(255,255,255,0.22)",fontStyle:"italic"}}>{c.sk}</div>
+        </div>
+      </div>
+      <div style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50,overflowX:"auto"}}>
+        {["overview","temples","pacing","wisdom"].map(tb => (
+          <button key={tb} className="t" onClick={() => setTab(tb)} style={{padding:"15px 16px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s",whiteSpace:"nowrap"}}>{tb}</button>
+        ))}
+      </div>
+      <div style={{padding:"20px 24px 0"}}>
+        {tab === "overview" && <div className="fi">
+          <div style={{padding:"0 0 20px",borderBottom:`1px solid ${C.divL}`}}>
+            <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Spiritual Essence</div>
+            <p style={{fontFamily:FD,fontSize:17,color:C.creamM,lineHeight:1.95}}>{c.essence}</p>
+          </div>
+          <div style={{padding:"20px 0",borderBottom:`1px solid ${C.divL}`}}>
+            <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Significance</div>
+            <p style={{fontSize:14.5,color:C.creamM,lineHeight:1.8}}>{c.significance}</p>
+          </div>
+          <div style={{padding:"20px 0",borderBottom:`1px solid ${C.divL}`}}>
+            <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Best For</div>
+            <p style={{fontSize:14,color:C.creamD,lineHeight:1.7}}>{c.bestFor}</p>
+          </div>
+          <div style={{padding:"20px 0",borderBottom:`1px solid ${C.divL}`}}>
+            <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Best Season</div>
+            <p style={{fontSize:14,color:C.creamD,lineHeight:1.7}}>{c.season}</p>
+          </div>
+          <div style={{margin:"20px 0 0",padding:20,borderRadius:18,background:C.goldDim,border:`1px solid rgba(196,162,78,0.08)`}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><span style={{fontSize:14}}>🕉</span><span style={{fontSize:9.5,fontWeight:800,color:C.gold,letterSpacing:1.2,textTransform:"uppercase"}}>Sacred Verse</span></div>
+            <p style={{fontFamily:FD,fontSize:13,color:C.creamD,lineHeight:2,fontStyle:"italic",whiteSpace:"pre-line"}}>{c.stotram}</p>
+          </div>
+        </div>}
+        {tab === "temples" && <div className="fi">
+          <div style={{fontSize:12,color:C.textD,marginBottom:14}}>Key sites · {c.count} total in complete circuit</div>
+          {c.temples.map((t,i) => (
+            <div key={i} className="rv" style={{padding:"14px 0",borderBottom:`1px solid ${C.divL}`,animationDelay:`${i*.04}s`}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(145deg,${hsl(c.hue,35,16)},${hsl(c.hue,45,8)})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,color:hsl(c.hue,50,55,0.7),fontWeight:700,fontFamily:FD}}>{i+1}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:15,fontWeight:600,color:C.cream,fontFamily:FD,marginBottom:3}}>{t.n}</div>
+                  <div style={{fontSize:11.5,color:C.textD,marginBottom:5,display:"flex",alignItems:"center",gap:4}}><div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.loc}</div>
+                  {t.note && <div style={{fontSize:12,color:C.creamD,lineHeight:1.6,fontStyle:"italic"}}>{t.note}</div>}
+                </div>
+              </div>
+            </div>
+          ))}
+          {c.count > c.temples.length && <div style={{padding:"18px 0",textAlign:"center"}}><div style={{fontSize:13,color:C.textD,fontStyle:"italic",fontFamily:FD}}>+ {c.count - c.temples.length} more sacred sites in the complete circuit</div></div>}
+        </div>}
+        {tab === "pacing" && <div className="fi">
+          <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:18}}>Choose Your Journey</div>
+          {c.pacing.map((p,i) => (
+            <div key={i} className="rv" style={{padding:20,borderRadius:20,background:C.card,border:`1px solid ${C.div}`,marginBottom:12,animationDelay:`${i*.06}s`}}>
+              <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:12}}>
+                <div style={{width:52,height:52,borderRadius:16,background:`linear-gradient(145deg,${hsl(c.hue,35,18)},${hsl(c.hue,45,8)})`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",border:`1px solid ${hsl(c.hue,30,25,0.15)}`}}>
+                  <span style={{fontFamily:FD,fontSize:18,fontWeight:500,color:hsl(c.hue,50,60,0.8),lineHeight:1}}>{p.days}</span>
+                  <span style={{fontSize:8,color:"rgba(255,255,255,0.25)",fontWeight:700,letterSpacing:.5}}>days</span>
+                </div>
+                <div>
+                  <div style={{fontSize:15,fontWeight:700,color:C.cream,marginBottom:2}}>{p.label}</div>
+                  <div style={{fontSize:10,color:C.textD,letterSpacing:.5}}>{p.days}-day circuit</div>
+                </div>
+              </div>
+              <p style={{fontSize:13.5,color:C.creamD,lineHeight:1.75}}>{p.desc}</p>
+            </div>
+          ))}
+        </div>}
+        {tab === "wisdom" && <div className="fi">
+          <div style={{fontSize:9,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:18}}>Pilgrim's Wisdom</div>
+          {c.tips.map((tip,i) => (
+            <div key={i} className="rv" style={{display:"flex",gap:14,padding:"14px 0",borderBottom:`1px solid ${C.divL}`,animationDelay:`${i*.05}s`}}>
+              <div style={{width:30,height:30,borderRadius:10,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.1)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:C.saffron,fontWeight:700,fontFamily:FD}}>{i+1}</div>
+              <p style={{fontSize:14,color:C.creamM,lineHeight:1.75,paddingTop:4}}>{tip}</p>
+            </div>
+          ))}
+        </div>}
+      </div>
+    </div>
   );
 };
 
@@ -3163,6 +3415,7 @@ const Chat = ({onBack, temple, temples, isDark, onToggleTheme}) => {
 export default function App() {
   const [scr, setScr] = useState("home");
   const [tmp, setTmp] = useState(null);
+  const [cir, setCir] = useState(null);
   const [stk, setStk] = useState(["home"]);
   const [temples, setTemples] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3231,6 +3484,7 @@ export default function App() {
     setTmp(t);
     nav("detail");
   }, [nav, addRecentId, getRecentIds]);
+  const oC = useCallback(c => { setCir(c); nav("circuitDetail"); }, [nav]);
   const onTab = useCallback(t => { setNavDir('none'); setPageKey(k => k+1); setStk([t]); setScr(t); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
 
   // Favorites: optimistic update → Supabase persist → rollback on error
@@ -3247,9 +3501,9 @@ export default function App() {
     }
   }, [showToast]);
 
-  const tabs = ["home","explore","nearby","saved","profile"];
+  const tabs = ["home","explore","circuits","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
-  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat","audio"].includes(scr);
+  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat","audio","circuitDetail"].includes(scr);
 
   if (fetchError) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>
@@ -3273,6 +3527,8 @@ export default function App() {
   else if (scr === "search") page = <Search oT={oT} oF={oF} onBack={back} temples={temples}/>;
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
+  else if (scr === "circuits") page = <CircuitsPage onCircuit={oC} isDark={isDark}/>;
+  else if (scr === "circuitDetail" && cir) page = <CircuitDetail circuit={cir} onBack={back} isDark={isDark}/>;
   else if (scr === "nearby") page = <Nearby oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} onBrowse={() => nav("explore")} {...th}/>;
   else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
