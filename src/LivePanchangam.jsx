@@ -190,8 +190,9 @@ function lahiriAyanamsa(jd) {
 
 // ─── Accurate Sunrise / Sunset (ephemeris-based + 1 refinement) ────────────────
 function accurateSunriseSunset(localDate, lat, lng, tz) {
-  const baseUTC = Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), localDate.getUTCDate(), 12 - tz, 0, 0);
-  const jdNoon = julianDay(new Date(baseUTC));
+  // localDate is the UTC timestamp for local midnight; add 12h to get local noon
+  const baseUTC = new Date(localDate.getTime() + 12 * 3600000);
+  const jdNoon = julianDay(baseUTC);
 
   const obliquity = (T) => 23.4392916667 - 0.0130041667 * T - 1.6667e-7 * T * T + 5.0278e-7 * T * T * T;
 
@@ -306,15 +307,35 @@ function getKarana(moonLon, sunLon) {
   return fixed[k - 56];
 }
 
+function findMeshaSankranti(year) {
+  const base = Date.UTC(year, 3, 13); // April 13
+  const startJD = julianDay(new Date(base));
+  const endJD = startJD + 4;
+  return findTransitionJD(startJD, endJD, (jd) => norm360(solarLongitude(jd) - lahiriAyanamsa(jd)), 0);
+}
+
 function getSamvatsara(sunriseJD) {
-  const date = jdToDate(sunriseJD);
-  const year = date.getUTCFullYear();
   const refYear = 2022;
   const refIdx = 35; // Shubhakrit
-  const hinduNewYear = Date.UTC(year, 3, 14); // ~14 Apr
-  let offset = year - refYear;
-  if (date.getTime() < hinduNewYear) offset -= 1;
-  const idx = ((refIdx + offset) % 60 + 60) % 60;
+  const date = jdToDate(sunriseJD);
+  const year = date.getUTCFullYear();
+  // Use exact Mesha Sankranti (sidereal Sun = 0°) as year boundary
+  for (let y = year + 1; y >= year - 1; y--) {
+    const sankranti = findMeshaSankranti(y);
+    if (sankranti != null && sunriseJD >= sankranti) {
+      const offset = y - refYear;
+      const idx = ((refIdx + offset) % 60 + 60) % 60;
+      const names = [
+        "Prabhava","Vibhava","Shukla","Pramoda","Prajotpatti","Angirasa","Shrimukha","Bhava","Yuva","Dhata",
+        "Ishvara","Bahudhanya","Pramathi","Vikrama","Vrisha","Chitrabhanu","Svabhanu","Tarana","Parthiva","Vyaya",
+        "Sarvajit","Sarvadhari","Virodhi","Vikrita","Khara","Nandana","Vijaya","Jaya","Manmatha","Durmukha",
+        "Hevilambi","Vilambi","Vikari","Sharvari","Plava","Shubhakrit","Shobhana","Krodhi","Vishvavasu","Parabhava",
+        "Plavanga","Kilaka","Saumya","Sadharana","Virodhikrit","Paridhavi","Pramadi","Ananda","Rakshasa","Nala",
+        "Pingala","Kalayukti","Siddhartha","Raudra","Durmati","Dundubhi","Rudhirodgari","Raktakshi","Krodhana","Akshaya"
+      ];
+      return names[idx];
+    }
+  }
   const names = [
     "Prabhava","Vibhava","Shukla","Pramoda","Prajotpatti","Angirasa","Shrimukha","Bhava","Yuva","Dhata",
     "Ishvara","Bahudhanya","Pramathi","Vikrama","Vrisha","Chitrabhanu","Svabhanu","Tarana","Parthiva","Vyaya",
@@ -323,7 +344,7 @@ function getSamvatsara(sunriseJD) {
     "Plavanga","Kilaka","Saumya","Sadharana","Virodhikrit","Paridhavi","Pramadi","Ananda","Rakshasa","Nala",
     "Pingala","Kalayukti","Siddhartha","Raudra","Durmati","Dundubhi","Rudhirodgari","Raktakshi","Krodhana","Akshaya"
   ];
-  return names[idx];
+  return names[refIdx];
 }
 
 function getChoghadiyaSlots(dayStartJD, sunsetJD, dayEndJD, varaIdx) {
@@ -452,8 +473,9 @@ function computePanchangam(now, loc) {
   const karanaNow = getKarana(tropMoonNow, tropSunNow);
 
   // ── Vara (sunrise-based) ──────────────────────────────────────────────────────
-  const dayMid = jdToDate(dayStartJD + 0.5);
-  const varaIdx = dayMid.getUTCDay();
+  // Use timezone-aware day-of-week based on local sunrise
+  const sunriseLocal = new Date(jdToDate(dayStartJD).getTime() + loc.tz * 3600000);
+  const varaIdx = sunriseLocal.getUTCDay();
 
   // ── Rashi / Masa / Samvatsara (at sunrise) ────────────────────────────────────
   const rashiSunIdx = Math.floor(siderSunRise / 30);
