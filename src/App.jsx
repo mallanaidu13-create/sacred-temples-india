@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { supabase } from "./supabase.js";
 import LivePanchangam, { computePanchangam, DEFAULT_LOC } from "./LivePanchangam.jsx";
 import CinematicOverlay, { cinematicKeyframes } from "./CinematicOverlay.jsx";
-import { CIRCUITS, CIRCUIT_COORDS } from "../../../../content/sacred-circuits/circuits.js";
+import { CIRCUITS, CIRCUIT_COORDS } from "./content/sacred-circuits/circuits.js";
 import { PanchangLangProvider } from "./PanchangLangContext.jsx";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -141,7 +141,7 @@ const SHLOKAS = [
 
 const FD = "'EB Garamond',Georgia,serif";
 
-// Circuit data now imported from ../../../content/sacred-circuits/circuits.js
+// Circuit data now imported from ./content/sacred-circuits/circuits.js
 const FB = "'DM Sans',system-ui,sans-serif";
 const FE = FD; // alias — serif display font
 
