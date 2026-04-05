@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo } from "react";
-import { LIMBS, TITHI_NAMES, NAKSHATRA_NAMES, YOGA_NAMES, KARANA_NAMES, VARA_NAMES, VARA_GRAHAS, RASHI_NAMES, MASA_NAMES, SAMVATSARA_NAMES, NAKSHATRA_DEITIES } from "./panchangam-i18n.js";
+import { LIMBS, TITHI_NAMES, NAKSHATRA_NAMES, YOGA_NAMES, KARANA_NAMES, VARA_NAMES, VARA_GRAHAS, RASHI_NAMES, MASA_NAMES, SAMVATSARA_NAMES, NAKSHATRA_DEITIES, CHOGHADIYA_NAMES, HORA_GRAHAS } from "./panchangam-i18n.js";
 
 const CTX = createContext(null);
 
@@ -64,6 +64,8 @@ export function PanchangLangProvider({ children }) {
         MASA_NAMES,
         SAMVATSARA_NAMES,
         NAKSHATRA_DEITIES,
+        CHOGHADIYA_NAMES,
+        HORA_GRAHAS,
       },
     }),
     [lang, dual, t, limb, fmtDual]

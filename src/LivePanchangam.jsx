@@ -39,6 +39,33 @@ const MUHURTA_SLOTS = [
   [3, 1, 1], // Saturday
 ];
 
+// Choghadiya sequences by weekday (indices into CHOGHADIYA_NAMES)
+// Order: Amrit=0, Shubh=1, Labh=2, Chal=3, Udveg=4, Rog=5, Kaal=6
+const CHOGHADIYA_DAY_SEQ = [
+  [4, 3, 2, 0, 6, 1, 5, 4],   // Sunday
+  [0, 6, 1, 5, 4, 3, 2, 0],   // Monday
+  [5, 4, 3, 2, 0, 6, 1, 5],   // Tuesday
+  [2, 0, 6, 1, 5, 4, 3, 2],   // Wednesday
+  [1, 5, 4, 3, 2, 0, 6, 1],   // Thursday
+  [3, 2, 0, 6, 1, 5, 4, 3],   // Friday
+  [6, 1, 5, 4, 3, 2, 0, 6],   // Saturday
+];
+const CHOGHADIYA_NIGHT_SEQ = [
+  [1, 5, 4, 3, 2, 0, 6, 1],   // Sunday
+  [3, 2, 0, 6, 1, 5, 4, 3],   // Monday
+  [6, 1, 5, 4, 3, 2, 0, 6],   // Tuesday
+  [4, 3, 2, 0, 6, 1, 5, 4],   // Wednesday
+  [0, 6, 1, 5, 4, 3, 2, 0],   // Thursday
+  [5, 4, 3, 2, 0, 6, 1, 5],   // Friday
+  [2, 0, 6, 1, 5, 4, 3, 2],   // Saturday
+];
+
+// Hora cyclic order: Sun → Venus → Mercury → Moon → Saturn → Jupiter → Mars
+const HORA_CYCLE = [0, 1, 2, 3, 4, 5, 6]; // indices into HORA_GRAHAS
+// Vara → starting Hora index in HORA_CYCLE
+// Sun(0)→0, Mon(1)→3, Tue(2)→6, Wed(3)→2, Thu(4)→5, Fri(5)→1, Sat(6)→4
+const VARA_TO_HORA_START = [0, 3, 6, 2, 5, 1, 4];
+
 // ─── Julian Day Helpers ───────────────────────────────────────────────────────
 function julianDay(date) {
   const Y = date.getUTCFullYear();
@@ -290,6 +317,38 @@ function getSamvatsara(sunriseJD) {
   return names[idx];
 }
 
+function getChoghadiyaSlots(dayStartJD, sunsetJD, dayEndJD, varaIdx) {
+  const dayDur = sunsetJD - dayStartJD;
+  const nightDur = dayEndJD - sunsetJD;
+  const daySlot = dayDur / 8;
+  const nightSlot = nightDur / 8;
+  const daySeq = CHOGHADIYA_DAY_SEQ[varaIdx];
+  const nightSeq = CHOGHADIYA_NIGHT_SEQ[varaIdx];
+  const daySlots = Array.from({ length: 8 }, (_, i) => ({
+    typeIdx: daySeq[i],
+    startJD: dayStartJD + i * daySlot,
+    endJD: dayStartJD + (i + 1) * daySlot,
+  }));
+  const nightSlots = Array.from({ length: 8 }, (_, i) => ({
+    typeIdx: nightSeq[i],
+    startJD: sunsetJD + i * nightSlot,
+    endJD: sunsetJD + (i + 1) * nightSlot,
+  }));
+  return { daySlots, nightSlots };
+}
+
+function getHoraSlots(dayStartJD, dayEndJD, varaIdx) {
+  const totalDur = dayEndJD - dayStartJD;
+  const slotDur = totalDur / 24;
+  const startIdx = VARA_TO_HORA_START[varaIdx];
+  const slots = Array.from({ length: 24 }, (_, i) => ({
+    grahaIdx: HORA_CYCLE[(startIdx + i) % 7],
+    startJD: dayStartJD + i * slotDur,
+    endJD: dayStartJD + (i + 1) * slotDur,
+  }));
+  return slots;
+}
+
 // ─── Full Panchang Engine ──────────────────────────────────────────────────────
 function computePanchangam(now, loc) {
   const jdNow = julianDay(now);
@@ -414,6 +473,29 @@ function computePanchangam(now, loc) {
     abhijitEnd   = ss.sunrise + 8 * muhurtaDur;
   }
 
+  // ── Choghadiya ────────────────────────────────────────────────────────────────
+  let choghadiya = { daySlots: [], nightSlots: [], current: null };
+  if (ss) {
+    const sunsetJD = dayStartJD + (ss.sunset - ss.sunrise) / 24;
+    const cg = getChoghadiyaSlots(dayStartJD, sunsetJD, dayEndJD, varaIdx);
+    choghadiya.daySlots = cg.daySlots;
+    choghadiya.nightSlots = cg.nightSlots;
+    const allSlots = [...cg.daySlots, ...cg.nightSlots];
+    choghadiya.current = allSlots.find((s) => s.startJD <= jdNow && jdNow < s.endJD) || null;
+  }
+
+  // ── Hora ───────────────────────────────────────────────────────────────────────
+  let horaSlots = [];
+  let currentHora = null;
+  if (ss) {
+    horaSlots = getHoraSlots(dayStartJD, dayEndJD, varaIdx);
+    currentHora = horaSlots.find((s) => s.startJD <= jdNow && jdNow < s.endJD) || null;
+  }
+
+  // ── Nakshatra Pāda & Navāṁśa ───────────────────────────────────────────────────
+  const pada = Math.floor((siderMoonNow % NAK_SPAN) / (NAK_SPAN / 4)) + 1;
+  const navamsaRashiIdx = ((nakIdxNow * 4 + (pada - 1)) % 12 + 12) % 12;
+
   // ── Festivals ─────────────────────────────────────────────────────────────────
   const panchangAtSunrise = {
     tithiNum: tithiAtSunriseIdx + 1,
@@ -467,6 +549,12 @@ function computePanchangam(now, loc) {
     masaIdx,
     location: loc.name,
     festivals,
+
+    choghadiya,
+    horaSlots,
+    currentHora,
+    pada,
+    navamsaRashiIdx,
 
     // Raw for scheduler
     dayStartJD,
@@ -734,7 +822,7 @@ export default function LivePanchangam({ location: locProp = DEFAULT_LOC }) {
                 <Tile
                   label={limb("nakshatra")}
                   value={renderName(tables.NAKSHATRA_NAMES, data.nakshatraIdx)}
-                  sub={`${Math.round(data.nakshatraFrac * 100)}% · ${renderName(tables.NAKSHATRA_DEITIES, data.nakshatraIdx)} · ${limb("next")} ~${fmtDateTz(data.nakshatraEndJD, loc.tzName || "Asia/Kolkata")}`}
+                  sub={`${Math.round(data.nakshatraFrac * 100)}% · ${limb("pada")} ${data.pada} · ${limb("navamsaRashi")}: ${renderName(tables.RASHI_NAMES, data.navamsaRashiIdx)} · ${renderName(tables.NAKSHATRA_DEITIES, data.nakshatraIdx)} · ${limb("next")} ~${fmtDateTz(data.nakshatraEndJD, loc.tzName || "Asia/Kolkata")}`}
                   timeline={<TimelineBar startJD={data.nakshatraStartJD} endJD={data.nakshatraEndJD} nowJD={nowJD} />}
                 />
                 <Tile label={limb("yoga")} value={renderName(tables.YOGA_NAMES, data.yogaIdx)} sub={`${Math.round(data.yogaFrac * 100)}% · ${limb("next")} ~${fmtDateTz(data.yogaEndJD, loc.tzName || "Asia/Kolkata")}`} />
@@ -759,6 +847,33 @@ export default function LivePanchangam({ location: locProp = DEFAULT_LOC }) {
                 <div style={{ fontSize: 11, color: CLR.textM, marginTop: 3 }}>{limb("rulingGraha")}: {renderName(tables.VARA_GRAHAS, data.varaIdx)}</div>
               </div>
 
+              {/* Hora strip */}
+              {data.currentHora && (
+                <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 12, background: CLR.goldDim, border: `1px solid ${CLR.goldBdr}` }}>
+                  <div style={{ fontSize: 8.5, color: CLR.gold, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>{limb("hora")}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ padding: "6px 12px", borderRadius: 20, background: "rgba(255,153,51,.15)", border: "1px solid rgba(255,153,51,.45)", color: CLR.saffron, fontWeight: 700, fontSize: 12 }}>
+                      {limb("currentHora")}: {renderName(tables.HORA_GRAHAS, data.currentHora.grahaIdx)}
+                    </div>
+                    {(() => {
+                      const idx = data.horaSlots.indexOf(data.currentHora);
+                      const next = data.horaSlots[idx + 1];
+                      const next2 = data.horaSlots[idx + 2];
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: CLR.textM }}>
+                          {next && (
+                            <span>→ {limb("nextHora")}: <span style={{ color: CLR.text, fontWeight: 600 }}>{renderName(tables.HORA_GRAHAS, next.grahaIdx)}</span> <span style={{ color: CLR.textD }}>({fmtDateTz(next.startJD, loc.tzName || "Asia/Kolkata")})</span></span>
+                          )}
+                          {next2 && (
+                            <span style={{ color: CLR.textD }}>• {renderName(tables.HORA_GRAHAS, next2.grahaIdx)} <span style={{ opacity: 0.8 }}>({fmtDateTz(next2.startJD, loc.tzName || "Asia/Kolkata")})</span></span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
               {/* Astronomy */}
               <SectionHead icon="☀" title={limb("siderealSun")} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9, marginBottom: 16 }}>
@@ -767,6 +882,42 @@ export default function LivePanchangam({ location: locProp = DEFAULT_LOC }) {
                 <Tile label={limb("siderealSun")} value={`${renderName(tables.RASHI_NAMES, data.rashiSunIdx)} ${fmtDeg(data.degInRashiSun)}`} sub={`${fmtDeg(data.siderSun)} ${limb("fromAries")}`} />
                 <Tile label={limb("siderealMoon")} value={`${renderName(tables.RASHI_NAMES, data.rashiMoonIdx)} ${fmtDeg(data.degInRashiMoon)}`} sub={`${fmtDeg(data.siderMoon)} ${limb("fromAries")}`} />
               </div>
+
+              {/* Choghadiya */}
+              {data.choghadiya.current && (
+                <div style={{ marginBottom: 16 }}>
+                  <SectionHead icon="◈" title={limb("choghadiya")} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                    <div style={{ padding: "6px 12px", borderRadius: 20, background: "rgba(40,120,80,.15)", border: "1px solid rgba(40,120,80,.45)", color: "#a0e0c0", fontWeight: 700, fontSize: 12 }}>
+                      {limb("today")}: {renderName(tables.CHOGHADIYA_NAMES, data.choghadiya.current.typeIdx)} <span style={{ opacity: 0.8, fontWeight: 500 }}>({fmtDateTz(data.choghadiya.current.startJD, loc.tzName || "Asia/Kolkata")} – {fmtDateTz(data.choghadiya.current.endJD, loc.tzName || "Asia/Kolkata")})</span>
+                    </div>
+                  </div>
+                  {[
+                    { key: "day", slots: data.choghadiya.daySlots, label: limb("day") },
+                    { key: "night", slots: data.choghadiya.nightSlots, label: limb("night") },
+                  ].map((row) => (
+                    <div key={row.key} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 9, color: CLR.textD, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 5 }}>{row.label}</div>
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                        {row.slots.map((slot, i) => {
+                          const active = data.choghadiya.current && slot.startJD === data.choghadiya.current.startJD;
+                          const typeIdx = slot.typeIdx;
+                          const isGood = [0, 1, 2].includes(typeIdx); // Amrit, Shubh, Labh
+                          const isNeutral = typeIdx === 3; // Chal
+                          const bg = isGood ? "rgba(40,120,80,.12)" : isNeutral ? "rgba(218,165,32,.12)" : "rgba(184,40,40,.12)";
+                          const border = isGood ? "rgba(40,120,80,.45)" : isNeutral ? "rgba(218,165,32,.45)" : "rgba(184,40,40,.45)";
+                          const color = isGood ? "#a0e0c0" : isNeutral ? CLR.gold : "#e8a0a0";
+                          return (
+                            <div key={i} style={{ padding: "5px 8px", borderRadius: 7, background: bg, border: active ? `2px solid ${color}` : `1px solid ${border}`, fontSize: 10, color, fontWeight: active ? 700 : 600, whiteSpace: "nowrap" }}>
+                              {renderName(tables.CHOGHADIYA_NAMES, typeIdx)}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Moon Rashi */}
               <div style={{ marginBottom: 16, padding: "11px 14px", borderRadius: 12, background: CLR.goldDim, border: `1px solid ${CLR.goldBdr}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
