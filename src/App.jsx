@@ -1582,16 +1582,17 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
   const geo = useGeo({ enableHighAccuracy: true });
   const nearYou = useMemo(() => {
     const loc = geo.effectiveLocation;
-    if (!loc || !temples.length) return [];
-    return temples
+    if (!loc || !temples.length) return { inRange: [], all: [] };
+    const all = temples
       .filter(t => t.latitude != null && t.longitude != null)
       .map(t => ({
         ...t,
         _dist: haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude),
         _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
       }))
-      .sort((a, b) => a._dist - b._dist)
-      .slice(0, 6);
+      .sort((a, b) => a._dist - b._dist);
+    // "inRange" for home is loosely defined as first 6 nearest (no hard range limit)
+    return { inRange: all.slice(0, 6), all };
   }, [geo.effectiveLocation, temples]);
   return (
   <div className="fi" style={{paddingBottom:28}}>
@@ -1972,12 +1973,12 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
             <SacredRadar
               location={geo.effectiveLocation}
               heading={geo.heading}
-              temples={nearYou}
+              temples={nearYou.inRange.length ? nearYou.inRange : nearYou.all}
               size={160}
-              maxDistKm={nearYou.length ? Math.max(1, nearYou[0]._dist * 2.5) : 5}
+              maxDistKm={nearYou.inRange.length ? Math.max(1, nearYou.inRange[0]._dist * 2.5) : 50}
             />
           </div>
-          {nearYou.slice(0,3).map((t,i) => (
+          {nearYou.inRange.slice(0,3).map((t,i) => (
             <NearbyCard
               key={t.id}
               t={{...t, bearing: t._bearing}}
@@ -1987,6 +1988,28 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
               gyroHeading={geo.heading}
             />
           ))}
+          {nearYou.inRange.length === 0 && nearYou.all.length > 0 && (
+            <>
+              <div style={{margin:"0 24px 10px",padding:"10px 14px",borderRadius:12,background:"rgba(212,133,60,0.08)",border:"1px solid rgba(212,133,60,0.2)"}}>
+                <div style={{fontSize:11,color:C.textD}}>No temples very close by. Nearest: <span style={{color:C.saffron,fontWeight:600}}>{nearYou.all[0].templeName}</span> · {nearYou.all[0]._dist < 1 ? `${(nearYou.all[0]._dist*1000).toFixed(0)} m` : `${nearYou.all[0]._dist.toFixed(1)} km`}</div>
+              </div>
+              {nearYou.all.slice(0,3).map((t,i) => (
+                <NearbyCard
+                  key={t.id}
+                  t={{...t, bearing: t._bearing}}
+                  distanceKm={t._dist}
+                  onClick={() => oT(t)}
+                  delay={0.7 + i * 0.08}
+                  gyroHeading={geo.heading}
+                />
+              ))}
+            </>
+          )}
+          {nearYou.inRange.length === 0 && nearYou.all.length === 0 && (
+            <div style={{margin:"0 24px",padding:"14px 16px",borderRadius:14,background:C.card,border:`1px solid ${C.div}`}}>
+              <div style={{fontSize:12,color:C.textD}}>No temples with coordinates found in database. Open the full map to search a wider area.</div>
+            </div>
+          )}
         </>
       ) : (
         <div style={{margin:"0 24px",padding:"18px 20px",borderRadius:18,background:C.card,border:`1px solid ${C.div}`,textAlign:"center"}}>
@@ -2484,9 +2507,11 @@ const DistrictBrowse = ({onBack, oT, oF, temples, isDark, onToggleTheme, state})
 
 const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const geo = useGeo({ enableHighAccuracy: true });
-  const [range, setRange] = useState(10);
+  const [range, setRange] = useState(25);
   const [osmLoading, setOsmLoading] = useState(false);
   const [osmRadius, setOsmRadius] = useState(0);
+  const [osmError, setOsmError] = useState(null);
+  const [osmCount, setOsmCount] = useState(0);
   const [merged, setMerged] = useState(temples);
   const [expandedCluster, setExpandedCluster] = useState(null);
   const [claimToast, setClaimToast] = useState(null);
@@ -2494,32 +2519,17 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const RANGES = [{l:"5 km",v:5},{l:"10 km",v:10},{l:"25 km",v:25},{l:"50 km",v:50},{l:"100 km",v:100}];
   const lastHapticRef = useRef(0);
 
-  // Merge OSM temples when range >= 10km and location available
+  // Always keep merged in sync with temples base data
   useEffect(() => {
-    let cancelled = false;
-    const loc = geo.effectiveLocation;
-    if (!loc || range < 10) {
-      setMerged(temples);
-      setOsmRadius(0);
-      return;
-    }
-    setOsmLoading(true);
-    fetchOsmTemplesProgressive(loc.latitude, loc.longitude, (r) => setOsmRadius(r))
-      .then(({ data }) => {
-        if (cancelled) return;
-        setMerged(mergeTemples(temples, data));
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setMerged(temples);
-      })
-      .finally(() => {
-        if (!cancelled) setOsmLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, temples]);
+    setMerged(prev => {
+      // If we had OSM data merged in, preserve it while updating supabase temples
+      const osmOnly = prev.filter(p => p._source === "osm");
+      return mergeTemples(temples, osmOnly);
+    });
+  }, [temples]);
 
-  const nearby = useMemo(() => {
+  // Compute all temples with coordinates sorted by distance (for diagnostics & fallback)
+  const allWithCoords = useMemo(() => {
     const loc = geo.effectiveLocation;
     if (!loc) return [];
     return merged
@@ -2529,9 +2539,61 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
         _dist: haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude),
         _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
       }))
-      .filter(t => t._dist <= range)
       .sort((a, b) => a._dist - b._dist);
-  }, [geo.effectiveLocation, merged, range]);
+  }, [geo.effectiveLocation, merged]);
+
+  const nearby = useMemo(() => {
+    return allWithCoords.filter(t => t._dist <= range);
+  }, [allWithCoords, range]);
+
+  const supabaseInRange = useMemo(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc) return 0;
+    return temples
+      .filter(t => t.latitude != null && t.longitude != null)
+      .filter(t => haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude) <= range).length;
+  }, [geo.effectiveLocation, temples, range]);
+
+  // Smart OSM fetch: trigger for range >=10, OR if < 15 supabase results in range, OR if 0 total coords
+  const shouldFetchOsm = useMemo(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc) return false;
+    if (range >= 10) return true;
+    return supabaseInRange < 15;
+  }, [geo.effectiveLocation, range, supabaseInRange]);
+
+  const runOsmFetch = useCallback(() => {
+    let cancelled = false;
+    const loc = geo.effectiveLocation;
+    if (!loc || !shouldFetchOsm) {
+      setOsmRadius(0);
+      setOsmError(null);
+      return;
+    }
+    setOsmLoading(true);
+    setOsmError(null);
+    fetchOsmTemplesProgressive(loc.latitude, loc.longitude, (r) => setOsmRadius(r))
+      .then(({ data, radius }) => {
+        if (cancelled) return;
+        setOsmCount(data.length);
+        setMerged(mergeTemples(temples, data));
+        setOsmError(null);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setOsmError(e.message || "Could not reach OpenStreetMap. Try again.");
+        // Keep existing merged state on error
+      })
+      .finally(() => {
+        if (!cancelled) setOsmLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [geo.effectiveLocation, shouldFetchOsm, temples]);
+
+  useEffect(() => {
+    const cleanup = runOsmFetch();
+    return cleanup;
+  }, [runOsmFetch]);
 
   // Haptic when temple within 500m
   useEffect(() => {
@@ -2581,6 +2643,9 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
   };
 
   const clusterItems = expandedCluster || [];
+  const coordCount = allWithCoords.length;
+  const nearest = allWithCoords[0];
+  const showFallback = geo.effectiveLocation && nearby.length === 0 && coordCount > 0;
 
   return (
     <div className="fi" style={{paddingBottom:24}}>
@@ -2629,7 +2694,7 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
           </svg>
-          {geo.status === "locating" ? "Locating…" : geo.status === "active" ? "Live Tracking" : "Locate Me"}
+          {geo.status === "locating" ? "Locating…" : geo.status === "active" ? "Live Tracking" : geo.error ? "Try Again" : "Locate Me"}
         </button>
       </div>
 
@@ -2642,6 +2707,30 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
         </div>
       )}
 
+      {/* Diagnostics card */}
+      {geo.effectiveLocation && (
+        <div style={{margin:"0 24px 14px",padding:"12px 14px",borderRadius:14,background:C.card,border:`1px solid ${C.div}`}}>
+          <div style={{fontSize:11,color:C.textD,lineHeight:1.6}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:geo.status==="active"?"#22c55e":"#eab308"}}/>
+              <span>GPS {geo.status==="active"?"active":geo.error?"denied":"calibrating"}
+                {geo.effectiveLocation?.accuracy ? ` · ±${Math.round(geo.effectiveLocation.accuracy)}m` : ""}
+              </span>
+            </div>
+            <div>Database: <span style={{color:C.creamM,fontWeight:600}}>{temples.filter(t=>t.latitude!=null&&t.longitude!=null).length}</span> temples with coordinates</div>
+            {nearest && <div>Nearest temple: <span style={{color:C.saffron,fontWeight:600}}>{nearest.templeName}</span> · {nearest._dist < 1 ? `${(nearest._dist*1000).toFixed(0)} m` : `${nearest._dist.toFixed(1)} km`} away</div>}
+            {osmLoading && <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}><span style={{width:10,height:10,borderRadius:"50%",border:`1.5px solid ${C.div}`,borderTopColor:C.saffron,animation:"spin 0.7s linear infinite",display:"inline-block"}}/><span>Scanning OpenStreetMap{osmRadius ? ` up to ${osmRadius} km…` : "…"}</span></div>}
+            {!osmLoading && osmCount > 0 && <div style={{marginTop:4,color:"#4ade80"}}>✓ OpenStreetMap added {osmCount} more temples</div>}
+            {osmError && (
+              <div style={{marginTop:6,display:"flex",alignItems:"center",gap:8,justifyContent:"space-between"}}>
+                <span style={{color:"#f87171"}}>⚠ {osmError}</span>
+                <button className="t" onClick={runOsmFetch} style={{padding:"5px 10px",borderRadius:8,background:C.saffronDim,border:"none",color:C.saffron,fontSize:10,fontWeight:700,cursor:"pointer"}}>Retry</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Tirtha claim toast */}
       {claimToast && (
         <div style={{margin:"0 24px 12px",padding:"12px 14px",borderRadius:14,background:"rgba(196,162,78,0.12)",border:"1px solid rgba(196,162,78,0.35)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
@@ -2650,14 +2739,6 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
             <div style={{fontSize:11,color:C.textD,marginTop:2}}>Claim your Tīrtha Stamp?</div>
           </div>
           <button className="t" onClick={claimStamp} style={{padding:"8px 14px",borderRadius:10,background:C.gold,color:"#1a0f00",border:"none",fontSize:12,fontWeight:700,cursor:"pointer"}}>Claim</button>
-        </div>
-      )}
-
-      {/* OSM loading hint */}
-      {osmLoading && (
-        <div style={{margin:"0 24px 12px",padding:"10px 14px",borderRadius:12,background:C.card,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${C.div}`,borderTopColor:C.saffron,animation:"spin 0.8s linear infinite"}}/>
-          <span style={{fontSize:11,color:C.textD}}>Discovering more temples{osmRadius ? ` within ${osmRadius} km…` : "…"}</span>
         </div>
       )}
 
@@ -2683,19 +2764,41 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
 
       {/* Results list */}
       {loading && !geo.effectiveLocation && [0,1].map(i => <SkeletonListCard key={i}/>)}
-      {geo.effectiveLocation && (
-        nearby.length > 0 ? nearby.map((t,i) => (
-          <NearbyCard
-            key={t.id}
-            t={{...t, bearing: t._bearing}}
-            distanceKm={t._dist}
-            onClick={() => oT(t)}
-            delay={i * 0.05}
-            gyroHeading={geo.heading}
-          />
-        )) : (
-          <Empty emoji="🏛" title="No Temples Nearby" sub={`No temples found within ${range} km. Try a larger radius or enable location.`}/>
-        )
+
+      {/* Fallback: show nearest temples beyond selected range */}
+      {showFallback && (
+        <>
+          <div style={{margin:"0 24px 10px",padding:"10px 14px",borderRadius:12,background:"rgba(212,133,60,0.08)",border:"1px solid rgba(212,133,60,0.2)"}}>
+            <div style={{fontSize:12,color:C.saffron,fontWeight:600}}>No temples within {range} km</div>
+            <div style={{fontSize:11,color:C.textD,marginTop:3}}>Showing the nearest temples from our database regardless of radius.</div>
+          </div>
+          {allWithCoords.slice(0,10).map((t,i) => (
+            <NearbyCard
+              key={t.id}
+              t={{...t, bearing: t._bearing}}
+              distanceKm={t._dist}
+              onClick={() => oT(t)}
+              delay={i * 0.05}
+              gyroHeading={geo.heading}
+            />
+          ))}
+        </>
+      )}
+
+      {geo.effectiveLocation && nearby.length > 0 && nearby.map((t,i) => (
+        <NearbyCard
+          key={t.id}
+          t={{...t, bearing: t._bearing}}
+          distanceKm={t._dist}
+          onClick={() => oT(t)}
+          delay={i * 0.05}
+          gyroHeading={geo.heading}
+        />
+      ))}
+
+      {/* True empty: no location or no temples with coords at all */}
+      {geo.effectiveLocation && nearby.length === 0 && coordCount === 0 && !osmLoading && (
+        <Empty emoji="🏛" title="No Temples Nearby" sub={`No temples found in the database with coordinates. Try a larger radius or check back later.`}/>
       )}
 
       {/* No location prompt */}
@@ -2704,12 +2807,13 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
           <div style={{fontSize:12,color:C.textD,lineHeight:1.7,marginBottom:10}}>
             Share your location to discover sacred temples around you.
           </div>
+          {geo.error && <div style={{fontSize:11,color:"#f87171",marginBottom:10}}>{geo.error}</div>}
           <button
             className="t"
             onClick={() => { geo.requestIOSPermission(); geo.startWatching(); }}
             style={{padding:"9px 18px",borderRadius:12,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,color:C.saffron,fontSize:12,fontWeight:700,cursor:"pointer"}}
           >
-            Enable Location
+            {geo.error ? "Try Again" : "Enable Location"}
           </button>
         </div>
       )}

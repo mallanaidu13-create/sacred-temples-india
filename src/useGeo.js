@@ -96,8 +96,8 @@ export function useGeo({ enableHighAccuracy = true } = {}) {
       },
       {
         enableHighAccuracy,
-        maximumAge: 0,
-        timeout: 20000,
+        maximumAge: 60000,
+        timeout: 15000,
       }
     );
   }, [enableHighAccuracy]);
