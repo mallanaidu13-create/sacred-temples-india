@@ -80,19 +80,28 @@ function julianDay(date) {
 }
 
 function jdToDate(jd) {
-  const A = Math.floor(jd + 32044.5);
-  const B = Math.floor((4 * A + 3) / 146097);
-  const C = A - Math.floor((146097 * B) / 4);
-  const D = Math.floor((4 * C + 3) / 1461);
-  const E = C - Math.floor((1461 * D) / 4);
-  const day = E - Math.floor((5 * E + 2) / 153) + 1.5;
-  const month = Math.floor((5 * E + 2) / 153) + 3;
-  const year = 100 * B + D - 4800 + Math.floor(month / 12);
-  const mo = ((month % 12) + 12) % 12;
+  // Meeus Astronomical Algorithms (2nd ed.) — inverse Julian Day
+  jd = jd + 0.5;
+  const Z = Math.floor(jd);
+  const F = jd - Z;
+  let A = Z;
+  if (Z >= 2299161) {
+    const alpha = Math.floor((Z - 1867216.25) / 36524.25);
+    A = Z + 1 + alpha - Math.floor(alpha / 4);
+  }
+  const B = A + 1524;
+  const C = Math.floor((B - 122.1) / 365.25);
+  const D = Math.floor(365.25 * C);
+  const E = Math.floor((B - D) / 30.6001);
+  const day = B - D - Math.floor(30.6001 * E) + F;
+  let month = E - 1;
+  if (E > 13) month = E - 13;
+  let year = C - 4715;
+  if (month > 2) year = C - 4716;
   const d = Math.floor(day);
   const frac = day - d;
   const ms = frac * 86400000;
-  return new Date(Date.UTC(year, mo, d) + ms);
+  return new Date(Date.UTC(year, month - 1, d) + ms);
 }
 
 function norm360(a) {
