@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
 import { supabase } from "./supabase.js";
 import LivePanchangam, { computePanchangam, DEFAULT_LOC } from "./LivePanchangam.jsx";
 import CinematicOverlay, { cinematicKeyframes } from "./CinematicOverlay.jsx";
 import { CIRCUITS, CIRCUIT_COORDS } from "./content/sacred-circuits/circuits.js";
 import { PanchangLangProvider } from "./PanchangLangContext.jsx";
+import { useGeo, haversineKm, bearingDeg, formatCompass } from "./useGeo.js";
+import { SacredRadar, NearbyCard, RadarLegend } from "./SacredRadar.jsx";
+import { mergeTemples, fetchOsmTemplesProgressive } from "./osm-temples.js";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -231,6 +234,9 @@ body{font-family:${FB};background:${theme.bg};color:${theme.text};-webkit-font-s
 @keyframes intentionIn{0%{opacity:0;transform:scale(0.96) translateY(16px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes routeDash{from{stroke-dashoffset:var(--route-len,800)}to{stroke-dashoffset:0}}
 @keyframes dotPulse{0%,100%{r:4;opacity:0.8}50%{r:6;opacity:1}}
+@keyframes radarSweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes locatePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,133,60,0.45)}50%{box-shadow:0 0 0 12px rgba(212,133,60,0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
 .scrFwd{animation:slideInRight .38s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 .scrBack{animation:slideInLeft .32s cubic-bezier(.22,1,.36,1) both;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -1537,6 +1543,22 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     if (statsRef.current) obs.observe(statsRef.current);
     return () => obs.disconnect();
   }, [triggerTemples, triggerStates, triggerDeities]);
+
+  // Geo for real "Near You"
+  const geo = useGeo({ enableHighAccuracy: true });
+  const nearYou = useMemo(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc || !temples.length) return [];
+    return temples
+      .filter(t => t.latitude != null && t.longitude != null)
+      .map(t => ({
+        ...t,
+        _dist: haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude),
+        _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
+      }))
+      .sort((a, b) => a._dist - b._dist)
+      .slice(0, 6);
+  }, [geo.effectiveLocation, temples]);
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* Cinematic spiritual overlay — triggered by Om chant */}
@@ -1886,9 +1908,44 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     {/* NEARBY */}
     <div style={{marginTop:42}}>
       <SH title="Near You" act="Map" onAct={() => nav("nearby")} d={.55}/>
-      {loading
-        ? [0,1].map(i => <SkeletonListCard key={i}/>)
-        : temples.slice(0,2).map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={.6+i*.08}/>)}
+      {loading ? (
+        [0,1].map(i => <SkeletonListCard key={i}/>)
+      ) : geo.effectiveLocation ? (
+        <>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:18}}>
+            <SacredRadar
+              location={geo.effectiveLocation}
+              heading={geo.heading}
+              temples={nearYou}
+              size={160}
+              maxDistKm={nearYou.length ? Math.max(1, nearYou[0]._dist * 2.5) : 5}
+            />
+          </div>
+          {nearYou.slice(0,3).map((t,i) => (
+            <NearbyCard
+              key={t.id}
+              t={{...t, bearing: t._bearing}}
+              distanceKm={t._dist}
+              onClick={() => oT(t)}
+              delay={0.6 + i * 0.08}
+              gyroHeading={geo.heading}
+            />
+          ))}
+        </>
+      ) : (
+        <div style={{margin:"0 24px",padding:"18px 20px",borderRadius:18,background:C.card,border:`1px solid ${C.div}`,textAlign:"center"}}>
+          <div style={{fontSize:12,color:C.textD,lineHeight:1.7,marginBottom:10}}>
+            Enable location for real-time discovery of sacred temples around you.
+          </div>
+          <button
+            className="t"
+            onClick={() => { geo.requestIOSPermission(); geo.startWatching(); }}
+            style={{padding:"9px 18px",borderRadius:12,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,color:C.saffron,fontSize:12,fontWeight:700,cursor:"pointer"}}
+          >
+            Enable Location
+          </button>
+        </div>
+      )}
     </div>
 
     {/* SAVED — only show when non-empty */}
@@ -2369,89 +2426,189 @@ const DistrictBrowse = ({onBack, oT, oF, temples, isDark, onToggleTheme, state})
   );
 };
 
-const distKm = (lat1, lon1, lat2, lon2) => {
-  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-};
-
 const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
-  const [geo, setGeo] = useState(null);
-  const [geoErr, setGeoErr] = useState(null);
-  const [locating, setLocating] = useState(false);
-  const [range, setRange] = useState(50);
-  const RANGES = [{l:"10 km",v:10},{l:"50 km",v:50},{l:"100 km",v:100},{l:"All",v:99999}];
+  const geo = useGeo({ enableHighAccuracy: true });
+  const [range, setRange] = useState(10);
+  const [osmLoading, setOsmLoading] = useState(false);
+  const [osmRadius, setOsmRadius] = useState(0);
+  const [merged, setMerged] = useState(temples);
+  const [expandedCluster, setExpandedCluster] = useState(null);
+  const RANGES = [{l:"5 km",v:5},{l:"10 km",v:10},{l:"25 km",v:25},{l:"50 km",v:50},{l:"100 km",v:100}];
+  const lastHapticRef = useRef(0);
 
-  const locate = () => {
-    if (!navigator.geolocation) { setGeoErr("Geolocation not supported by your browser."); return; }
-    setLocating(true); setGeoErr(null);
-    navigator.geolocation.getCurrentPosition(
-      pos => { setGeo({lat:pos.coords.latitude, lng:pos.coords.longitude}); setLocating(false); },
-      err => { setGeoErr(err.code === 1 ? "Location access denied. Please allow location in browser settings." : "Could not get your location. Please try again."); setLocating(false); },
-      {timeout:12000, maximumAge:60000}
-    );
-  };
+  // Merge OSM temples when range >= 10km and location available
+  useEffect(() => {
+    let cancelled = false;
+    const loc = geo.effectiveLocation;
+    if (!loc || range < 10) {
+      setMerged(temples);
+      setOsmRadius(0);
+      return;
+    }
+    setOsmLoading(true);
+    fetchOsmTemplesProgressive(loc.latitude, loc.longitude, (r) => setOsmRadius(r))
+      .then(({ data }) => {
+        if (cancelled) return;
+        setMerged(mergeTemples(temples, data));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMerged(temples);
+      })
+      .finally(() => {
+        if (!cancelled) setOsmLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, temples]);
 
-  const nearby = geo
-    ? temples
-        .filter(t => t.latitude && t.longitude)
-        .map(t => ({...t, _dist: distKm(geo.lat, geo.lng, t.latitude, t.longitude)}))
-        .filter(t => t._dist <= range)
-        .sort((a,b) => a._dist - b._dist)
-    : [];
+  const nearby = useMemo(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc) return [];
+    return merged
+      .filter(t => t.latitude != null && t.longitude != null)
+      .map(t => ({
+        ...t,
+        _dist: haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude),
+        _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
+      }))
+      .filter(t => t._dist <= range)
+      .sort((a, b) => a._dist - b._dist);
+  }, [geo.effectiveLocation, merged, range]);
+
+  // Haptic when temple within 500m
+  useEffect(() => {
+    const loc = geo.location || geo.cachedLocation;
+    if (!loc || !nearby.length) return;
+    const now = Date.now();
+    if (now - lastHapticRef.current < 5000) return;
+    const close = nearby.some(t => t._dist * 1000 <= 500);
+    if (close) {
+      try { navigator.vibrate?.(40); } catch {}
+      lastHapticRef.current = now;
+    }
+  }, [geo.location, geo.cachedLocation, nearby]);
+
+  const clusterItems = expandedCluster || [];
 
   return (
     <div className="fi" style={{paddingBottom:24}}>
       <div style={{padding:"22px 24px",display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
         <div>
           <h1 style={{fontFamily:FD,fontSize:28,fontWeight:500,color:C.cream}}>Nearby</h1>
-          <p style={{fontSize:13,color:C.textD,marginTop:5}}>{geo ? `${nearby.length} temples within ${range === 99999 ? "any distance" : range+" km"}` : "Temples around your location"}</p>
+          <p style={{fontSize:13,color:C.textD,marginTop:5}}>
+            {geo.effectiveLocation ? `${nearby.length} temples within ${range} km` : "Temples around your location"}
+          </p>
         </div>
         <ThemeBtn isDark={isDark} onToggle={onToggleTheme}/>
       </div>
 
-      {/* Location card */}
-      {!geo ? (
-        <div style={{margin:"0 24px",borderRadius:24,background:C.card,border:`1px solid ${C.div}`,padding:"32px 24px",display:"flex",flexDirection:"column",alignItems:"center",gap:16,textAlign:"center"}}>
-          <div style={{width:72,height:72,borderRadius:22,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.15)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <svg width="30" height="30" fill="none" stroke={C.saffron} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      {/* Full radar */}
+      {geo.effectiveLocation && (
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",margin:"8px 0 18px"}}>
+          <SacredRadar
+            location={geo.effectiveLocation}
+            heading={geo.heading}
+            temples={merged}
+            size={240}
+            maxDistKm={range}
+            showClusters={true}
+            onClusterClick={(items) => setExpandedCluster(items)}
+          />
+          <RadarLegend count={nearby.length} maxDistKm={range} />
+        </div>
+      )}
+
+      {/* Locate me button */}
+      <div style={{display:"flex",justifyContent:"center",margin:"0 24px 14px"}}>
+        <button
+          className="t"
+          onClick={() => { geo.requestIOSPermission(); geo.startWatching(); }}
+          disabled={geo.status === "locating"}
+          style={{
+            display:"flex",alignItems:"center",gap:8,
+            padding:"11px 22px",borderRadius:99,
+            background: geo.status === "active" ? C.saffronDim : `linear-gradient(120deg,${C.saffron},${C.saffronH})`,
+            border: `1px solid ${geo.status === "active" ? "rgba(212,133,60,0.25)" : "transparent"}`,
+            color: geo.status === "active" ? C.saffron : "#fff",
+            fontSize:12,fontWeight:700,cursor:"pointer",
+            animation: geo.status === "locating" ? "locatePulse 1.2s ease-in-out infinite" : "none",
+          }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+          </svg>
+          {geo.status === "locating" ? "Locating…" : geo.status === "active" ? "Live Tracking" : "Locate Me"}
+        </button>
+      </div>
+
+      {/* Range pills */}
+      {geo.effectiveLocation && (
+        <div style={{display:"flex",gap:8,padding:"0 24px 12px",overflowX:"auto"}}>
+          {RANGES.map(r => (
+            <Chip key={r.l} label={r.l} active={range===r.v} onClick={() => { setRange(r.v); setExpandedCluster(null); }}/>
+          ))}
+        </div>
+      )}
+
+      {/* OSM loading hint */}
+      {osmLoading && (
+        <div style={{margin:"0 24px 12px",padding:"10px 14px",borderRadius:12,background:C.card,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${C.div}`,borderTopColor:C.saffron,animation:"spin 0.8s linear infinite"}}/>
+          <span style={{fontSize:11,color:C.textD}}>Discovering more temples{osmRadius ? ` within ${osmRadius} km…` : "…"}</span>
+        </div>
+      )}
+
+      {/* Expanded cluster list */}
+      {clusterItems.length > 0 && (
+        <div style={{margin:"0 24px 12px",padding:"12px 14px",borderRadius:16,background:"rgba(212,133,60,0.08)",border:"1px solid rgba(212,133,60,0.18)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <span style={{fontSize:12,fontWeight:700,color:C.saffron}}>{clusterItems.length} temples nearby</span>
+            <button className="t" onClick={() => setExpandedCluster(null)} style={{fontSize:11,color:C.textD,background:"none",border:"none",cursor:"pointer"}}>Close</button>
           </div>
-          {geoErr
-            ? <p style={{fontSize:12.5,color:"#ef4444",lineHeight:1.7,maxWidth:260}}>{geoErr}</p>
-            : <p style={{fontSize:13,color:C.textD,lineHeight:1.7,maxWidth:260}}>Share your location to discover sacred temples near you.</p>
-          }
-          <button className="t" onClick={locate} disabled={locating} style={{padding:"13px 36px",borderRadius:16,background:`linear-gradient(120deg,${C.saffron},${C.saffronH})`,color:"#fff",border:"none",fontSize:13,fontWeight:700,cursor:locating?"default":"pointer",fontFamily:FB,boxShadow:"0 4px 20px rgba(212,133,60,0.32)",opacity:locating?.7:1,transition:"all .3s"}}>
-            {locating ? "Locating…" : geoErr ? "Try Again" : "Enable Location"}
+          {clusterItems.slice(0,5).map((t,i) => (
+            <NearbyCard
+              key={t.id}
+              t={{...t, bearing: t._bearing}}
+              distanceKm={t._dist}
+              onClick={() => { setExpandedCluster(null); oT(t); }}
+              delay={i * 0.04}
+              gyroHeading={geo.heading}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Results list */}
+      {loading && !geo.effectiveLocation && [0,1].map(i => <SkeletonListCard key={i}/>)}
+      {geo.effectiveLocation && (
+        nearby.length > 0 ? nearby.map((t,i) => (
+          <NearbyCard
+            key={t.id}
+            t={{...t, bearing: t._bearing}}
+            distanceKm={t._dist}
+            onClick={() => oT(t)}
+            delay={i * 0.05}
+            gyroHeading={geo.heading}
+          />
+        )) : (
+          <Empty emoji="🏛" title="No Temples Nearby" sub={`No temples found within ${range} km. Try a larger radius or enable location.`}/>
+        )
+      )}
+
+      {/* No location prompt */}
+      {!geo.effectiveLocation && !loading && (
+        <div style={{margin:"0 24px",padding:"18px 20px",borderRadius:18,background:C.card,border:`1px solid ${C.div}`,textAlign:"center"}}>
+          <div style={{fontSize:12,color:C.textD,lineHeight:1.7,marginBottom:10}}>
+            Share your location to discover sacred temples around you.
+          </div>
+          <button
+            className="t"
+            onClick={() => { geo.requestIOSPermission(); geo.startWatching(); }}
+            style={{padding:"9px 18px",borderRadius:12,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,color:C.saffron,fontSize:12,fontWeight:700,cursor:"pointer"}}
+          >
+            Enable Location
           </button>
         </div>
-      ) : (
-        <div style={{margin:"0 24px",padding:"14px 18px",borderRadius:18,background:C.card,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",gap:12}}>
-          <svg width="16" height="16" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-          <span style={{fontSize:12,color:C.creamM,flex:1}}>Location: {geo.lat.toFixed(3)}°N, {geo.lng.toFixed(3)}°E</span>
-          <button className="t" onClick={() => { setGeo(null); setGeoErr(null); }} style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:C.textD,fontWeight:600}}>Change</button>
-        </div>
-      )}
-
-      {/* Range filter */}
-      {geo && (
-        <div style={{display:"flex",gap:8,padding:"16px 24px 4px",overflowX:"auto"}}>
-          {RANGES.map(r => <Chip key={r.l} label={r.l} active={range===r.v} onClick={() => setRange(r.v)}/>)}
-        </div>
-      )}
-
-      {/* Results */}
-      {loading && !geo && [0,1].map(i => <SkeletonListCard key={i}/>)}
-      {geo && (nearby.length > 0
-        ? nearby.map((t,i) => (
-            <div key={t.id}>
-              <LCard t={t} onClick={oT} onFav={oF} d={i*.06}/>
-              <div style={{fontSize:11,color:C.textD,fontWeight:600,padding:"0 24px 6px",marginTop:-8,display:"flex",alignItems:"center",gap:4}}>
-                <svg width="10" height="10" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-                {t._dist < 1 ? `${(t._dist*1000).toFixed(0)} m away` : `${t._dist.toFixed(1)} km away`}
-              </div>
-            </div>
-          ))
-        : <Empty emoji="🏛" title="No Temples Nearby" sub={`No temples found within ${range} km. Try a larger radius.`}/>
       )}
     </div>
   );
