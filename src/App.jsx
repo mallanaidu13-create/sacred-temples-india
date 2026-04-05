@@ -15,6 +15,7 @@ import SarathiVision from "./SarathiVision.jsx";
 import TirthaStamps from "./TirthaStamps.jsx";
 import { TIRTHA_CIRCUITS } from "./tirtha-data.js";
 import { useSacredSoundscape } from "./SacredSoundscape.js";
+import SarathiChat from "./SarathiChat.jsx";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -4142,7 +4143,7 @@ export default function App() {
   else if (scr === "discover") page = <Discover temples={temples} oT={oT} onBack={back}/>;
   else if (scr === "explore") page = <Explore nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "detail" && tmp) page = <Detail temple={tmp} onBack={back} oF={oF} nav={nav} {...th}/>;
-  else if (scr === "chat") page = <Chat onBack={backNoTmpReset} temple={tmp} temples={temples} {...th}/>;
+  else if (scr === "chat") page = <SarathiChat onBack={backNoTmpReset} temple={tmp} temples={temples} oT={oT} {...th}/>;
   else if (scr === "search") page = <Search oT={oT} oF={oF} onBack={back} temples={temples}/>;
   else if (scr === "stateBrowse") page = <StateBrowse nav={nav} onBack={back} onSelect={t => setTmp(t)} {...th}/>;
   else if (scr === "districtBrowse") page = <DistrictBrowse onBack={back} oT={oT} oF={oF} temples={temples} state={tmp} {...th}/>;
