@@ -17,20 +17,18 @@ import { useState, useEffect, useRef, memo } from "react";
  */
 
 // ── Petal configuration (deterministic, no randomness at render time) ──
-const PETALS = [
-  { emoji: "🌸", left: 8,  size: 16, dur: 8.5, delay: 0,    drift: -18, rot: 75  },
-  { emoji: "🌺", left: 22, size: 14, dur: 10,  delay: 1.2,  drift: 12,  rot: -60 },
-  { emoji: "🌼", left: 38, size: 13, dur: 7.8, delay: 2.5,  drift: -8,  rot: 110 },
-  { emoji: "🪷", left: 55, size: 15, dur: 9.2, delay: 0.8,  drift: 14,  rot: -85 },
-  { emoji: "🌸", left: 68, size: 12, dur: 8,   delay: 3.2,  drift: -22, rot: 55  },
-  { emoji: "🌺", left: 82, size: 14, dur: 10.5,delay: 1.6,  drift: 10,  rot: -120},
-  { emoji: "🌼", left: 15, size: 11, dur: 9.8, delay: 4,    drift: -6,  rot: 90  },
-  { emoji: "🪷", left: 45, size: 13, dur: 7.4, delay: 2,    drift: 16,  rot: -40 },
-  { emoji: "🌸", left: 75, size: 15, dur: 8.8, delay: 3.8,  drift: -14, rot: 65  },
-  { emoji: "🌺", left: 92, size: 12, dur: 11,  delay: 0.4,  drift: 8,   rot: -95 },
-  { emoji: "🌼", left: 32, size: 14, dur: 9.5, delay: 5,    drift: -10, rot: 130 },
-  { emoji: "🪷", left: 60, size: 11, dur: 8.2, delay: 1.8,  drift: 20,  rot: -70 },
-];
+// Generous shower of petals across the entire viewport when Om is playing
+const PETAL_EMOJIS = ["🌸", "🌺", "🌼", "🪷", "🌷", "🏵️"];
+const PETALS = Array.from({ length: 36 }, (_, i) => {
+  const emoji = PETAL_EMOJIS[i % PETAL_EMOJIS.length];
+  const left = 2 + (i * 2.7) % 96;                 // spread 2% → 98%
+  const size = 10 + (i % 5) * 1.8;                 // 10–17px
+  const dur = 7 + (i % 7) * 0.85;                  // 7–12s fall
+  const delay = (i % 11) * 0.55;                   // staggered starts
+  const drift = -26 + (i % 13) * 4.3;              // left/right sway
+  const rot = -140 + (i % 9) * 35;                 // rotation
+  return { emoji, left, size, dur, delay, drift, rot };
+});
 
 // ── Ambient dust particles ──
 const DUST = [
@@ -214,10 +212,6 @@ const CinematicOverlay = memo(({ active = false, enabled = true }) => {
         style={{
           position: "absolute",
           inset: 0,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "100%",
-          maxWidth: 430,
           pointerEvents: "none",
         }}
       >
