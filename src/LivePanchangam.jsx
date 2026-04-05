@@ -10,7 +10,7 @@
  * Auto-refreshes every 60 seconds.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const D2R = Math.PI / 180; // degrees → radians
@@ -615,6 +615,7 @@ export default function LivePanchangam({ location = DEFAULT_LOC }) {
   const [data, setData]           = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [refreshing, setRefreshing]   = useState(false);
+  const refreshTimeoutRef = useRef(null);
 
   /** Re-compute Panchāṅgam and mark as refreshed */
   const refresh = useCallback(() => {
@@ -627,14 +628,18 @@ export default function LivePanchangam({ location = DEFAULT_LOC }) {
     }
     setLastUpdated(new Date());
     // Clear spinner after a short visual delay
-    setTimeout(() => setRefreshing(false), 700);
+    if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    refreshTimeoutRef.current = setTimeout(() => setRefreshing(false), 700);
   }, [location]);
 
   // Initial computation + 60-second auto-refresh
   useEffect(() => {
     refresh();
     const id = setInterval(refresh, 60000);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    };
   }, [refresh]);
 
   const toggle = () => setOpen((v) => !v);

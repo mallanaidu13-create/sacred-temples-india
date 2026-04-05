@@ -14,8 +14,8 @@ const getHinduPanchang = (date = new Date()) => {
   const knownNewMoon = new Date('2000-01-06T18:14:00Z');
   const daysSince = (date - knownNewMoon) / 86400000;
   const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth;
-  const tithiIdx = Math.floor(phase / synodicMonth * 30) % 15;
-  const tithis = ['Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami','Shashti','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi','Trayodashi','Chaturdashi','Purnima'];
+  const tithiIdx = Math.floor(phase / synodicMonth * 30) % 30;
+  const tithis = ['Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami','Shashti','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi','Trayodashi','Chaturdashi','Purnima','Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami','Shashti','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi','Trayodashi','Chaturdashi','Amavasya'];
   const siderealMonth = 27.32166;
   const nakPh = ((daysSince % siderealMonth) + siderealMonth) % siderealMonth;
   const nakIdx = Math.floor(nakPh / siderealMonth * 27);
@@ -148,13 +148,6 @@ const SHLOKAS = [
   {sk:"ॐ हनुमते नमः", tr:"Om Hanumate Namah", src:"Hanuman Mantra"},
 ];
 
-const PANCHANG = {
-  tithi: "Tritiya",
-  nakshatra: "Rohini",
-  yoga: "Siddha",
-  muhurta: "Abhijit (11:52 – 12:44)",
-  vara: "Ravivara (Sunday)",
-};
 
 const CIRCUITS = [
   {id:"jyotirlingas",name:"Dvādasha Jyotirlinga Circuit",shortName:"12 Jyotirlingas",sk:"ज्योतिर्लिङ्ग",deity:"Shiva",count:12,hue:350,
@@ -1323,7 +1316,7 @@ const DailyIntention = ({ onClose }) => {
         animation:"omGlow 4s ease-in-out infinite",lineHeight:1,marginBottom:24,position:"relative",zIndex:2}}>ॐ</div>
       {/* Panchang */}
       <div style={{display:"flex",gap:16,marginBottom:32,position:"relative",zIndex:2}}>
-        {[{l:"Tithi",v:panchang.tithi},{l:"Nakshatra",v:panchang.nakshatra},{l:"Vara",v:panchang.vara.split("a")[0]+"a"}].map(p => (
+        {[{l:"Tithi",v:panchang.tithi},{l:"Nakshatra",v:panchang.nakshatra},{l:"Vara",v:{Ravivara:"Ravi",Somavara:"Soma",Mangalavara:"Mangala",Budhavara:"Budha",Guruvara:"Guru",Shukravara:"Shukra",Shanivara:"Shani"}[panchang.vara] || panchang.vara}].map(p => (
           <div key={p.l} style={{textAlign:"center"}}>
             <div style={{fontSize:8,color:"rgba(212,133,60,0.5)",fontWeight:800,letterSpacing:2.5,textTransform:"uppercase",marginBottom:4}}>{p.l}</div>
             <div style={{fontFamily:FD,fontSize:13,color:C.creamM}}>{p.v}</div>
