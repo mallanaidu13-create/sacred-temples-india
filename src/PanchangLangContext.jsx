@@ -11,6 +11,16 @@ export const LANGS = [
   { code: "ta", label: "த", script: "Tamil" },
   { code: "te", label: "త", script: "Telugu" },
   { code: "ml", label: "മ", script: "Malayalam" },
+  { code: "gu", label: "ગુ", script: "Gujarati" },
+  { code: "mr", label: "म", script: "Marathi" },
+  { code: "bn", label: "ব", script: "Bengali" },
+  { code: "or", label: "ଓ", script: "Odia" },
+  { code: "pa", label: "ਪੰ", script: "Punjabi" },
+  { code: "ur", label: "ا", script: "Urdu" },
+  { code: "as", label: "অ", script: "Assamese" },
+  { code: "sd", label: "सिं", script: "Sindhi" },
+  { code: "ks", label: "क", script: "Kashmiri" },
+  { code: "ne", label: "ने", script: "Nepali" },
 ];
 
 export function PanchangLangProvider({ children }) {
