@@ -7,6 +7,14 @@ import { PanchangLangProvider } from "./PanchangLangContext.jsx";
 import { useGeo, haversineKm, bearingDeg, formatCompass } from "./useGeo.js";
 import { SacredRadar, NearbyCard, RadarLegend } from "./SacredRadar.jsx";
 import { mergeTemples, fetchOsmTemplesProgressive } from "./osm-temples.js";
+import MandalaAR from "./MandalaAR.jsx";
+import SpatialAudio from "./SpatialAudio.jsx";
+import KalaChakra from "./KalaChakra.jsx";
+import SankalpaEngine from "./SankalpaEngine.jsx";
+import SarathiVision from "./SarathiVision.jsx";
+import TirthaStamps from "./TirthaStamps.jsx";
+import { TIRTHA_CIRCUITS } from "./tirtha-data.js";
+import { useSacredSoundscape } from "./SacredSoundscape.js";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -254,6 +262,11 @@ input:focus-visible{outline:2px solid ${theme.saffron};outline-offset:0;border-r
 input{font-family:${FB}}
 input::placeholder{color:${theme.textD}}
 ${cinematicKeyframes}
+@keyframes arAuraSpin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes arOmPulse{0%{transform:translate(-50%,-50%) scale(0.6);opacity:0.85}100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}}
+@keyframes arFlowerFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(55vh) rotate(180deg);opacity:0}}
+@keyframes sankalpaBar{0%,100%{transform:scaleY(0.4);opacity:0.6}50%{transform:scaleY(1);opacity:1}}
+@keyframes visionScan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
 `;
 
 // ── Temple Image Helpers ──
@@ -1525,6 +1538,27 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
   );
 };
 
+const FeatureCard = ({ title, sub, icon, hue, onClick, delay, premium }) => (
+  <div className="rv t" onClick={onClick} style={{
+    margin:"14px 24px 0", borderRadius:20, overflow:"hidden", position:"relative",
+    height: premium ? 124 : 110, cursor:"pointer", animationDelay: delay,
+    boxShadow:`0 8px 32px rgba(0,0,0,0.16)`,
+    border:`1px solid ${premium ? "rgba(196,162,78,0.35)" : "rgba(255,255,255,0.06)"}`,
+  }}>
+    <div style={{position:"absolute", inset:0, background:`linear-gradient(135deg,${hsl(hue, premium?55:45, premium?14:12)},${hsl((hue+40)%360, premium?50:40, premium?10:8)})`}} />
+    <div style={{position:"absolute", top:"-20%", right:"-6%", width:160, height:160, borderRadius:"50%", background:`radial-gradient(circle,${hsl(hue,60,45,0.1)},transparent 60%)`, filter:"blur(30px)", pointerEvents:"none"}} />
+    <div style={{position:"absolute", inset:0, padding:"18px 20px", display:"flex", flexDirection:"column", justifyContent:"flex-end", background:"linear-gradient(transparent 10%,rgba(0,0,0,0.45))"}}>
+      <div style={{fontSize:9, color:hsl(hue,70,55,0.85), fontWeight:800, letterSpacing:2, textTransform:"uppercase", marginBottom:6}}>{premium ? "Premium" : "Experience"}</div>
+      <h3 style={{fontFamily:FD, fontSize:19, fontWeight:600, color:"#fff", lineHeight:1.1, marginBottom:4}}>{icon} {title}</h3>
+      <p style={{fontSize:12, color:"rgba(255,255,255,0.45)", lineHeight:1.4}}>{sub}</p>
+    </div>
+    <div style={{position:"absolute", top:18, right:18, width:32, height:32, borderRadius:10, background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, color:"#fff"}}>→</div>
+    {premium && (
+      <div style={{position:"absolute", top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,transparent,${hsl(hue,70,60,0.8)},transparent)`}} />
+    )}
+  </div>
+);
+
 const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[]}) => {
   const { playing, toggle } = useOmChant();
   const [chantFlash, setChantFlash] = useState(0);
@@ -1740,6 +1774,13 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
             <span style={{fontSize:11,fontWeight:700,letterSpacing:.8,color:playing?"#fff":C.saffron,textTransform:"uppercase"}}>{playing?"Chanting…":"Chant Om"}</span>
           </button>
         </div>
+        {/* AR Darshan pill */}
+        <div style={{position:"absolute",bottom:-14,right:"8%",zIndex:3}}>
+          <button className="t" onClick={() => nav("mandalaAR")} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:100,background:"rgba(196,162,78,0.15)",border:"1px solid rgba(196,162,78,0.35)",cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .2s"}}>
+            <span style={{fontSize:12}}>✨</span>
+            <span style={{fontSize:10,fontWeight:700,letterSpacing:.6,color:C.gold,textTransform:"uppercase"}}>AR Darshan</span>
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -1817,6 +1858,21 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
       </div>
       <div style={{position:"absolute",top:20,right:20,width:38,height:38,borderRadius:12,background:"rgba(212,133,60,0.12)",border:"1px solid rgba(212,133,60,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,color:C.saffron}}>→</div>
     </div>
+
+    {/* SACRED WALKS — Spatial Audio */}
+    <FeatureCard title="Sacred Walks" sub="Spatial Audio Pradakṣiṇa" icon="🎧" hue={30} onClick={() => nav("spatialAudio")} delay=".38s" />
+
+    {/* KĀLA CHAKRA — Personal Panchangam */}
+    <FeatureCard title="Your Kāla Chakra" sub="Personal Panchangam & Muhurta" icon="⏰" hue={45} onClick={() => nav("kalaChakra")} delay=".4s" premium />
+
+    {/* SANKALPA ENGINE — Voice-to-Sanskrit */}
+    <FeatureCard title="Sankalpa Engine" sub="Speak your intention · Receive Sanskrit" icon="🗣" hue={15} onClick={() => nav("sankalpa")} delay=".42s" />
+
+    {/* SARATHI VISION — Camera AI */}
+    <FeatureCard title="Sarathi Vision" sub="Identify deity · Iconography AI" icon="📷" hue={200} onClick={() => nav("sarathiVision")} delay=".44s" />
+
+    {/* TĪRTHA STAMPS — Spiritual Passport */}
+    <FeatureCard title="Tīrtha Stamps" sub="Spiritual Passport · Pilgrimage circuits" icon="🪷" hue={280} onClick={() => nav("tirthaStamps")} delay=".46s" />
 
     {/* BY STATE — shows top 8 + "See all 36" */}
     <Reveal delay={0}>
@@ -2433,6 +2489,8 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const [osmRadius, setOsmRadius] = useState(0);
   const [merged, setMerged] = useState(temples);
   const [expandedCluster, setExpandedCluster] = useState(null);
+  const [claimToast, setClaimToast] = useState(null);
+  const claimTimerRef = useRef(null);
   const RANGES = [{l:"5 km",v:5},{l:"10 km",v:10},{l:"25 km",v:25},{l:"50 km",v:50},{l:"100 km",v:100}];
   const lastHapticRef = useRef(0);
 
@@ -2487,6 +2545,40 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
       lastHapticRef.current = now;
     }
   }, [geo.location, geo.cachedLocation, nearby]);
+
+  // Tirtha Stamp claim toast when within 300m of a pilgrimage temple
+  useEffect(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc) return;
+    const claims = JSON.parse(localStorage.getItem("sti_tirtha_claims") || "[]");
+    const check = () => {
+      for (const circuit of TIRTHA_CIRCUITS) {
+        for (const t of circuit.temples) {
+          const d = haversineKm(loc.latitude, loc.longitude, t.lat, t.lng) * 1000;
+          if (d <= 300 && !claims.some((c) => c.templeId === t.id)) {
+            setClaimToast({ temple: t, circuit });
+            return;
+          }
+        }
+      }
+      setClaimToast(null);
+    };
+    check();
+    claimTimerRef.current = setInterval(check, 8000);
+    return () => clearInterval(claimTimerRef.current);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude]);
+
+  const claimStamp = () => {
+    if (!claimToast) return;
+    const claims = JSON.parse(localStorage.getItem("sti_tirtha_claims") || "[]");
+    const entry = {
+      templeId: claimToast.temple.id,
+      circuitId: claimToast.circuit.id,
+      date: new Date().toISOString(),
+    };
+    localStorage.setItem("sti_tirtha_claims", JSON.stringify([...claims, entry]));
+    setClaimToast(null);
+  };
 
   const clusterItems = expandedCluster || [];
 
@@ -2547,6 +2639,17 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
           {RANGES.map(r => (
             <Chip key={r.l} label={r.l} active={range===r.v} onClick={() => { setRange(r.v); setExpandedCluster(null); }}/>
           ))}
+        </div>
+      )}
+
+      {/* Tirtha claim toast */}
+      {claimToast && (
+        <div style={{margin:"0 24px 12px",padding:"12px 14px",borderRadius:14,background:"rgba(196,162,78,0.12)",border:"1px solid rgba(196,162,78,0.35)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:C.gold}}>You are at {claimToast.temple.name}</div>
+            <div style={{fontSize:11,color:C.textD,marginTop:2}}>Claim your Tīrtha Stamp?</div>
+          </div>
+          <button className="t" onClick={claimStamp} style={{padding:"8px 14px",borderRadius:10,background:C.gold,color:"#1a0f00",border:"none",fontSize:12,fontWeight:700,cursor:"pointer"}}>Claim</button>
         </div>
       )}
 
@@ -2897,7 +3000,27 @@ const AudioGuide = ({onBack, isDark, onToggleTheme}) => {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const Profile = ({isDark, onToggleTheme, temples, nav}) => {
+const PassportWidget = ({ nav }) => {
+  const [claims] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("sti_tirtha_claims") || "[]"); } catch { return []; }
+  });
+  const jyotirlingaClaims = claims.filter((c) => c.circuitId === "jyotirlingas").length;
+  return (
+    <div onClick={() => nav("tirthaStamps")} className="t" style={{
+      margin:"14px 24px 0", padding:"14px 18px", borderRadius:18, background:C.card, border:`1px solid ${C.div}`,
+      display:"flex", alignItems:"center", gap:14, cursor:"pointer",
+    }}>
+      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,rgba(212,133,60,0.2),rgba(196,162,78,0.1))",border:"1px solid rgba(212,133,60,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🪷</div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:13,fontWeight:700,color:C.cream}}>Tīrtha Passport</div>
+        <div style={{fontSize:11,color:C.textD,marginTop:2}}>{jyotirlingaClaims}/12 Jyotirlingas visited</div>
+      </div>
+      <span style={{color:C.textDD,fontSize:16}}>→</span>
+    </div>
+  );
+};
+
+const Profile = ({isDark, onToggleTheme, temples, nav, ambienceOn, setAmbienceOn}) => {
   const LS_KEY = "sti_profile";
   const load = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } };
 
@@ -3098,6 +3221,9 @@ const Profile = ({isDark, onToggleTheme, temples, nav}) => {
         }}>Edit</button>
       </div>
 
+      {/* Tirtha passport widget */}
+      <PassportWidget nav={nav} />
+
       {/* Stats */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,padding:"16px 24px 0"}}>
         {[{l:"Saved",v:savedCount,icon:<svg width="16" height="16" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>},
@@ -3162,6 +3288,29 @@ const Profile = ({isDark, onToggleTheme, temples, nav}) => {
               left:notifs?22:3,
               width:20,height:20,borderRadius:"50%",
               background:notifs?"#fff":C.textDD,
+              transition:"left .25s cubic-bezier(.16,1,.3,1)",
+              boxShadow:"0 1px 6px rgba(0,0,0,0.18)",
+            }}/>
+          </div>
+        </div>
+
+        {/* Sacred Ambience row */}
+        <div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",borderBottom:`1px solid ${C.divL}`}}>
+          <div style={{width:42,height:42,borderRadius:13,background:C.bg3,border:`1px solid ${C.div}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg width="17" height="17" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <span style={{flex:1,fontSize:14,fontWeight:600,color:C.creamM}}>Sacred Ambience</span>
+          <div onClick={() => setAmbienceOn((v) => !v)} style={{
+            width:50,height:28,borderRadius:99,cursor:"pointer",position:"relative",
+            background:ambienceOn ? C.saffron : C.bg3,
+            border:`1.5px solid ${ambienceOn ? "rgba(212,133,60,0.4)" : C.div}`,
+            transition:"background .3s,border-color .3s",
+          }}>
+            <div style={{
+              position:"absolute",top:3,
+              left:ambienceOn?22:3,
+              width:20,height:20,borderRadius:"50%",
+              background:ambienceOn?"#fff":C.textDD,
               transition:"left .25s cubic-bezier(.16,1,.3,1)",
               boxShadow:"0 1px 6px rgba(0,0,0,0.18)",
             }}/>
@@ -3786,6 +3935,7 @@ export default function App() {
   const toastTimer = useRef(null);
   const { getIds: getRecentIds, addId: addRecentId } = useRecentlyViewed();
   const [recentIds, setRecentIds] = useState(() => getRecentIds());
+  const [ambienceOn, setAmbienceOn] = useState(() => localStorage.getItem("sti_ambience") === "1");
   const ref = useRef(null);
 
   const showToast = useCallback((msg, icon='✓') => {
@@ -3793,6 +3943,11 @@ export default function App() {
     setToast({msg, icon, visible:true});
     toastTimer.current = setTimeout(() => setToast(t => ({...t, visible:false})), 2400);
   }, []);
+
+  // Sacred soundscape hook
+  const panchangForSound = useMemo(() => computePanchangam(new Date(), DEFAULT_LOC), []);
+  useSacredSoundscape({ enabled: ambienceOn, panchangam: panchangForSound, volume: 0.2 });
+  useEffect(() => { localStorage.setItem("sti_ambience", ambienceOn ? "1" : "0"); }, [ambienceOn]);
 
   // Keep module-level C in sync with current theme before every render
   C = isDark ? CDark : CLight;
@@ -3863,7 +4018,7 @@ export default function App() {
 
   const tabs = ["home","explore","circuits","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
-  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat","audio","circuitDetail"].includes(scr);
+  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat","audio","circuitDetail","mandalaAR","spatialAudio","sarathiVision"].includes(scr);
 
   if (fetchError) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>
@@ -3891,9 +4046,15 @@ export default function App() {
   else if (scr === "circuitDetail" && cir) page = <CircuitDetail circuit={cir} onBack={back} isDark={isDark}/>;
   else if (scr === "nearby") page = <Nearby oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
   else if (scr === "saved") page = <Saved oT={oT} oF={oF} temples={temples} onBrowse={() => nav("explore")} {...th}/>;
-  else if (scr === "profile") page = <Profile nav={nav} temples={temples} {...th}/>;
+  else if (scr === "profile") page = <Profile nav={nav} temples={temples} ambienceOn={ambienceOn} setAmbienceOn={setAmbienceOn} {...th}/>;
   else if (scr === "about") page = <About onBack={back} temples={temples} {...th}/>;
   else if (scr === "audio") page = <AudioGuide onBack={back} {...th}/>;
+  else if (scr === "mandalaAR") page = <MandalaAR onBack={back} />;
+  else if (scr === "spatialAudio") page = <SpatialAudio onBack={back} />;
+  else if (scr === "kalaChakra") page = <KalaChakra onBack={back} />;
+  else if (scr === "sankalpa") page = <SankalpaEngine onBack={back} />;
+  else if (scr === "sarathiVision") page = <SarathiVision onBack={back} onFindTemples={(deity) => { nav("explore"); }} />;
+  else if (scr === "tirthaStamps") page = <TirthaStamps onBack={back} />;
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
 
   const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : '';
