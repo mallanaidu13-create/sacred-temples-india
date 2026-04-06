@@ -90,6 +90,15 @@ function isHighQualityName(name = "") {
   const n = name.trim();
   if (n.length < 4) return false;
 
+  // Reject URLs, phone numbers, and addresses that sometimes leak into OSM names
+  if (/https?:\/\//.test(n)) return false;
+  if (/\+\d{2,}/.test(n)) return false;
+  if (/\d{5,}/.test(n)) return false; // long number strings like PIN codes
+
+  // Reject names that are mostly numbers/symbols
+  const letterCount = (n.match(/[a-zA-Z]/g) || []).length;
+  if (letterCount / n.length < 0.4) return false;
+
   // Reject pure Indic-script names (unreadable to most users)
   if (INDIC_SCRIPTS.test(n)) return false;
 

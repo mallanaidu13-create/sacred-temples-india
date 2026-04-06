@@ -2564,11 +2564,14 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const claimTimerRef = useRef(null);
   const RANGES = [{l:"5 km",v:5},{l:"10 km",v:10},{l:"25 km",v:25},{l:"50 km",v:50},{l:"100 km",v:100}];
   const lastHapticRef = useRef(0);
+  const templesRef = useRef(temples);
+  const fetchingRef = useRef(false);
+  const fetchedKeyRef = useRef("");
 
   // Always keep merged in sync with temples base data
   useEffect(() => {
+    templesRef.current = temples;
     setMerged(prev => {
-      // If we had OSM data merged in, preserve it while updating supabase temples
       const osmOnly = prev.filter(p => p._source === "osm");
       return mergeTemples(temples, osmOnly);
     });
@@ -2614,27 +2617,35 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
     if (!loc || !shouldFetchOsm) {
       setOsmRadius(0);
       setOsmError(null);
+      if (!shouldFetchOsm) {
+        setMerged(prev => prev.filter(p => p._source !== "osm"));
+        setOsmCount(0);
+      }
       return;
     }
+    const fetchKey = `${loc.latitude.toFixed(4)},${loc.longitude.toFixed(4)},${range}`;
+    if (fetchedKeyRef.current === fetchKey || fetchingRef.current) return;
+    fetchedKeyRef.current = fetchKey;
+    fetchingRef.current = true;
     setOsmLoading(true);
     setOsmError(null);
     fetchOsmTemplesProgressive(loc.latitude, loc.longitude, (r) => setOsmRadius(r))
       .then(({ data, radius }) => {
         if (cancelled) return;
         setOsmCount(data.length);
-        setMerged(mergeTemples(temples, data));
+        setMerged(mergeTemples(templesRef.current, data));
         setOsmError(null);
       })
       .catch((e) => {
         if (cancelled) return;
         setOsmError(e.message || "Could not reach OpenStreetMap. Try again.");
-        // Keep existing merged state on error
       })
       .finally(() => {
+        fetchingRef.current = false;
         if (!cancelled) setOsmLoading(false);
       });
     return () => { cancelled = true; };
-  }, [geo.effectiveLocation, shouldFetchOsm, temples]);
+  }, [geo.effectiveLocation, shouldFetchOsm, range]);
 
   useEffect(() => {
     const cleanup = runOsmFetch();
