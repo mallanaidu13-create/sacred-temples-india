@@ -1818,8 +1818,8 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
           </button>
         </div>
         {/* AR Darshan pill */}
-        <div style={{position:"absolute",bottom:-14,right:"8%",zIndex:3}}>
-          <button className="t" onClick={() => nav("mandalaAR")} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:100,background:"rgba(196,162,78,0.15)",border:"1px solid rgba(196,162,78,0.35)",cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .2s"}}>
+        <div style={{position:"absolute",bottom:-20,right:"4%",zIndex:3}}>
+          <button className="t" onClick={() => nav("mandalaAR")} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:100,background:"rgba(196,162,78,0.15)",border:"1px solid rgba(196,162,78,0.35)",cursor:"pointer",backdropFilter:"blur(12px)",transition:"all .2s"}}>
             <span style={{fontSize:12}}>✨</span>
             <span style={{fontSize:10,fontWeight:700,letterSpacing:.6,color:C.gold,textTransform:"uppercase"}}>AR Darshan</span>
           </button>

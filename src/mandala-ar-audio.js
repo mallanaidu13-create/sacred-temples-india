@@ -10,6 +10,7 @@ export class MandalaAudioEngine {
   droneNodes = [];
   omNodes = [];
   isPlaying = false;
+  timeouts = [];
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -18,6 +19,17 @@ export class MandalaAudioEngine {
         this.ctx = new AudioContext();
       }
     }
+  }
+
+  _addTimeout(fn, ms) {
+    const id = setTimeout(fn, ms);
+    this.timeouts.push(id);
+    return id;
+  }
+
+  _clearTimeouts() {
+    this.timeouts.forEach((id) => clearTimeout(id));
+    this.timeouts = [];
   }
 
   ensureResumed() {
@@ -58,7 +70,7 @@ export class MandalaAudioEngine {
 
   /* ─── Tanpura drone ─────────────────────────────────────────────────────── */
   startDrone() {
-    if (!this.ctx || this.droneNodes.length > 0) return;
+    if (!this.ctx || this.droneNodes.length > 0) return false;
     this.ensureResumed();
 
     if (!this.reverb) this.reverb = this.buildReverb();
@@ -110,13 +122,14 @@ export class MandalaAudioEngine {
     // Fade in master
     const now = this.ctx.currentTime;
     this.masterGain.gain.setTargetAtTime(0.55, now, 1.5);
+    return true;
   }
 
   stopDrone() {
     if (!this.ctx || this.droneNodes.length === 0 || !this.masterGain) return;
     const now = this.ctx.currentTime;
     this.masterGain.gain.setTargetAtTime(0.0001, now, 0.8);
-    setTimeout(() => {
+    this._addTimeout(() => {
       this.droneNodes.forEach((n) => {
         try { n.osc.stop(); n.lfo.stop(); } catch {}
       });
@@ -189,7 +202,7 @@ export class MandalaAudioEngine {
     nodes.push({ noise });
 
     // Clean up nodes after chant
-    setTimeout(() => {
+    this._addTimeout(() => {
       nodes.forEach((n) => { try { n.osc?.stop(); n.vib?.stop(); n.noise?.stop(); } catch {} });
     }, 5200);
   }
@@ -211,13 +224,14 @@ export class MandalaAudioEngine {
       this.stopDrone();
       this.isPlaying = false;
     } else {
-      this.startDrone();
-      this.isPlaying = true;
+      const started = this.startDrone();
+      this.isPlaying = started;
     }
     return this.isPlaying;
   }
 
   destroy() {
+    this._clearTimeouts();
     this.stopDrone();
     if (this.ctx) {
       try { this.ctx.close(); } catch {}

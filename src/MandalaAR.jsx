@@ -49,6 +49,8 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
   const targetOrientRef = useRef({ alpha: 0, beta: 45, gamma: 0 });
   const currentOrientRef = useRef({ alpha: 0, beta: 45, gamma: 0 });
   const timerRef = useRef(null);
+  const mountedRef = useRef(true);
+  const streamRef = useRef(null);
 
   // Offerings persistence
   useEffect(() => {
@@ -59,9 +61,18 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
   useEffect(() => {
     audioRef.current = new MandalaAudioEngine();
     return () => {
+      mountedRef.current = false;
       audioRef.current?.destroy();
+      audioRef.current = null;
     };
   }, []);
+
+  // Attach camera stream to video element when ref becomes available
+  useEffect(() => {
+    if (magicWindow && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [magicWindow]);
 
   // XR / Magic window camera start
   useEffect(() => {
@@ -87,9 +98,11 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
     };
 
     const startMagicWindow = async () => {
+      if (!mountedRef.current) return;
       setMagicWindow(true);
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
       } catch {}
 
@@ -121,45 +134,61 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
 
     return () => {
       if (xrSessionRef.current) { try { xrSessionRef.current.end(); } catch {} }
-      if (videoRef.current?.srcObject) { videoRef.current.srcObject.getTracks().forEach((t) => t.stop()); }
+      if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); }
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (cleanupOrientation) cleanupOrientation();
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
 
-  // Timer logic
+  // Timer logic (stable interval, no re-create on every tick)
   useEffect(() => {
     if (timeLeft <= 0) {
       if (timerRef.current) clearInterval(timerRef.current);
       if (timerMin > 0 && isPlaying) {
-        // Timer just finished
         setIsPlaying(false);
         audioRef.current?.toggleDrone();
-        setShowBlessing(true);
+        if (mountedRef.current) setShowBlessing(true);
         HAPTIC([60, 40, 60]);
       }
       return;
     }
+    if (timerRef.current) return; // interval already running
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
+          timerRef.current = null;
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-    return () => clearInterval(timerRef.current);
+    return () => {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
   }, [timeLeft, timerMin, isPlaying]);
+
+  const requestOrientation = async () => {
+    if (
+      typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function"
+    ) {
+      try {
+        await DeviceOrientationEvent.requestPermission();
+      } catch {}
+    }
+  };
 
   const startTimer = (min) => {
     HAPTIC(20);
+    requestOrientation();
     setTimerMin(min);
     setTimeLeft(min * 60);
     setShowBlessing(false);
     if (!isPlaying) {
-      const playing = audioRef.current?.toggleDrone();
+      const playing = audioRef.current?.toggleDrone() ?? false;
       setIsPlaying(playing);
       setAudioReady(true);
     }
@@ -177,7 +206,8 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
 
   const toggleAudio = () => {
     HAPTIC(20);
-    const playing = audioRef.current?.toggleDrone();
+    requestOrientation();
+    const playing = audioRef.current?.toggleDrone() ?? false;
     setIsPlaying(playing);
     setAudioReady(true);
     if (!playing) {
@@ -188,13 +218,13 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
 
   const omPulse = () => {
     HAPTIC(30);
+    requestOrientation();
     setPulse((p) => p + 1);
-    audioRef.current?.chantOm();
     if (!audioReady) {
-      // Prime audio context on first user gesture
       audioRef.current?.ensureResumed();
       setAudioReady(true);
     }
+    audioRef.current?.chantOm();
   };
 
   const offerFlowers = () => {
