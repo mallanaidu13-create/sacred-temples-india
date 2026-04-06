@@ -166,7 +166,7 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
       const compass = formatCompass(t._bearing ?? 0);
       const loc = [t.townOrCity, t.district].filter(Boolean).join(", ");
       const deity = t.deityPrimary || "";
-      const isMappls = t._source === "mappls";
+      const hasAddress = (t._source === "mappls" || t._source === "osm") && t._address;
 
       const darshan = t.darshanTimings || "";
       const festivals = t.majorFestivals || "";
@@ -182,7 +182,7 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
         <div style="font-family:${FB};padding:2px 0;min-width:200px">
           <div style="font-family:${FD};font-size:15px;font-weight:600;color:#F2E8D4;margin-bottom:4px;line-height:1.3">${t.templeName || "Sacred Temple"}</div>
           ${deity ? `<div style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;background:rgba(212,133,60,0.15);margin-bottom:6px"><span style="font-size:10px;color:#D4853C;font-weight:600">${deity}</span></div>` : ""}
-          ${isMappls && t._address ? `<div style="font-size:10px;color:#A89878;margin-bottom:4px;line-height:1.3">${t._address}</div>` : loc ? `<div style="font-size:11px;color:#A89878;margin-bottom:4px">${loc}</div>` : ""}
+          ${hasAddress ? `<div style="font-size:10px;color:#A89878;margin-bottom:4px;line-height:1.3">${t._address}</div>` : loc ? `<div style="font-size:11px;color:#A89878;margin-bottom:4px">${loc}</div>` : ""}
           ${darshan ? `<div style="font-size:10px;color:#C4A24E;margin-bottom:3px">🕐 ${darshan}</div>` : ""}
           ${archStyle ? `<div style="font-size:10px;color:#A89878;margin-bottom:3px">🏛 ${archStyle}</div>` : ""}
           ${festivals ? `<div style="font-size:10px;color:#e9967a;margin-bottom:4px;line-height:1.4">🎪 ${festivals.length > 80 ? festivals.slice(0, 80) + '…' : festivals}</div>` : ""}

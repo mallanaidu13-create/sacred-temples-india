@@ -270,7 +270,7 @@ export const NearbyCard = memo(({ t, distanceKm, onClick, delay = 0, gyroHeading
           </div>
         )}
         <div style={{ fontSize: 11, color: "#A89878", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {t._source === "mappls" && t._address ? t._address : ([t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(" · ") || "Sacred Temple")}
+          {(t._source === "mappls" || t._source === "osm") && t._address ? t._address : ([t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(" · ") || "Sacred Temple")}
         </div>
         {t.darshanTimings && (
           <div style={{ fontSize: 10, color: "#C4A24E", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🕐 {t.darshanTimings}</div>

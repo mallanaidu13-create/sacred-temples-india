@@ -38,9 +38,14 @@ export async function fetchOverpassTemples(lat, lng, radiusKm = 25) {
   // Query: Hindu temples + generic temples in India region
   const query = `[out:json][timeout:15];
 (
-  nwr["amenity"="place_of_worship"]["religion"="hindu"](around:${radiusM},${lat},${lng});
-  nwr["amenity"="place_of_worship"]["denomination"="hindu"](around:${radiusM},${lat},${lng});
-  nwr["building"="temple"](around:${radiusM},${lat},${lng});
+  node["amenity"="place_of_worship"]["religion"="hindu"](around:${radiusM},${lat},${lng});
+  way["amenity"="place_of_worship"]["religion"="hindu"](around:${radiusM},${lat},${lng});
+  node["amenity"="place_of_worship"]["denomination"="hindu"](around:${radiusM},${lat},${lng});
+  way["amenity"="place_of_worship"]["denomination"="hindu"](around:${radiusM},${lat},${lng});
+  node["building"="temple"]["religion"="hindu"](around:${radiusM},${lat},${lng});
+  way["building"="temple"]["religion"="hindu"](around:${radiusM},${lat},${lng});
+  node["building"="temple"](around:${radiusM},${lat},${lng});
+  way["building"="temple"](around:${radiusM},${lat},${lng});
 );
 out center body qt;`;
 
