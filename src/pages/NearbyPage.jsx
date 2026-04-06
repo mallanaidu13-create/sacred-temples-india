@@ -401,7 +401,7 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
   const [osmCount, setOsmCount] = useState(0);
   const [merged, setMerged] = useState(temples);
   const fetchedKeyRef = useRef("");
-  const fetchingRef = useRef(false);
+  const abortRef = useRef(null);
 
   useEffect(() => {
     templesRef.current = temples;
@@ -462,38 +462,34 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
 
   // ── OSM: Discover real temples nearby at user's current range ──
   const runOsmFetch = useCallback(() => {
-    let cancelled = false;
     const loc = geo.effectiveLocation;
-    if (!loc) {
-      setOsmRadius(0);
-      setOsmError(null);
-      return;
-    }
+    if (!loc) { setOsmRadius(0); setOsmError(null); return; }
 
     const fetchKey = `${loc.latitude.toFixed(3)},${loc.longitude.toFixed(3)},${range}`;
-    if (fetchedKeyRef.current === fetchKey || fetchingRef.current) return;
+    if (fetchedKeyRef.current === fetchKey) return;
     fetchedKeyRef.current = fetchKey;
-    fetchingRef.current = true;
+
+    // Cancel any in-flight request for a previous range/location
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setOsmLoading(true);
     setOsmError(null);
     setOsmRadius(range);
-    fetchOsmTemples(loc.latitude, loc.longitude, range)
+    fetchOsmTemples(loc.latitude, loc.longitude, range, controller.signal)
       .then((data) => {
-        if (cancelled) return;
         setOsmCount(data.length);
         setMerged(mergeTemples(templesRef.current, data));
         setOsmError(null);
       })
       .catch((e) => {
-        if (cancelled) return;
+        if (e.name === "AbortError") return;
         setOsmError(e.message || "Could not reach OpenStreetMap. Try again.");
       })
       .finally(() => {
-        fetchingRef.current = false;
-        if (!cancelled) setOsmLoading(false);
+        setOsmLoading(false);
       });
-    return () => { cancelled = true; };
   }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range]);
 
   // Auto-trigger OSM fetch when location or range changes
@@ -694,7 +690,7 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
             {osmError && (
               <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
                 <span style={{ color: "#f87171" }}>⚠ {osmError}</span>
-                <button className="t" onClick={() => { fetchedKeyRef.current = ""; fetchingRef.current = false; runOsmFetch(); }} style={{ padding: "5px 10px", borderRadius: 8, background: C.saffronDim, border: "none", color: C.saffron, fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Retry</button>
+                <button className="t" onClick={() => { fetchedKeyRef.current = ""; runOsmFetch(); }} style={{ padding: "5px 10px", borderRadius: 8, background: C.saffronDim, border: "none", color: C.saffron, fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Retry</button>
               </div>
             )}
             {isMapplsAvail && mapplsDiscoveries.length > 0 && (

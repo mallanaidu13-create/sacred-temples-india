@@ -192,12 +192,13 @@ out center tags;
 `.trim();
 }
 
-export async function fetchOsmTemples(lat, lon, radiusKm) {
+export async function fetchOsmTemples(lat, lon, radiusKm, signal) {
   const query = buildOverpassQuery(lat, lon, radiusKm);
   const res = await fetch(OVERPASS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `data=${encodeURIComponent(query)}`,
+    signal,
   });
   if (!res.ok) throw new Error(`Overpass ${res.status}`);
   const json = await res.json();
