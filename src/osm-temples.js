@@ -52,18 +52,94 @@ function centerForElement(el) {
   return null;
 }
 
+// ── Strict name-quality gates for 100% accuracy ──
+
+const INDIC_SCRIPTS = /[\u0900-\u097F\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/;
+
 const GENERIC_NAMES = new Set([
-  "temple", "mandir", "hindu temple", "place of worship", "religious place",
-  "shrine", "devasthanam", "devasthan", "koyil", "kovil", "gudi", "devalay",
-  "devalaya", "alayam", "mandapa", "mantapa", "chatra", "math", "mutt",
-  "peeth", "peetha", "ashram", "ashrama", "gurukul", "satsang", "bhavan",
-  "bhawan", "kendra", "samaj", "sangh", "seva", "trust temple", "community temple"
+  "temple", "mandir", "shrine", "place of worship", "religious place", "hindu temple",
+  "devasthanam", "devasthan", "koyil", "kovil", "gudi", "devalay", "devalaya", "alayam",
+  "mandapa", "mantapa", "chatra", "math", "mutt", "peeth", "peetha", "ashram", "ashrama",
+  "gurukul", "satsang", "bhavan", "bhawan", "kendra", "samaj", "sangh", "seva",
+  "trust temple", "community temple", "hall", "building", "complex", "center", "centre",
+  "office", "school", "institution", "organization", "organisation", "committee",
+  "society", "board", "unknown", "unnamed", "no name", "n/a", "na", "none"
 ]);
 
-function isGenericName(name = "") {
-  const n = name.trim().toLowerCase();
-  if (n.length < 3) return true;
-  return GENERIC_NAMES.has(n);
+const COMMON_DEITIES = new Set([
+  "shiva", "mahadev", "mahadeva", "shankar", "bholenath", "nataraja",
+  "vishnu", "venkateswara", "balaji", "perumal", "narayan", "narayana",
+  "rama", "ram", "sriram", "shriram", "sita",
+  "krishna", "govind", "gopala", "govinda", "radha", "radhe",
+  "ganesh", "ganesha", "ganapati", "vinayak", "vinayaka", "vigneshwara", "vigneshwar",
+  "hanuman", "bajrang", "anjaneya", "maruti", "maruthi",
+  "murugan", "subramanya", "kartikeya", "skanda", "palani",
+  "durga", "kali", "amman", "mariamman", "parvati", "lakshmi", "saraswati",
+  "shakti", "mata", "devi", "bhavani", "tulja", "tuljabhavani",
+  "surya", "aditya", "sun"
+]);
+
+const GENERIC_SUFFIXES = [
+  "temple", "mandir", "koyil", "kovil", "gudi", "devalay", "devalaya",
+  "devalayam", "alayam", "alay", "mandapa", "mantapa", "math", "mutt",
+  "peeth", "peetha", "ashram", "ashrama", "gurukul", "satsang", "bhavan",
+  "bhawan", "kendra", "samaj", "sangh", "seva", "chatra", "devasthan", "devasthanam"
+];
+
+function isHighQualityName(name = "") {
+  const n = name.trim();
+  if (n.length < 4) return false;
+
+  // Reject pure Indic-script names (unreadable to most users)
+  if (INDIC_SCRIPTS.test(n)) return false;
+
+  // Must contain at least some Latin letters
+  if (!/[a-zA-Z]/.test(n)) return false;
+
+  // Should not be all lowercase (proper nouns are capitalized)
+  if (n === n.toLowerCase()) return false;
+
+  const lower = n.toLowerCase();
+
+  // Exact generic match
+  if (GENERIC_NAMES.has(lower)) return false;
+
+  const words = lower.split(/\s+/).filter((w) => w.length > 0);
+  if (words.length === 0) return false;
+
+  // Single word: must not be generic
+  if (words.length === 1) {
+    return !GENERIC_NAMES.has(words[0]);
+  }
+
+  // Two-word names: reject if it's just "[common deity] [temple type]"
+  if (words.length === 2) {
+    const [first, second] = words;
+    const firstIsCommonDeity = COMMON_DEITIES.has(first);
+    const secondIsGenericSuffix = GENERIC_SUFFIXES.some((s) => second === s || second.endsWith(s));
+    if (firstIsCommonDeity && secondIsGenericSuffix) return false;
+  }
+
+  // Must contain at least one word that isn't purely generic
+  const hasProperNoun = words.some((word) => {
+    return !GENERIC_NAMES.has(word) && !GENERIC_SUFFIXES.some((s) => word === s);
+  });
+
+  return hasProperNoun;
+}
+
+function pickBestName(tags) {
+  const candidates = [
+    tags["name:en"],
+    tags.name,
+    tags.official_name,
+    tags.alt_name?.split(/[;,]/)[0],
+  ].filter(Boolean).map((n) => n.trim().replace(/\s+/g, " "));
+
+  for (const c of candidates) {
+    if (isHighQualityName(c)) return c;
+  }
+  return "";
 }
 
 export function transformOsmElement(el) {
@@ -71,9 +147,8 @@ export function transformOsmElement(el) {
   const center = centerForElement(el);
   if (!center) return null;
 
-  const rawName = tags.name || tags["name:en"] || tags["name:hi"] || "";
-  const name = rawName.trim();
-  if (!name || isGenericName(name)) return null;
+  const name = pickBestName(tags);
+  if (!name) return null;
 
   const townOrCity = tags["addr:city"] || tags["addr:town"] || tags["addr:place"] || tags["is_in:city"] || "";
   const district = tags["addr:district"] || tags["is_in:district"] || "";
@@ -121,7 +196,7 @@ export async function fetchOsmTemples(lat, lon, radiusKm) {
   if (!res.ok) throw new Error(`Overpass ${res.status}`);
   const json = await res.json();
   const elements = (json.elements || []).filter(
-    (el) => el.tags && (el.tags.name || el.tags["name:en"])
+    (el) => el.tags && pickBestName(el.tags)
   );
   return elements.map(transformOsmElement).filter(Boolean);
 }
