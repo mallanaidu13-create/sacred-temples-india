@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { C, hsl, FD, FB, FE } from "../theme.js";
 import { DEITIES } from "../data.js";
 import { skelBg } from "../utils.js";
@@ -79,4 +79,4 @@ const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {
   );
 };
 
-export default Explore;
+export default memo(Explore);

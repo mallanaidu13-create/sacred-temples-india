@@ -22,10 +22,13 @@ export const getPanchangSummary = () => {
 
 // ── IndexedDB offline cache ──
 export const IDB = (() => {
-  const NAME = 'sacredTemples', VER = 1, STORE = 'temples';
+  const NAME = 'sacredTemples', VER = 2, STORE = 'temples';
   const open = () => new Promise((res, rej) => {
     const r = indexedDB.open(NAME, VER);
-    r.onupgradeneeded = e => e.target.result.createObjectStore(STORE, {keyPath:'id'});
+    r.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, {keyPath:'id'});
+    };
     r.onsuccess = e => res(e.target.result);
     r.onerror = () => rej(r.error);
   });
@@ -98,6 +101,16 @@ export const searchTemples = (temples, query) => {
   }).filter(r => r.score > 0);
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, 5).map(r => r.temple);
+};
+
+// Highlight search matches in text
+export const highlightMatch = (text, query) => {
+  if (!text || !query) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(${escaped})`, 'gi');
+  const parts = text.split(re);
+  if (parts.length === 1) return text;
+  return parts;
 };
 
 // ── Format temple data for AI prompt ──

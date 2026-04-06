@@ -88,6 +88,17 @@ export default function App() {
     });
   }, []);
 
+  // Listen for SW update notifications
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === 'SW_UPDATED') {
+        showToast('Update available — tap to refresh', '↻');
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', handler);
+    return () => navigator.serviceWorker?.removeEventListener('message', handler);
+  }, [showToast]);
+
   // Supabase returns snake_case columns; app uses camelCase everywhere
   const snakeToCamel = (rows) => rows.map(r => ({
     id: r.id,
@@ -252,6 +263,7 @@ export default function App() {
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th} />;
 
   const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : '';
+  const savedCount = useMemo(() => temples.filter(t => t.isFavorite).length, [temples]);
 
   return (
     <PanchangLangProvider>
@@ -278,7 +290,7 @@ export default function App() {
               <OmSvg size={28} color="#fff" />
             </button>
           )}
-          {showNav && <BNav a={aTab} on={onTab} savedCount={temples.filter(t => t.isFavorite).length} />}
+          {showNav && <BNav a={aTab} on={onTab} savedCount={savedCount} />}
         </div>
       </div>
     </PanchangLangProvider>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { C, hsl, FD, FB, FE } from "../theme.js";
 import { useParallax } from "../hooks.js";
 import { TempleImage, BackBtn, ThemeBtn, IR, OmSvg, OmSymbol } from "../components.jsx";
@@ -70,14 +70,14 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
       </div>
       <div role="tablist" aria-label="Temple information" style={{display:"flex",background:C.glass,backdropFilter:"blur(20px)",borderBottom:`1px solid ${C.divL}`,padding:"0 24px",position:"sticky",top:0,zIndex:50}}
         onKeyDown={(e) => {
-          const tabs = ["overview","travel","visit","gallery"];
+          const tabs = ["overview","travel","visit","facts"];
           const idx = tabs.indexOf(tab);
           let nextIdx = -1;
           if (e.key === 'ArrowRight') { e.preventDefault(); nextIdx = (idx+1) % tabs.length; }
           if (e.key === 'ArrowLeft') { e.preventDefault(); nextIdx = (idx-1+tabs.length) % tabs.length; }
           if (nextIdx >= 0) { switchTab(tabs[nextIdx]); e.currentTarget.querySelectorAll('[role="tab"]')[nextIdx]?.focus(); }
         }}>
-        {["overview","travel","visit","gallery"].map(tb => (
+        {["overview","travel","visit","facts"].map(tb => (
           <button key={tb} role="tab" aria-selected={tab===tb} aria-controls={`tabpanel-${tb}`} tabIndex={tab===tb?0:-1} className="t" onClick={() => switchTab(tb)} style={{padding:"16px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12.5,fontWeight:tab===tb?700:400,color:tab===tb?C.saffron:C.textD,fontFamily:FB,textTransform:"capitalize",letterSpacing:.4,borderBottom:`2.5px solid ${tab===tb?C.saffron:"transparent"}`,transition:"all .2s"}}>{tb}</button>
         ))}
       </div>
@@ -163,28 +163,52 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
               </div>
             ))}
           </div>
-          <button className="t" style={{width:"100%",marginTop:24,padding:16,borderRadius:18,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 6px 28px rgba(212,133,60,0.35)"}}>
+          <button className="t" onClick={() => t.latitude && t.longitude && window.open(`https://www.google.com/maps/dir/?api=1&destination=${t.latitude},${t.longitude}`,'_blank')} style={{width:"100%",marginTop:24,padding:16,borderRadius:18,background:`linear-gradient(135deg,${C.saffron},${C.saffronH})`,color:"#fff",border:"none",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:FB,display:"flex",alignItems:"center",justifyContent:"center",gap:10,boxShadow:"0 6px 28px rgba(212,133,60,0.35)"}}>
             ◎ Plan My Visit
           </button>
           <div style={{marginTop:12,textAlign:"center",fontSize:11.5,color:C.textDD,lineHeight:1.7}}>
             Best season: Oct – Feb · Avoid: Amavasya crowds
           </div>
         </div>}
-        {tab === "gallery" && (
+        {tab === "facts" && (
           <div key={tabKey} className="tabContent" style={{paddingTop:8}}>
-            <div style={{borderRadius:20,overflow:"hidden",height:240,position:"relative",marginBottom:8}}>
-              <TempleImage src={null} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              {[1,2,3,4].map(i => (
-                <div key={i} style={{borderRadius:16,overflow:"hidden",height:150,position:"relative"}}>
-                  <TempleImage src={null} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={32}/>
+            <div style={{fontSize:9.5,color:C.textDD,fontWeight:800,letterSpacing:2,textTransform:"uppercase",marginBottom:16}}>Temple Facts</div>
+            {[
+              {icon:"🕉",label:"Primary Deity",val:t.deityPrimary},
+              {icon:"🔱",label:"Secondary Deity",val:t.deitySecondary},
+              {icon:"🏛",label:"Architecture",val:t.architectureStyle},
+              {icon:"📍",label:"Location",val:[t.village,t.townOrCity,t.district,t.stateOrUnionTerritory].filter(Boolean).join(", ")},
+              {icon:"🕐",label:"Darshan Timings",val:t.darshanTimings},
+              {icon:"🎪",label:"Major Festivals",val:t.majorFestivals},
+              {icon:"🏙",label:"Nearest City",val:t.nearestCity},
+              {icon:"🚂",label:"Railway Station",val:t.nearestRailwayStation},
+              {icon:"✈",label:"Airport",val:t.nearestAirport},
+            ].filter(f => f.val).map((f,i) => (
+              <div key={f.label} style={{display:"flex",gap:14,padding:"14px 0",borderBottom:`1px solid ${C.divL}`,animation:`flipIn 0.4s cubic-bezier(.16,1,.3,1) ${i*0.06}s both`}}>
+                <div style={{width:40,height:40,borderRadius:12,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.08)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{f.icon}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:9.5,color:C.textDD,fontWeight:700,letterSpacing:1.2,textTransform:"uppercase",marginBottom:4}}>{f.label}</div>
+                  <div style={{fontSize:14,color:C.creamM,lineHeight:1.6}}>{f.val}</div>
                 </div>
-              ))}
-            </div>
-            <div style={{borderRadius:20,overflow:"hidden",height:180,position:"relative",marginTop:8}}>
-              <TempleImage src={null} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={44}/>
-            </div>
+              </div>
+            ))}
+            {t.historicalSignificance && (
+              <div style={{marginTop:18,padding:20,borderRadius:18,background:C.goldDim,border:`1px solid rgba(196,162,78,0.08)`}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><span style={{fontSize:14}}>📜</span><span style={{fontSize:9.5,fontWeight:800,color:C.gold,letterSpacing:1.2,textTransform:"uppercase"}}>Historical Significance</span></div>
+                <p style={{fontSize:13.5,color:C.creamD,lineHeight:1.8}}>{t.historicalSignificance}</p>
+              </div>
+            )}
+            {t.specialNotes && (
+              <div style={{marginTop:12,padding:20,borderRadius:18,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.08)`}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><span style={{fontSize:14}}>📋</span><span style={{fontSize:9.5,fontWeight:800,color:C.saffron,letterSpacing:1.2,textTransform:"uppercase"}}>Special Notes</span></div>
+                <p style={{fontSize:13.5,color:C.creamD,lineHeight:1.8}}>{t.specialNotes}</p>
+              </div>
+            )}
+            {(t.latitude && t.longitude) && (
+              <div style={{marginTop:16,padding:16,borderRadius:16,background:C.bg3,textAlign:"center",border:`1px solid ${C.div}`}}>
+                <span style={{fontSize:12,color:C.textD,letterSpacing:1,fontWeight:600}}>{t.latitude?.toFixed(4)}°N · {t.longitude?.toFixed(4)}°E</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -192,4 +216,4 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
   );
 };
 
-export default Detail;
+export default memo(Detail);

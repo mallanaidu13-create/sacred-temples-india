@@ -1,4 +1,4 @@
-const CACHE = 'temples-v14';
+const CACHE = 'temples-v15';
 const STATIC = ['/','/index.html','/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -7,7 +7,12 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+  e.waitUntil(
+    caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.matchAll({type:'window'}).then(clients => {
+        clients.forEach(c => c.postMessage({type:'SW_UPDATED'}));
+      }))
+  );
   self.clients.claim();
 });
 
@@ -15,8 +20,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  // Never cache Supabase API or Unsplash — always live
-  if (url.hostname.includes('supabase') || url.hostname.includes('unsplash')) return;
+  // Never cache Supabase API or Overpass — always live
+  if (url.hostname.includes('supabase') || url.hostname.includes('overpass')) return;
 
   const isAsset = url.pathname.startsWith('/assets/');
   const isHtml = url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html');

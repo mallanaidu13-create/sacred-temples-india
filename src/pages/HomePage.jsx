@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { C, hsl, FD, FB, FE } from "../theme.js";
 import { DEITIES, SHLOKAS, HERO_PARTICLES, STATES } from "../data.js";
 import { haptic } from "../utils.js";
@@ -21,10 +21,18 @@ const Home = ({ nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds 
   const [notified, setNotified] = useState(() => localStorage.getItem('premiumNotify') === '1');
   const onNotify = () => { localStorage.setItem('premiumNotify', '1'); setNotified(true); };
 
+  // Compute real stats from temple data
+  const realStats = useMemo(() => {
+    const tCount = temples.length || 81;
+    const states = new Set(temples.map(t => t.stateOrUnionTerritory).filter(Boolean));
+    const deities = new Set(temples.map(t => t.deityPrimary).filter(Boolean));
+    return { temples: tCount, states: states.size || 28, deities: deities.size || 6 };
+  }, [temples]);
+
   // Animated stats counters
-  const [templesCount, triggerTemples] = useCountUp(3000, 1600);
-  const [statesCount, triggerStates] = useCountUp(36, 1200);
-  const [deitiesCount, triggerDeities] = useCountUp(6, 900);
+  const [templesCount, triggerTemples] = useCountUp(realStats.temples, 1600);
+  const [statesCount, triggerStates] = useCountUp(realStats.states, 1200);
+  const [deitiesCount, triggerDeities] = useCountUp(realStats.deities, 900);
   const statsRef = useRef(null);
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
@@ -54,6 +62,26 @@ const Home = ({ nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds 
       .sort((a, b) => a._dist - b._dist);
     return { inRange: all.slice(0, 6), all };
   }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, temples]);
+
+  // Smart featured: prefer isFeatured flag, fallback to completeness scoring
+  const featured = useMemo(() => {
+    const flagged = temples.filter(t => t.isFeatured);
+    if (flagged.length >= 3) return flagged;
+    // Score by data completeness
+    const scored = temples.map(t => {
+      let s = 0;
+      if (t.latitude && t.longitude) s += 3;
+      if (t.historicalSignificance) s += 2;
+      if (t.architectureStyle) s += 2;
+      if (t.darshanTimings) s += 1;
+      if (t.majorFestivals) s += 1;
+      if (t.specialNotes) s += 1;
+      if (t.nearestCity) s += 1;
+      return { ...t, _score: s };
+    });
+    scored.sort((a, b) => b._score - a._score);
+    return scored.slice(0, 8);
+  }, [temples]);
 
   return (
     <div className="fi" style={{ paddingBottom: 28 }}>
@@ -287,7 +315,7 @@ const Home = ({ nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds 
         <SH title="Featured Temples" sub="Handpicked sacred destinations" act="See all" onAct={() => nav("explore")} d={.25} />
         {loading
           ? <div style={{ display: "flex", gap: 18, overflowX: "auto", padding: "0 24px 14px" }}>{[0, 1, 2].map(i => <SkeletonCard key={i} />)}</div>
-          : <CardCarousel items={(temples.filter(t => t.isFeatured).length > 0 ? temples.filter(t => t.isFeatured) : temples.slice(0, 6))} renderCard={(t, i) => <FCard t={t} onClick={oT} onFav={oF} d={.3 + i * .08} />} />}
+          : <CardCarousel items={featured} renderCard={(t, i) => <FCard t={t} onClick={oT} onFav={oF} d={.3 + i * .08} />} />}
       </div>
 
       {/* SACRED CIRCUITS */}
@@ -468,4 +496,4 @@ const Home = ({ nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds 
   );
 };
 
-export default Home;
+export default memo(Home);

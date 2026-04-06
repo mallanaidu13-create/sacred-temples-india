@@ -1,10 +1,10 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  Shared UI Components
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-import { useState, useEffect, useRef, useCallback, memo, Component } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo, Component } from "react";
 import { C, hsl, FD, FB, FE, getCss } from "./theme.js";
 import { SHLOKAS, HERO_PARTICLES, INTENTIONS } from "./data.js";
-import { haptic, getPanchangSummary, skelBg, deityQuery, cpGet, cpSet } from "./utils.js";
+import { haptic, getPanchangSummary, skelBg, deityQuery, cpGet, cpSet, highlightMatch } from "./utils.js";
 import { useReveal, useParallax, useTilt, useCountUp } from "./hooks.js";
 import { CIRCUITS, CIRCUIT_COORDS } from "./content/sacred-circuits/circuits.js";
 
@@ -81,12 +81,12 @@ export const OmSymbol = ({ size = 160, style = {} }) => {
 };
 
 // ── Temple Image with Ken Burns + parallax ──
-export const TempleImage = ({src, hue, style, omSize=48, px=0, py=0}) => {
+export const TempleImage = ({src, hue, style, omSize=48, px=0, py=0, alt=""}) => {
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState(!src);
   const PAD = 20;
   return (
-    <div style={{position:'relative',overflow:'hidden',...style}}>
+    <div role="img" aria-label={alt || "Temple illustration"} style={{position:'relative',overflow:'hidden',...style}}>
       <div style={{position:'absolute',inset:0,background:`linear-gradient(165deg,${hsl(hue,40,16)},${hsl(hue,50,4)})`}}/>
       {!loaded && !err && (
         <div style={{position:'absolute',inset:0,background:`linear-gradient(90deg,${hsl(30,25,14,1)} 25%,${hsl(30,30,18,1)} 50%,${hsl(30,25,14,1)} 75%)`,backgroundSize:'800px 100%',animation:'skeletonShimmer 1.6s ease-in-out infinite'}}/>
@@ -196,7 +196,7 @@ export const ShlokaWidget = () => {
 
 // ── Panchang Widget ──
 export const PanchangWidget = () => {
-  const p = getPanchangSummary();
+  const p = useMemo(() => getPanchangSummary(), []);
   const [ref, visible] = useReveal(0.2);
   return (
     <div ref={ref} style={{margin:"28px 24px 0",borderRadius:22,overflow:"hidden",background:C.card,border:`1px solid ${C.div}`,boxShadow:`0 4px 20px rgba(212,133,60,0.06)`}}>
@@ -344,7 +344,7 @@ export const FCard = memo(({t, onClick, onFav, d=0}) => {
 });
 
 // ── List Card ──
-export const LCard = memo(({t, onClick, onFav, d=0}) => {
+export const LCard = memo(({t, onClick, onFav, d=0, highlight=""}) => {
   const imgSrc = null;
   const [burst, setBurst] = useState(0);
   const DEGS = [0,45,90,135,180,225,270,315];
@@ -362,7 +362,7 @@ export const LCard = memo(({t, onClick, onFav, d=0}) => {
           <div style={{position:"absolute",bottom:5,left:5,padding:"3px 7px",borderRadius:6,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(6px)",fontSize:8.5,color:"rgba(255,255,255,0.9)",fontWeight:700,letterSpacing:.3}}>{t.deityPrimary}</div>
         </div>
         <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",minWidth:0,gap:4}}>
-          <h3 style={{fontFamily:FE,fontSize:18,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.templeName}</h3>
+          <h3 style={{fontFamily:FE,fontSize:18,fontWeight:500,lineHeight:1.25,color:C.cream,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{highlight ? (() => { const parts = highlightMatch(t.templeName, highlight); return Array.isArray(parts) ? parts.map((p,i) => new RegExp(highlight.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i').test(p) ? <mark key={i} style={{background:C.saffronDim,color:C.saffron,borderRadius:2,padding:"0 1px"}}>{p}</mark> : p) : parts; })() : t.templeName}</h3>
           <div style={{fontSize:11.5,color:C.textD,display:"flex",alignItems:"center",gap:4}}>
             <div style={{width:3,height:3,borderRadius:"50%",background:C.textDD}}/>{t.townOrCity}{t.stateOrUnionTerritory ? `, ${t.stateOrUnionTerritory}` : ""}
           </div>
@@ -376,7 +376,7 @@ export const LCard = memo(({t, onClick, onFav, d=0}) => {
           {burst > 0 && DEGS.map((deg,i) => (
             <div key={`hb-${burst}-${i}`} aria-hidden="true" style={{position:"absolute",top:"50%",left:"50%",width:6,height:6,borderRadius:"50%",background:C.red,pointerEvents:"none",zIndex:10,"--hb-deg":`${deg}deg`,animation:"heartBurst 0.65s ease-out both",animationDelay:`${i*0.04}s`}}/>
           ))}
-          <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" onClick={e => { e.stopPropagation(); if (!t.isFavorite) { setBurst(b => b+1); haptic(30); } onFav?.(t.id, t.isFavorite); }} style={{fontSize:15,color:t.isFavorite?C.red:C.textDD,cursor:"pointer",transition:"transform .12s"}}>{t.isFavorite?"♥":"♡"}</div>
+          <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" tabIndex={0} onClick={e => { e.stopPropagation(); if (!t.isFavorite) { setBurst(b => b+1); haptic(30); } onFav?.(t.id, t.isFavorite); }} onKeyDown={e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); e.stopPropagation(); if (!t.isFavorite) { setBurst(b => b+1); haptic(30); } onFav?.(t.id, t.isFavorite); } }} style={{fontSize:15,color:t.isFavorite?C.red:C.textDD,cursor:"pointer",transition:"transform .12s",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.isFavorite?"♥":"♡"}</div>
         </div>
       </div>
     </div>
@@ -424,8 +424,16 @@ export const CardCarousel = ({items, renderCard, pad='24px'}) => {
     itemRefs.current.forEach(el => el && obs.observe(el));
     return () => obs.disconnect();
   }, [items.length]);
+  const scrollToIdx = useCallback((idx) => {
+    const el = itemRefs.current[idx];
+    if (el) el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
+  }, []);
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); const next = Math.min(active+1, items.length-1); scrollToIdx(next); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); const prev = Math.max(active-1, 0); scrollToIdx(prev); }
+  }, [active, items.length, scrollToIdx]);
   return (
-    <div>
+    <div role="region" aria-label="Temple carousel" onKeyDown={handleKeyDown} tabIndex={0}>
       <div ref={scrollRef} style={{display:'flex',gap:18,overflowX:'auto',padding:`0 ${pad} 4px`,scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}}>
         {items.map((item,i) => (
           <div key={item.id||i} ref={el => itemRefs.current[i]=el} style={{scrollSnapAlign:'start',flexShrink:0}}>
@@ -435,9 +443,9 @@ export const CardCarousel = ({items, renderCard, pad='24px'}) => {
         <div style={{flexShrink:0,width:8}}/>
       </div>
       {items.length > 1 && (
-        <div style={{display:'flex',gap:5,justifyContent:'center',paddingTop:10,paddingBottom:2}}>
+        <div style={{display:'flex',gap:5,justifyContent:'center',paddingTop:10,paddingBottom:2}} role="tablist" aria-label="Carousel position">
           {items.map((_,i) => (
-            <div key={i} style={{
+            <div key={i} role="tab" aria-selected={i===active} aria-label={`Item ${i+1} of ${items.length}`} style={{
               height:5, borderRadius:3, background: i===active ? C.saffron : C.textDD,
               width: i===active ? 20 : 5,
               transition:'all 0.35s cubic-bezier(.16,1,.3,1)',

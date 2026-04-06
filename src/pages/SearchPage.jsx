@@ -50,7 +50,7 @@ const Search = ({oT, oF, onBack, temples}) => {
         ))}
       </div> : res.length > 0 ? <div style={{paddingTop:10}}>
         <div role="status" aria-live="polite" style={{padding:"0 24px 12px",fontSize:12,color:C.textD}}>{res.length} result{res.length !== 1 ? "s" : ""}</div>
-        {res.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.04}/>)}
+        {res.map((t,i) => <LCard key={t.id} t={t} onClick={oT} onFav={oF} d={i*.04} highlight={q}/>)}
       </div> : <Empty emoji="⌕" title="No Results" sub={`Nothing for "${q}". Try another search.`}/>}
     </div>
   );

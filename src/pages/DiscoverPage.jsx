@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, memo } from "react";
 import { C, hsl, FD, FB } from "../theme.js";
 import { haptic } from "../utils.js";
 import { useParallax } from "../hooks.js";
@@ -168,4 +168,4 @@ const Discover = ({temples, oT, onBack}) => {
   );
 };
 
-export default Discover;
+export default memo(Discover);
