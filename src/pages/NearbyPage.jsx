@@ -485,7 +485,11 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       })
       .catch((e) => {
         if (e.name === "AbortError") return;
-        setOsmError(e.message || "Could not reach OpenStreetMap. Try again.");
+        const msg = e.message || "";
+        const friendly = /5\d\d/.test(msg)
+          ? "Map server busy — showing saved temples. Tap Retry."
+          : "Could not reach OpenStreetMap. Check connection and retry.";
+        setOsmError(friendly);
       })
       .finally(() => {
         setOsmLoading(false);

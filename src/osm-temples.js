@@ -1,6 +1,10 @@
 ﻿import { haversineKm } from "./useGeo.js";
 
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
+];
 
 const deityHueMap = {
   shiva: 350,
@@ -182,7 +186,7 @@ export function transformOsmElement(el) {
 export function buildOverpassQuery(lat, lon, radiusKm) {
   const r = Math.round(radiusKm * 1000);
   return `
-[out:json][timeout:25];
+[out:json][timeout:30];
 (
   node["amenity"="place_of_worship"]["religion"="hindu"](around:${r},${lat},${lon});
   way["amenity"="place_of_worship"]["religion"="hindu"](around:${r},${lat},${lon});
@@ -194,18 +198,35 @@ out center tags;
 
 export async function fetchOsmTemples(lat, lon, radiusKm, signal) {
   const query = buildOverpassQuery(lat, lon, radiusKm);
-  const res = await fetch(OVERPASS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `data=${encodeURIComponent(query)}`,
-    signal,
-  });
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const json = await res.json();
-  const elements = (json.elements || []).filter(
-    (el) => el.tags && pickBestName(el.tags)
-  );
-  return elements.map(transformOsmElement).filter(Boolean);
+  const body = `data=${encodeURIComponent(query)}`;
+  let lastErr;
+  for (const mirror of OVERPASS_MIRRORS) {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    try {
+      const res = await fetch(mirror, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+        signal,
+      });
+      if (!res.ok) {
+        lastErr = new Error(`Overpass ${res.status}`);
+        // 5xx = server overloaded — try next mirror; 4xx = bad request, stop
+        if (res.status < 500) throw lastErr;
+        continue;
+      }
+      const json = await res.json();
+      const elements = (json.elements || []).filter(
+        (el) => el.tags && pickBestName(el.tags)
+      );
+      return elements.map(transformOsmElement).filter(Boolean);
+    } catch (e) {
+      if (e.name === "AbortError") throw e;
+      lastErr = e;
+      // network error — try next mirror
+    }
+  }
+  throw lastErr ?? new Error("All Overpass mirrors failed");
 }
 
 export function mergeTemples(supabaseTemples = [], osmTemples = [], dedupRadiusM = 150) {
