@@ -693,8 +693,8 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
         </>
       )}
 
-      {/* Temple list (always shown in list/radar mode, hidden in map mode unless scrolled) */}
-      {geo.effectiveLocation && nearby.length > 0 && (view !== "map" || nearby.length <= 50) && nearby.map((t, i) => (
+      {/* Temple list — always shown below map/radar */}
+      {geo.effectiveLocation && nearby.length > 0 && nearby.map((t, i) => (
         <NearbyCard
           key={t.id}
           t={{ ...t, bearing: t._bearing ?? 0 }}

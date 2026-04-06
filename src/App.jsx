@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { supabase } from "./supabase.js";
+import { FALLBACK_TEMPLES } from "./fallback-temples.js";
 import { computePanchangam, DEFAULT_LOC } from "./LivePanchangam.jsx";
 import { PanchangLangProvider } from "./PanchangLangContext.jsx";
 import { useSacredSoundscape } from "./SacredSoundscape.js";
@@ -87,7 +88,7 @@ export default function App() {
     });
   }, []);
 
-  // Data fetching with IndexedDB fallback
+  // Data fetching with IndexedDB fallback → static fallback
   const fetchTemples = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
@@ -96,13 +97,16 @@ export default function App() {
       const cached = await IDB.load();
       if (cached.length > 0) {
         setTemples(cached);
-        setFetchError(null);
       } else {
-        setFetchError(error.message || "Could not load temples. Please check your connection.");
+        setTemples(FALLBACK_TEMPLES);
       }
-    } else if (data) {
+    } else if (data && data.length > 0) {
       setTemples(data);
       IDB.save(data);
+    } else {
+      // Supabase returned empty — try IDB cache, then static fallback
+      const cached = await IDB.load();
+      setTemples(cached.length > 0 ? cached : FALLBACK_TEMPLES);
     }
     setLoading(false);
   }, []);
