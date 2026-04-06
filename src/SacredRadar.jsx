@@ -213,6 +213,7 @@ export const NearbyCard = memo(({ t, distanceKm, onClick, delay = 0, gyroHeading
   const walkMin = walkingMinutes(distanceKm);
   const tilt = gyroHeading != null ? ((bearing - gyroHeading + 540) % 360) - 180 : 0;
   const rotateY = clamp(tilt * 0.15, -12, 12);
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${t.latitude},${t.longitude}`;
 
   return (
     <div
@@ -263,9 +264,17 @@ export const NearbyCard = memo(({ t, distanceKm, onClick, delay = 0, gyroHeading
         >
           {t.templeName}
         </div>
+        {t.deityPrimary && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "1px 8px", borderRadius: 20, background: "rgba(212,133,60,0.12)", marginTop: 3 }}>
+            <span style={{ fontSize: 10, color: "#D4853C", fontWeight: 600 }}>{t.deityPrimary}</span>
+          </div>
+        )}
         <div style={{ fontSize: 11, color: "#A89878", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {[t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(" · ") || (t._source === "osm" ? "OpenStreetMap" : "Sacred Temple")}
+          {[t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(" · ") || "Sacred Temple"}
         </div>
+        {t.darshanTimings && (
+          <div style={{ fontSize: 10, color: "#C4A24E", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🕐 {t.darshanTimings}</div>
+        )}
         <div style={{ fontSize: 11, color: "#A89878", marginTop: 3, display: "flex", alignItems: "center", gap: 8 }}>
           <span>{formatDistance(distanceKm)}</span>
           <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(168,152,120,0.5)" }} />
@@ -274,7 +283,13 @@ export const NearbyCard = memo(({ t, distanceKm, onClick, delay = 0, gyroHeading
           <span>{compass}</span>
         </div>
       </div>
-      <div style={{ fontSize: 18, color: "rgba(212,133,60,0.7)", flexShrink: 0 }}>→</div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div style={{ fontSize: 18, color: "rgba(212,133,60,0.7)" }}>→</div>
+        {t.latitude && t.longitude && (
+          <a href={directionsUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+            style={{ fontSize: 9, color: "#D4853C", fontWeight: 700, textDecoration: "none", padding: "3px 8px", borderRadius: 6, background: "rgba(212,133,60,0.1)" }}>📍</a>
+        )}
+      </div>
     </div>
   );
 });

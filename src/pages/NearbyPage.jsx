@@ -4,7 +4,6 @@ import { haptic } from "../utils.js";
 import { Chip, ThemeBtn, SkeletonListCard, Empty } from "../components.jsx";
 import { useGeo, haversineKm, bearingDeg, formatCompass } from "../useGeo.js";
 import { SacredRadar, NearbyCard, RadarLegend } from "../SacredRadar.jsx";
-import { mergeTemples, fetchOsmTemplesProgressive } from "../osm-temples.js";
 import { TIRTHA_CIRCUITS } from "../tirtha-data.js";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -135,21 +134,17 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
 
     nearby.forEach(t => {
       const isSel = selectedTemple?.id === t.id;
-      const isDb = t._source !== "osm";
       const hue = t.hue ?? 30;
       const size = isSel ? 36 : 28;
-      const emj = isDb ? "🛕" : "🕉";
       const icon = L.divIcon({
         className: "",
         html: `<div style="
           width:${size}px;height:${size}px;border-radius:50%;
           background:${isSel
             ? "linear-gradient(135deg,#E69A52,#D4853C)"
-            : isDb
-              ? `linear-gradient(135deg,hsl(${hue},60%,45%),hsl(${hue},55%,35%))`
-              : "linear-gradient(135deg,#4a7c59,#2d5a3e)"
+            : `linear-gradient(135deg,hsl(${hue},60%,45%),hsl(${hue},55%,35%))`
           };
-          border:${isSel ? "3px solid #fff" : `2px solid rgba(255,255,255,${isDb ? 0.4 : 0.2})`};
+          border:${isSel ? "3px solid #fff" : `2px solid rgba(255,255,255,0.4)`};
           display:flex;align-items:center;justify-content:center;
           font-size:${isSel ? 16 : 13}px;
           box-shadow:${isSel
@@ -158,7 +153,7 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
           };
           transition:all 0.3s cubic-bezier(.22,1,.36,1);
           cursor:pointer;
-        ">${emj}</div>`,
+        ">🛕</div>`,
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
@@ -168,22 +163,30 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
       const loc = [t.townOrCity, t.district].filter(Boolean).join(", ");
       const deity = t.deityPrimary || "";
 
+      const darshan = t.darshanTimings || "";
+      const festivals = t.majorFestivals || "";
+      const archStyle = t.architectureStyle || "";
+      const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${t.latitude},${t.longitude}`;
+
       const popup = L.popup({
         className: "sacred-popup",
         closeButton: false,
-        maxWidth: 260,
+        maxWidth: 280,
         offset: [0, -size / 2 - 4],
       }).setContent(`
-        <div style="font-family:${FB};padding:2px 0;min-width:180px">
-          <div style="font-family:${FD};font-size:15px;font-weight:600;color:#F2E8D4;margin-bottom:4px;line-height:1.3">${t.templeName || t.name || "Sacred Temple"}</div>
+        <div style="font-family:${FB};padding:2px 0;min-width:200px">
+          <div style="font-family:${FD};font-size:15px;font-weight:600;color:#F2E8D4;margin-bottom:4px;line-height:1.3">${t.templeName || "Sacred Temple"}</div>
           ${deity ? `<div style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;background:rgba(212,133,60,0.15);margin-bottom:6px"><span style="font-size:10px;color:#D4853C;font-weight:600">${deity}</span></div>` : ""}
           ${loc ? `<div style="font-size:11px;color:#A89878;margin-bottom:4px">${loc}</div>` : ""}
+          ${darshan ? `<div style="font-size:10px;color:#C4A24E;margin-bottom:3px">🕐 ${darshan}</div>` : ""}
+          ${archStyle ? `<div style="font-size:10px;color:#A89878;margin-bottom:3px">🏛 ${archStyle}</div>` : ""}
+          ${festivals ? `<div style="font-size:10px;color:#e9967a;margin-bottom:4px;line-height:1.4">🎪 ${festivals.length > 80 ? festivals.slice(0, 80) + '…' : festivals}</div>` : ""}
           <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#6E5E48;margin-top:4px">
             <span style="color:#D4853C;font-weight:700">${dist}</span>
             <span style="width:3px;height:3px;border-radius:50%;background:#6E5E48"></span>
             <span>${compass}</span>
-            ${t._source === "osm" ? '<span style="width:3px;height:3px;border-radius:50%;background:#6E5E48"></span><span style="color:#4ade80;font-size:10px">OSM</span>' : ""}
           </div>
+          <a href="${directionsUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:5px 12px;border-radius:8px;background:rgba(212,133,60,0.15);color:#D4853C;font-size:10px;font-weight:700;text-decoration:none">📍 Directions</a>
         </div>
       `);
 
@@ -289,12 +292,12 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
               background: `linear-gradient(135deg,hsl(${selectedTemple.hue ?? 30},60%,45%),hsl(${selectedTemple.hue ?? 30},55%,30%))`,
               border: `1px solid hsl(${selectedTemple.hue ?? 30},50%,50%,0.3)`,
               display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
-            }}>{selectedTemple._source === "osm" ? "🕉" : "🛕"}</div>
+            }}>🛕</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: FD, fontSize: 14, fontWeight: 600, color: "#F2E8D4", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {selectedTemple.templeName || selectedTemple.name}
+                {selectedTemple.templeName}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#A89878", marginTop: 3 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#A89878", marginTop: 3, flexWrap: "wrap" }}>
                 <span style={{ color: "#D4853C", fontWeight: 700 }}>{formatDist(selectedTemple._dist)}</span>
                 <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#6E5E48" }} />
                 <span>{formatCompass(selectedTemple._bearing ?? 0)}</span>
@@ -303,12 +306,22 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
                   <span>{selectedTemple.deityPrimary}</span>
                 </>}
               </div>
+              {selectedTemple.darshanTimings && (
+                <div style={{ fontSize: 10, color: "#C4A24E", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🕐 {selectedTemple.darshanTimings}</div>
+              )}
             </div>
-            <button className="t" onClick={() => onSelectTemple(selectedTemple)} style={{
-              padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-              background: "linear-gradient(135deg,#D4853C,#E69A52)",
-              color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0,
-            }}>View</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+              <button className="t" onClick={() => onSelectTemple(selectedTemple)} style={{
+                padding: "8px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+                background: "linear-gradient(135deg,#D4853C,#E69A52)",
+                color: "#fff", fontSize: 11, fontWeight: 700,
+              }}>View</button>
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedTemple.latitude},${selectedTemple.longitude}`} target="_blank" rel="noopener noreferrer" style={{
+                padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer",
+                background: "rgba(212,133,60,0.15)", textAlign: "center",
+                color: "#D4853C", fontSize: 9, fontWeight: 700, textDecoration: "none",
+              }}>📍 Navigate</a>
+            </div>
           </div>
         </div>
       )}
@@ -351,33 +364,21 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
   const [range, setRange] = useState(25);
   const [view, setView] = useState("map");
   const [selectedTemple, setSelectedTemple] = useState(null);
-  const [osmLoading, setOsmLoading] = useState(false);
-  const [osmRadius, setOsmRadius] = useState(0);
-  const [osmError, setOsmError] = useState(null);
-  const [osmCount, setOsmCount] = useState(0);
-  const [merged, setMerged] = useState(temples);
   const [expandedCluster, setExpandedCluster] = useState(null);
   const [claimToast, setClaimToast] = useState(null);
   const claimTimerRef = useRef(null);
   const RANGES = [{ l: "5 km", v: 5 }, { l: "10 km", v: 10 }, { l: "25 km", v: 25 }, { l: "50 km", v: 50 }, { l: "100 km", v: 100 }];
   const lastHapticRef = useRef(0);
   const templesRef = useRef(temples);
-  const fetchingRef = useRef(false);
-  const fetchedKeyRef = useRef("");
-  const osmDebounceRef = useRef(null);
 
   useEffect(() => {
     templesRef.current = temples;
-    setMerged(prev => {
-      const osmOnly = prev.filter(p => p._source === "osm");
-      return mergeTemples(temples, osmOnly);
-    });
   }, [temples]);
 
   const allWithCoords = useMemo(() => {
     const loc = geo.effectiveLocation;
     if (!loc) return [];
-    return merged
+    return temples
       .filter(t => t.latitude != null && t.longitude != null && isFinite(t.latitude) && isFinite(t.longitude))
       .map(t => ({
         ...t,
@@ -386,77 +387,11 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       }))
       .filter(t => isFinite(t._dist) && t._dist >= 0)
       .sort((a, b) => a._dist - b._dist);
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, merged]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, temples]);
 
   const nearby = useMemo(() => {
     return allWithCoords.filter(t => t._dist <= range);
   }, [allWithCoords, range]);
-
-  const supabaseInRange = useMemo(() => {
-    const loc = geo.effectiveLocation;
-    if (!loc) return 0;
-    return temples
-      .filter(t => t.latitude != null && t.longitude != null && isFinite(t.latitude) && isFinite(t.longitude))
-      .filter(t => {
-        const d = haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude);
-        return isFinite(d) && d <= range;
-      }).length;
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, temples, range]);
-
-  const shouldFetchOsm = useMemo(() => {
-    const loc = geo.effectiveLocation;
-    if (!loc) return false;
-    if (range >= 10) return true;
-    return supabaseInRange < 15;
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, supabaseInRange]);
-
-  const runOsmFetch = useCallback(() => {
-    let cancelled = false;
-    const loc = geo.effectiveLocation;
-    if (!loc || !shouldFetchOsm) {
-      setOsmRadius(0);
-      setOsmError(null);
-      if (!shouldFetchOsm) {
-        setMerged(prev => prev.filter(p => p._source !== "osm"));
-        setOsmCount(0);
-      }
-      return;
-    }
-    const fetchKey = `${loc.latitude.toFixed(4)},${loc.longitude.toFixed(4)},${range}`;
-    if (fetchedKeyRef.current === fetchKey || fetchingRef.current) return;
-    fetchedKeyRef.current = fetchKey;
-    fetchingRef.current = true;
-    setOsmLoading(true);
-    setOsmError(null);
-    fetchOsmTemplesProgressive(loc.latitude, loc.longitude, (r) => setOsmRadius(r))
-      .then(({ data, radius }) => {
-        if (cancelled) return;
-        setOsmCount(data.length);
-        setMerged(mergeTemples(templesRef.current, data));
-        setOsmError(null);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setOsmError(e.message || "Could not reach OpenStreetMap. Try again.");
-      })
-      .finally(() => {
-        fetchingRef.current = false;
-        if (!cancelled) setOsmLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, shouldFetchOsm, range]);
-
-  // Debounced OSM fetch
-  useEffect(() => {
-    if (osmDebounceRef.current) clearTimeout(osmDebounceRef.current);
-    osmDebounceRef.current = setTimeout(() => {
-      const cleanup = runOsmFetch();
-      return cleanup;
-    }, 600);
-    return () => {
-      if (osmDebounceRef.current) clearTimeout(osmDebounceRef.current);
-    };
-  }, [runOsmFetch]);
 
   // Proximity haptic
   useEffect(() => {
@@ -554,7 +489,7 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
           <SacredRadar
             location={geo.effectiveLocation}
             heading={geo.heading}
-            temples={merged}
+            temples={temples}
             size={240}
             maxDistKm={range}
             showClusters={true}
@@ -608,14 +543,6 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
             </div>
             <div>Database: <span style={{ color: C.creamM, fontWeight: 600 }}>{temples.filter(t => t.latitude != null && t.longitude != null).length}</span> temples with coordinates</div>
             {nearest && <div>Nearest temple: <span style={{ color: C.saffron, fontWeight: 600 }}>{nearest.templeName}</span> · {nearest._dist < 1 ? `${(nearest._dist * 1000).toFixed(0)} m` : `${nearest._dist.toFixed(1)} km`} away</div>}
-            {osmLoading && <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}><span style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.div}`, borderTopColor: C.saffron, animation: "spin 0.7s linear infinite", display: "inline-block" }} /><span>Scanning OpenStreetMap{osmRadius ? ` up to ${osmRadius} km…` : "…"}</span></div>}
-            {!osmLoading && osmCount > 0 && <div style={{ marginTop: 4, color: "#4ade80" }}>✓ OpenStreetMap added {osmCount} more temples</div>}
-            {osmError && (
-              <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
-                <span style={{ color: "#f87171" }}>⚠ {osmError}</span>
-                <button className="t" onClick={runOsmFetch} style={{ padding: "5px 10px", borderRadius: 8, background: C.saffronDim, border: "none", color: C.saffron, fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Retry</button>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -687,7 +614,7 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       ))}
 
       {/* Empty states */}
-      {geo.effectiveLocation && nearby.length === 0 && coordCount === 0 && !osmLoading && (
+      {geo.effectiveLocation && nearby.length === 0 && coordCount === 0 && (
         <Empty emoji="🏛" title="No Temples Nearby" sub="No temples found in the database with coordinates. Try a larger radius or check back later." />
       )}
 
