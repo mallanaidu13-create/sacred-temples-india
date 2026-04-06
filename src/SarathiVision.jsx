@@ -1,84 +1,154 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import {
+  startCamera, stopCamera, captureFrame, readFileAsDataURL,
+  identifyWithGemini, guessDeityLocal, findTemplesByKeywords, isQuotaError,
+  GEMINI_KEY,
+} from "./sarathi-vision-logic.js";
 
-const C = {
-  bg: "#1A1109", saffron: "#D4853C", gold: "#C4A24E", cream: "#F2E8D4", text: "#EDE4D4",
-  card: "#241A10", div: "rgba(255,255,255,0.07)", glass: "rgba(26,17,9,0.78)", textD: "#6E5E48",
+const CDark = {
+  bg: "#1A1109", saffron: "#D4853C", saffronDim: "rgba(212,133,60,0.12)",
+  gold: "#C4A24E", goldDim: "rgba(196,162,78,0.1)",
+  cream: "#F2E8D4", text: "#EDE4D4", textM: "#A89878", textD: "#6E5E48", textDD: "#5C4E3A",
+  card: "#241A10", cardH: "#2E2218", div: "rgba(255,255,255,0.07)", glass: "rgba(26,17,9,0.78)",
+  good: "#4ade80", bad: "#f87171",
 };
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const CLight = {
+  bg: "#FAFAF8", saffron: "#C4721A", saffronDim: "rgba(196,114,26,0.12)",
+  gold: "#9E7A28", goldDim: "rgba(158,122,40,0.08)",
+  cream: "#1A1208", text: "#1A1208", textM: "#5A3A10", textD: "#8A6030", textDD: "#B89060",
+  card: "#FFFFFF", cardH: "#FBF8F3", div: "rgba(0,0,0,0.08)", glass: "rgba(250,250,248,0.88)",
+  good: "#16a34a", bad: "#dc2626",
+};
 
-export default function SarathiVision({ onBack, onFindTemples }) {
+const DEITY_BUTTONS = [
+  { label: "Shiva", icon: "🔱" },
+  { label: "Vishnu", icon: "🪷" },
+  { label: "Devi", icon: "🌸" },
+  { label: "Ganesha", icon: "🐭" },
+  { label: "Hanuman", icon: "🏹" },
+  { label: "Murugan", icon: "🌿" },
+];
+
+export default function SarathiVision({ onBack, isDark, onToggleTheme, temples, onFindTemples }) {
+  const C = useMemo(() => (isDark ? CDark : CLight), [isDark]);
+
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [stream, setStream] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const inputRef = useRef(null);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [isLocalMode, setIsLocalMode] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState("environment");
+  const [cameraReady, setCameraReady] = useState(false);
 
-  const handleFile = async (e) => {
+  // Start camera on mount
+  useEffect(() => {
+    let activeStream = null;
+    startCamera(videoRef.current, cameraFacing)
+      .then((s) => {
+        activeStream = s;
+        setStream(s);
+        setCameraReady(true);
+      })
+      .catch((e) => {
+        setErrorMsg(e.message || "Could not start camera. You can upload a photo instead.");
+      });
+    return () => {
+      stopCamera(activeStream, videoRef.current);
+    };
+  }, [cameraFacing]);
+
+  const takePhoto = useCallback(() => {
+    const dataUrl = captureFrame(videoRef.current, canvasRef.current);
+    if (!dataUrl) return;
+    setPreview(dataUrl);
+    identify(dataUrl);
+  }, []);
+
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
+    try {
+      const dataUrl = await readFileAsDataURL(file);
       setPreview(dataUrl);
-      identify(dataUrl);
-    };
-    reader.readAsDataURL(file);
+      identify(dataUrl, file.name || "");
+    } catch (err) {
+      setErrorMsg("Could not read image.");
+    }
   };
 
-  const identify = async (dataUrl) => {
-    if (!GEMINI_KEY) return;
+  const identify = async (dataUrl, filename = "") => {
     setLoading(true);
-    const base64 = dataUrl.split(",")[1];
-    const prompt = `Identify this Hindu deity, icon, statue, or temple carving. Return JSON:
-{
-  "deity": "Primary deity name",
-  "form": "Specific form/manifestation",
-  "mudra": "Hand gesture if visible",
-  "vahana": "Vehicle animal",
-  "weapon": "Primary weapon/holding",
-  "story": "2-sentence mythological significance",
-  "temples": ["Famous temple 1", "Famous temple 2"]
-}`;
+    setResult(null);
+    setErrorMsg("");
+    setIsLocalMode(false);
+
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              role: "user",
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: "image/jpeg", data: base64 } },
-              ],
-            }],
-          }),
-        }
-      );
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-      setResult(parsed);
+      const parsed = await identifyWithGemini(dataUrl);
+      const matched = findTemplesByKeywords(temples, parsed.keywords);
+      setResult({ ...parsed, matchedTemples: matched });
     } catch (e) {
-      setResult({
-        deity: "Shiva",
-        form: "Nataraja",
-        mudra: "Abhaya",
-        vahana: "Nandi",
-        weapon: "Trishula",
-        story: "Shiva as Nataraja performs the cosmic dance of creation and destruction, balancing the universe in eternal rhythm.",
-        temples: ["Chidambaram Nataraja Temple", "Madurai Meenakshi Temple"],
-      });
+      const errText = e?.message || "";
+      if (isQuotaError(errText)) {
+        setIsLocalMode(true);
+        const fallback = guessDeityLocal(filename);
+        const matched = findTemplesByKeywords(temples, fallback.keywords);
+        setResult({ ...fallback, matchedTemples: matched });
+      } else {
+        setErrorMsg(errText || "Unable to identify. Please try again.");
+      }
     }
     setLoading(false);
+  };
+
+  const pickDeity = (name) => {
+    const fallback = guessDeityLocal(name);
+    const matched = findTemplesByKeywords(temples, fallback.keywords);
+    setResult({ ...fallback, matchedTemples: matched });
+    setIsLocalMode(true);
+    setErrorMsg("");
   };
 
   const retake = () => {
     setPreview(null);
     setResult(null);
-    if (inputRef.current) inputRef.current.value = "";
+    setErrorMsg("");
+    setIsLocalMode(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Restart camera if it was stopped
+    if (!stream && videoRef.current) {
+      startCamera(videoRef.current, cameraFacing)
+        .then((s) => { setStream(s); setCameraReady(true); })
+        .catch(() => {});
+    }
+  };
+
+  const flipCamera = () => {
+    stopCamera(stream, videoRef.current);
+    setStream(null);
+    setCameraReady(false);
+    setCameraFacing((f) => (f === "environment" ? "user" : "environment"));
+  };
+
+  const copyResult = async () => {
+    if (!result?.deity) return;
+    try {
+      await navigator.clipboard.writeText(`${result.deity} — ${result.form || ""}\n${result.story}`);
+    } catch {}
+  };
+
+  const shareResult = async () => {
+    if (!result) return;
+    const text = `🙏 Sarathi Vision identified: ${result.deity}${result.form ? ` (${result.form})` : ""}\n\n${result.story}\n\nGenerated by Sacred Temples of Bhārata`;
+    if (navigator.share) {
+      try { await navigator.share({ title: "Sarathi Vision", text }); } catch {}
+    } else {
+      try { await navigator.clipboard.writeText(text); } catch {}
+    }
   };
 
   return (
@@ -90,10 +160,24 @@ export default function SarathiVision({ onBack, onFindTemples }) {
           display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
           color: C.cream, fontSize: 20,
         }}>←</button>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: C.cream }}>Sarathi Vision</h1>
           <p style={{ fontSize: 12, color: C.textD, marginTop: 2 }}>Identify Deity · Iconography AI</p>
         </div>
+        <button onClick={onToggleTheme} style={{
+          width: 40, height: 40, borderRadius: 12, background: C.card, border: `1px solid ${C.div}`,
+          display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: C.cream,
+        }}>
+          {isDark ? (
+            <svg width="18" height="18" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+          ) : (
+            <svg width="18" height="18" fill="none" stroke={C.saffron} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Camera / Preview area */}
@@ -101,10 +185,17 @@ export default function SarathiVision({ onBack, onFindTemples }) {
         {preview ? (
           <img src={preview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-            <div style={{ fontSize: 48 }}>📷</div>
-            <div style={{ color: C.textD, fontSize: 13 }}>Tap the ring to capture</div>
-          </div>
+          <>
+            <video ref={videoRef} playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {!cameraReady && (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, background: "#000" }}>
+                <div style={{ fontSize: 48 }}>📷</div>
+                <div style={{ color: C.textD, fontSize: 13, textAlign: "center", padding: "0 24px" }}>
+                  {errorMsg || "Starting camera..."}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Frame overlay */}
@@ -122,50 +213,121 @@ export default function SarathiVision({ onBack, onFindTemples }) {
               position: "absolute", left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, #4ade80, transparent)",
               animation: "visionScan 1.6s ease-in-out infinite",
             }} />
+            <div style={{ position: "absolute", bottom: 16, left: 0, right: 0, textAlign: "center", color: "#fff", fontSize: 12, fontWeight: 600 }}>
+              Analysing iconography…
+            </div>
           </div>
         )}
-
-        {/* Hidden file input */}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFile}
-          style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }}
-        />
       </div>
 
-      {/* Capture button (visible when no preview) */}
-      {!preview && (
-        <div style={{ display: "flex", justifyContent: "center", marginTop: -32, position: "relative", zIndex: 10 }}>
-          <label style={{
+      {/* Controls */}
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20, marginTop: -28, position: "relative", zIndex: 10, padding: "0 24px" }}>
+        {/* Upload file */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            width: 48, height: 48, borderRadius: "50%", background: C.card, border: `1px solid ${C.div}`,
+            display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: C.cream,
+          }}
+          title="Upload photo"
+        >
+          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+
+        {/* Shutter */}
+        <button
+          onClick={takePhoto}
+          disabled={!cameraReady || !!preview}
+          style={{
             width: 72, height: 72, borderRadius: "50%",
             background: "rgba(0,0,0,0.7)", border: `3px solid ${C.gold}`,
-            display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-            boxShadow: "0 6px 24px rgba(0,0,0,0.5)",
-          }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: C.saffron }} />
-          </label>
-        </div>
-      )}
+            display: "flex", alignItems: "center", justifyContent: "center", cursor: preview ? "default" : "pointer",
+            boxShadow: "0 6px 24px rgba(0,0,0,0.5)", opacity: preview ? 0.5 : 1,
+          }}
+        >
+          <div style={{ width: 56, height: 56, borderRadius: "50%", background: C.saffron }} />
+        </button>
+
+        {/* Flip camera */}
+        <button
+          onClick={flipCamera}
+          style={{
+            width: 48, height: 48, borderRadius: "50%", background: C.card, border: `1px solid ${C.div}`,
+            display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: C.cream,
+          }}
+          title="Flip camera"
+        >
+          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+      </div>
+
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} style={{ display: "none" }} />
+      <canvas ref={canvasRef} style={{ display: "none" }} />
 
       {/* Results */}
       {result && (
         <div style={{ padding: "18px 24px 0" }}>
-          <div style={{
-            padding: 20, borderRadius: 20, background: C.card, border: `1px solid ${C.div}`,
-          }}>
-            <div style={{ fontSize: 28, fontFamily: "'Noto Serif Devanagari', serif", color: C.cream, marginBottom: 6 }}>{result.deity}</div>
-            <div style={{ fontSize: 12, color: C.gold, marginBottom: 14 }}>{result.form}</div>
+          <div style={{ padding: 20, borderRadius: 20, background: C.card, border: `1px solid ${C.div}` }}>
+            {isLocalMode && (
+              <div style={{
+                padding: "6px 10px", borderRadius: 8, marginBottom: 12,
+                background: C.goldDim, border: `1px solid ${C.goldDim}`,
+                color: C.gold, fontSize: 11, fontWeight: 600,
+              }}>
+                📿 Vision API is resting — using local iconography wisdom
+              </div>
+            )}
 
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-              {result.mudra && <Pill label={`Mudra: ${result.mudra}`} />}
-              {result.vahana && <Pill label={`Vāhana: ${result.vahana}`} />}
-              {result.weapon && <Pill label={`Weapon: ${result.weapon}`} />}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 26, fontFamily: "'Noto Serif Devanagari', serif", color: C.cream, marginBottom: 4 }}>{result.deity}</div>
+                {result.form && <div style={{ fontSize: 12, color: C.gold }}>{result.form}</div>}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <IconBtn onClick={copyResult} title="Copy" C={C}>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                </IconBtn>
+                <IconBtn onClick={shareResult} title="Share" C={C}>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  </svg>
+                </IconBtn>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "14px 0" }}>
+              {result.mudra && <Pill label={`Mudra: ${result.mudra}`} C={C} />}
+              {result.vahana && <Pill label={`Vāhana: ${result.vahana}`} C={C} />}
+              {result.weapon && <Pill label={`Weapon: ${result.weapon}`} C={C} />}
             </div>
 
             <div style={{ fontSize: 13, color: C.text, lineHeight: 1.7, marginBottom: 16 }}>{result.story}</div>
+
+            {/* Matched temples */}
+            {result.matchedTemples?.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.textD, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Matched Temples</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {result.matchedTemples.slice(0, 3).map((t) => (
+                    <div key={t.id || t.templeName} style={{
+                      padding: 10, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                      border: `1px solid ${C.div}`,
+                    }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.cream }}>{t.templeName}</div>
+                      <div style={{ fontSize: 11, color: C.textD, marginTop: 2 }}>
+                        {t.deityPrimary}{t.townOrCity ? ` · ${t.townOrCity}` : ""}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div style={{ display: "flex", gap: 10 }}>
               <button
@@ -187,9 +349,26 @@ export default function SarathiVision({ onBack, onFindTemples }) {
         </div>
       )}
 
-      {!GEMINI_KEY && !result && (
-        <div style={{ padding: "18px 24px 0", textAlign: "center", color: C.textD, fontSize: 12 }}>
-          Gemini API key not configured. Vision results will use fallback data.
+      {/* Local fallback deity picker */}
+      {!loading && !result && (
+        <div style={{ padding: "18px 24px 0" }}>
+          <div style={{ fontSize: 12, color: C.textD, marginBottom: 10 }}>Or select a deity manually:</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {DEITY_BUTTONS.map((d) => (
+              <button
+                key={d.label}
+                onClick={() => pickDeity(d.label)}
+                style={{
+                  padding: "8px 14px", borderRadius: 100, background: C.card,
+                  border: `1px solid ${C.div}`, color: C.cream, fontSize: 12,
+                  fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+                }}
+              >
+                <span>{d.icon}</span>
+                <span>{d.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -200,11 +379,27 @@ export default function SarathiVision({ onBack, onFindTemples }) {
   );
 }
 
-function Pill({ label }) {
+function Pill({ label, C }) {
   return (
     <span style={{
-      padding: "6px 12px", borderRadius: 99, background: "rgba(212,133,60,0.12)",
-      border: "1px solid rgba(212,133,60,0.25)", color: "#F2E8D4", fontSize: 11, fontWeight: 600,
+      padding: "6px 12px", borderRadius: 99, background: C.saffronDim,
+      border: `1px solid ${C.div}`, color: C.cream, fontSize: 11, fontWeight: 600,
     }}>{label}</span>
+  );
+}
+
+function IconBtn({ onClick, title, children, C }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={{
+        width: 34, height: 34, borderRadius: 10, background: C.card,
+        border: `1px solid ${C.div}`, color: C.cream,
+        display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
   );
 }
