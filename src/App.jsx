@@ -72,7 +72,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem("sti_ambience", ambienceOn ? "1" : "0"); }, [ambienceOn]);
 
   // Theme sync
-  applyTheme(isDark);
+  useEffect(() => { applyTheme(isDark); }, [isDark]);
 
   useEffect(() => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#1A1109' : '#FAFAF8');

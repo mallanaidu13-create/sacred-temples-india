@@ -53,6 +53,7 @@ export default function KalaChakra({ onBack, isDark, onToggleTheme }) {
   const [tab, setTab] = useState("today");
   const [reminderSet, setReminderSet] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
+  const reminderTimeoutRef = useRef(null);
 
   // Live tick every minute
   useEffect(() => {

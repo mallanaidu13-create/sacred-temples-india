@@ -9,6 +9,7 @@ import {
   NAKSHATRA_NAMES,
   MASA_NAMES,
   VARA_NAMES,
+  YOGA_NAMES,
 } from "./panchangam-i18n.js";
 import { findAbhijitMuhurta, julianDay } from "./kala-chakra-logic.js";
 
@@ -156,7 +157,7 @@ export function buildSankalpaContext(loc = DEFAULT_LOC) {
     const vara = VARA_NAMES.en[p.varaIdx] || "";
 
     const sunriseJD = p.dayStartJD;
-    const sunsetJD = p.dayEndJD;
+    const sunsetJD = sunriseJD + (p.sunset - p.sunrise) / 24;
     const abhijit = findAbhijitMuhurta(sunriseJD, sunsetJD, loc.tz);
 
     return {
@@ -166,7 +167,7 @@ export function buildSankalpaContext(loc = DEFAULT_LOC) {
       vara,
       paksha: p.paksha,
       samvatsara: p.samvatsara || "",
-      yoga: p.yoga?.name || "",
+      yoga: YOGA_NAMES.en[p.yogaIdx] || "",
       sunrise: p.sunrise,
       sunset: p.sunset,
       abhijitStartStr: abhijit?.startStr || "",

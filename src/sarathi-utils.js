@@ -76,14 +76,14 @@ export function buildPanchangContext(loc = DEFAULT_LOC) {
     const p = computePanchangam(now, loc);
     const nowJD = julianDay(now);
     const sunriseJD = p.dayStartJD;
-    const sunsetJD = p.dayEndJD; // next sunrise
+    const sunsetJD = sunriseJD + (p.sunset - p.sunrise) / 24;
     const varaIdx = p.varaIdx; // 0=Sun ... 6=Sat
 
     const abhijit = findAbhijitMuhurta(sunriseJD, sunsetJD, loc.tz);
     const rahu = findRahuKala(sunriseJD, sunsetJD, varaIdx, loc.tz);
 
-    const inRahuKala = rahu && nowJD >= rahu.startJD && nowJD < rahu.endJD;
-    const inAbhijit = abhijit && nowJD >= abhijit.startJD && nowJD < abhijit.endJD;
+    const inRahuKala = rahu && nowJD >= rahu.start && nowJD < rahu.end;
+    const inAbhijit = abhijit && nowJD >= abhijit.start && nowJD < abhijit.end;
 
     // Festival check (using sunrise-based indices as in LivePanchangam)
     const festivals = evaluateFestivals(
@@ -94,7 +94,6 @@ export function buildPanchangContext(loc = DEFAULT_LOC) {
       Math.floor(p.nakshatraIdx)
     );
     const todayFestivals = festivals
-      .filter((f) => f.today || f.tomorrow)
       .map((f) => f.names?.en || f.name || "Unknown festival");
 
     return {
@@ -107,8 +106,8 @@ export function buildPanchangContext(loc = DEFAULT_LOC) {
       vara: VARA_NAMES.en[p.varaIdx] || "",
       sunrise: fmtTime(p.sunrise),
       sunset: fmtTime(p.sunset),
-      abhijitMuhurta: abhijit ? `${abhijit.start} – ${abhijit.end}` : null,
-      rahuKala: rahu ? `${rahu.start} – ${rahu.end}` : null,
+      abhijitMuhurta: abhijit ? `${abhijit.startStr} – ${abhijit.endStr}` : null,
+      rahuKala: rahu ? `${rahu.startStr} – ${rahu.endStr}` : null,
       inRahuKala,
       inAbhijit,
       festivalsToday: todayFestivals,

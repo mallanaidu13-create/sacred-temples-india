@@ -211,7 +211,7 @@ export const PanchangWidget = () => {
             {l:"Tithi",v:p.tithi,e:"🌙"},
             {l:"Nakshatra",v:p.nakshatra,e:"✦"},
             {l:"Yoga",v:p.yoga,e:"◎"},
-            {l:"Muhurta",v:p.muhurta,e:"⊙"},
+            {l:"Rahu Kāla",v:p.muhurta,e:"⊙"},
           ].map((item,i) => (
             <div key={item.l} style={{
               padding:"12px 14px",borderRadius:14,background:C.saffronPale,

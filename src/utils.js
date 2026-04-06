@@ -2,7 +2,8 @@
 //  Utility functions — haptic, IDB, localStorage, search helpers
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 import { useCallback } from "react";
-import { computePanchangam, DEFAULT_LOC } from "./LivePanchangam.jsx";
+import { computePanchangam, DEFAULT_LOC, fmtTime } from "./LivePanchangam.jsx";
+import { TITHI_NAMES, NAKSHATRA_NAMES, YOGA_NAMES, VARA_NAMES } from "./panchangam-i18n.js";
 
 // ── Haptic feedback ──
 export const haptic = (ms = 20) => { try { navigator.vibrate?.(ms); } catch(e) {} };
@@ -11,11 +12,11 @@ export const haptic = (ms = 20) => { try { navigator.vibrate?.(ms); } catch(e) {
 export const getPanchangSummary = () => {
   const p = computePanchangam(new Date(), DEFAULT_LOC);
   return {
-    tithi: p.tithi,
-    nakshatra: p.nakshatra,
-    yoga: p.yoga,
-    vara: p.vara,
-    rashiMoon: p.rashiMoon,
+    tithi: TITHI_NAMES.en[p.tithiIdx] || "",
+    nakshatra: NAKSHATRA_NAMES.en[p.nakshatraIdx] || "",
+    yoga: YOGA_NAMES.en[p.yogaIdx] || "",
+    vara: VARA_NAMES.en[p.varaIdx] || "",
+    muhurta: p.muhurta ? fmtTime(p.muhurta.rahuStart) + " – " + fmtTime(p.muhurta.rahuEnd) + " (Rahu)" : "",
   };
 };
 
