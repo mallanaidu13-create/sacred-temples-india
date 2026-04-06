@@ -29,6 +29,11 @@ export default function KalaChakra({ onBack, isDark, onToggleTheme }) {
   const C = useMemo(() => (isDark ? CDark : CLight), [isDark]);
 
   const geo = useGeo();
+  useEffect(() => {
+    geo.startWatching();
+    return () => geo.stopWatching();
+  }, []);
+
   const loc = useMemo(() => {
     if (geo.effectiveLocation) {
       return {

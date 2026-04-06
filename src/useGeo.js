@@ -144,12 +144,6 @@ export function useGeo({ enableHighAccuracy = true } = {}) {
     };
   }, []);
 
-  // Auto-start watch on mount
-  useEffect(() => {
-    startWatching();
-    return () => stopWatching();
-  }, [startWatching, stopWatching]);
-
   // iOS 13+ permission helper
   const requestIOSPermission = useCallback(async () => {
     if (

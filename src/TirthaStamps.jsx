@@ -30,6 +30,10 @@ const HAPTIC = (ms = 20) => { try { navigator.vibrate?.(ms); } catch {} };
 export default function TirthaStamps({ onBack, isDark, onToggleTheme }) {
   const C = useMemo(() => (isDark ? CDark : CLight), [isDark]);
   const geo = useGeo();
+  useEffect(() => {
+    geo.startWatching();
+    return () => geo.stopWatching();
+  }, []);
 
   const [activeCircuit, setActiveCircuit] = useState(TIRTHA_CIRCUITS[0].id);
   const [claims, setClaims] = useState(() => {
@@ -64,6 +68,10 @@ export default function TirthaStamps({ onBack, isDark, onToggleTheme }) {
 
   const claim = (circuit, temple) => {
     if (isClaimed(temple.id)) return;
+    if (!canClaim(temple)) {
+      alert("You must be within 5 km to claim this stamp.");
+      return;
+    }
     HAPTIC(30);
     const entry = {
       templeId: temple.id,

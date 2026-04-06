@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, memo, useMemo, lazy, Suspense, Component } from "react";
 import { supabase } from "./supabase.js";
 import LivePanchangam, { computePanchangam, DEFAULT_LOC } from "./LivePanchangam.jsx";
 import CinematicOverlay, { cinematicKeyframes } from "./CinematicOverlay.jsx";
@@ -7,15 +7,15 @@ import { PanchangLangProvider } from "./PanchangLangContext.jsx";
 import { useGeo, haversineKm, bearingDeg, formatCompass } from "./useGeo.js";
 import { SacredRadar, NearbyCard, RadarLegend } from "./SacredRadar.jsx";
 import { mergeTemples, fetchOsmTemplesProgressive } from "./osm-temples.js";
-import MandalaAR from "./MandalaAR.jsx";
-import SpatialAudio from "./SpatialAudio.jsx";
-import KalaChakra from "./KalaChakra.jsx";
-import SankalpaEngine from "./SankalpaEngine.jsx";
-import SarathiVision from "./SarathiVision.jsx";
-import TirthaStamps from "./TirthaStamps.jsx";
+const MandalaAR = lazy(() => import('./MandalaAR.jsx'));
+const SpatialAudio = lazy(() => import('./SpatialAudio.jsx'));
+const KalaChakra = lazy(() => import('./KalaChakra.jsx'));
+const SankalpaEngine = lazy(() => import('./SankalpaEngine.jsx'));
+const SarathiVision = lazy(() => import('./SarathiVision.jsx'));
+const TirthaStamps = lazy(() => import('./TirthaStamps.jsx'));
+const SarathiChat = lazy(() => import('./SarathiChat.jsx'));
 import { TIRTHA_CIRCUITS } from "./tirtha-data.js";
 import { useSacredSoundscape } from "./SacredSoundscape.js";
-import SarathiChat from "./SarathiChat.jsx";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -59,6 +59,43 @@ const useRecentlyViewed = () => {
   }, []);
   return { getIds: get, addId: add };
 };
+
+// ── Error Boundary ──
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("ErrorBoundary:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, background: C.bg, color: C.cream }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🙏</div>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Something went wrong</div>
+          <div style={{ fontSize: 13, color: C.textD, marginBottom: 24, textAlign: "center" }}>This sacred space encountered an unexpected disturbance.</div>
+          <button onClick={() => this.setState({ hasError: false })} style={{ padding: "10px 22px", borderRadius: 99, background: C.saffron, color: "#fff", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Try Again</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ── Page Loader for Suspense ──
+function PageLoader() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: C.bg }}>
+      <OmSymbol size={80} style={{ animation: "omLive 2s ease-in-out infinite, omGlow 2s ease-in-out infinite" }} />
+      <div style={{ marginTop: 16, fontSize: 13, color: C.textD }}>Entering sacred space…</div>
+    </div>
+  );
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  SACRED TEMPLES OF BHĀRATA
@@ -1581,6 +1618,10 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
 
   // Geo for real "Near You"
   const geo = useGeo({ enableHighAccuracy: true });
+  useEffect(() => {
+    geo.startWatching();
+    return () => geo.stopWatching();
+  }, []);
   const nearYou = useMemo(() => {
     const loc = geo.effectiveLocation;
     if (!loc || !temples.length) return { inRange: [], all: [] };
@@ -2508,6 +2549,10 @@ const DistrictBrowse = ({onBack, oT, oF, temples, isDark, onToggleTheme, state})
 
 const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
   const geo = useGeo({ enableHighAccuracy: true });
+  useEffect(() => {
+    geo.startWatching();
+    return () => geo.stopWatching();
+  }, []);
   const [range, setRange] = useState(25);
   const [osmLoading, setOsmLoading] = useState(false);
   const [osmRadius, setOsmRadius] = useState(0);
@@ -4170,8 +4215,12 @@ export default function App() {
         <style>{getCss(C)}</style>
         <a href="#main-content" className="skipLink">Skip to main content</a>
         <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,position:"relative",boxShadow:"0 0 120px rgba(0,0,0,0.3)",display:"flex",flexDirection:"column"}}>
-          <main id="main-content" ref={ref} role="main" style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?78:0}}>
-            <div key={pageKey} className={transitionClass}>{page}</div>
+          <main id="main-content" ref={ref} role="main" style={{flex:1,overflowY:"auto",overflowX:"hidden",paddingBottom:showNav?'calc(78px + env(safe-area-inset-bottom))':'env(safe-area-inset-bottom)'}}>
+            <ErrorBoundary key={scr}>
+              <Suspense fallback={<PageLoader />}>
+                <div key={pageKey} className={transitionClass}>{page}</div>
+              </Suspense>
+            </ErrorBoundary>
           </main>
           {/* Sunrise sweep — triggers on dark→light toggle */}
           {sunrising && (

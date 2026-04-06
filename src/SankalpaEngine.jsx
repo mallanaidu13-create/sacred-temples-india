@@ -39,6 +39,11 @@ export default function SankalpaEngine({ onBack, isDark, onToggleTheme, temples 
   const C = useMemo(() => (isDark ? CDark : CLight), [isDark]);
 
   const geo = useGeo();
+  useEffect(() => {
+    geo.startWatching();
+    return () => geo.stopWatching();
+  }, []);
+
   const location = useMemo(() => {
     if (geo.effectiveLocation) {
       return {

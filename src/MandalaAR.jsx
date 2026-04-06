@@ -232,7 +232,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
   const currentOfferings = offerings[deity] || 0;
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: C.bg, zIndex: 300, overflow: "hidden" }}>
+    <div style={{ position: "fixed", inset: 0, background: C.bg, zIndex: 300, overflow: "hidden", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
       {/* Camera background for magic window */}
       {magicWindow && (
         <video
@@ -250,7 +250,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
       )}
 
       {/* Top bar */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 310, padding: "18px 18px 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      <div style={{ position: "absolute", top: "env(safe-area-inset-top)", left: 0, right: 0, zIndex: 310, padding: "18px 18px 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <button
           onClick={onBack}
           style={{
@@ -404,7 +404,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
       {/* Bottom controls */}
       <div style={{
         position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 310,
-        padding: "24px 20px 34px", background: isDark ? "linear-gradient(transparent, rgba(0,0,0,0.85))" : "linear-gradient(transparent, rgba(250,250,248,0.85))",
+        padding: "24px 20px calc(34px + env(safe-area-inset-bottom))", background: isDark ? "linear-gradient(transparent, rgba(0,0,0,0.85))" : "linear-gradient(transparent, rgba(250,250,248,0.85))",
         display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
       }}>
         {/* Deity selector */}

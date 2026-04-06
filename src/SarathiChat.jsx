@@ -223,6 +223,11 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
   const C = useMemo(() => (isDark ? CDark : CLight), [isDark]);
 
   const geo = useGeo();
+  useEffect(() => {
+    geo.startWatching();
+    return () => geo.stopWatching();
+  }, []);
+
   const timeCtx = useMemo(() => getTimeContext(), []);
   const panchangCtx = useMemo(() => {
     const loc = geo.effectiveLocation
@@ -696,6 +701,7 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
               onSpeak={() => toggleSpeak(m.text)}
               isSpeaking={isSpeaking}
               temples={temples}
+              oT={oT}
             />
           );
         })}
@@ -811,7 +817,7 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
 
 /* ─── Message Bubble Sub-component ────────────────────────────────────────── */
 
-function MessageBubble({ msg, C, enableTyping, onDoneTyping, onAction, onCopy, onSpeak, isSpeaking, temples }) {
+function MessageBubble({ msg, C, enableTyping, onDoneTyping, onAction, onCopy, onSpeak, isSpeaking, temples, oT }) {
   const { displayed, done } = useTypingEffect(msg.text, 16, enableTyping);
 
   useEffect(() => {
