@@ -380,10 +380,14 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
     });
 
     try {
-      const contents = nextMsgs.map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.text }],
-      }));
+      // Gemini API requires contents to start with user and alternate roles.
+      // Filter out the local welcome greeting so the turn sequence is valid.
+      const contents = nextMsgs
+        .filter((m) => !(m.role === "assistant" && m.id === "welcome"))
+        .map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.text }],
+        }));
 
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
@@ -391,13 +395,22 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
+            systemInstruction: { parts: [{ text: systemPrompt }] },
             contents,
           }),
         }
       );
       const data = await res.json();
+
+      if (!res.ok || data?.error) {
+        const errMsg = data?.error?.message || `HTTP ${res.status}`;
+        throw new Error(errMsg);
+      }
+
       const rawReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawReply) {
+        throw new Error("Empty response from Gemini");
+      }
       const parsed = parseSarathiResponse(rawReply);
 
       const assistantMsg = {
@@ -409,10 +422,9 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
       };
       setMsgs((prev) => [...prev, assistantMsg]);
       setTypingMsgId(assistantMsg.id);
-
-      // Auto-speak the response if TTS is supported and user hasn't disabled it
-      // (We don't auto-speak by default to be respectful; user can tap speaker.)
     } catch (e) {
+      const errText = e?.message || "Unknown error";
+      console.error("Sarathi API error:", e);
       if (matchedTemples.length > 0) {
         const fallback = matchedTemples.map((t) => {
           const parts = [`**🛕 ${t.templeName}**`];
@@ -439,7 +451,7 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
         const errMsg = {
           id: `${Date.now()}-a`,
           role: "assistant",
-          text: "🙏 Unable to reach Sarathi right now. Please check your connection and try again.",
+          text: `🙏 Unable to reach Sarathi right now.\n\n**Error:** ${errText}`,
           parsed: { temples: [], actions: [], quickReplies: [], alert: "" },
           createdAt: Date.now(),
         };
