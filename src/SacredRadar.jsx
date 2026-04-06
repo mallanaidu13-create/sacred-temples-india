@@ -262,6 +262,9 @@ export const NearbyCard = memo(({ t, distanceKm, onClick, delay = 0, gyroHeading
         >
           {t.templeName}
         </div>
+        <div style={{ fontSize: 11, color: "#A89878", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {[t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(" · ") || (t._source === "osm" ? "OpenStreetMap" : "Sacred Temple")}
+        </div>
         <div style={{ fontSize: 11, color: "#A89878", marginTop: 3, display: "flex", alignItems: "center", gap: 8 }}>
           <span>{formatDistance(distanceKm)}</span>
           <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(168,152,120,0.5)" }} />

@@ -52,14 +52,32 @@ function centerForElement(el) {
   return null;
 }
 
+const GENERIC_NAMES = new Set([
+  "temple", "mandir", "hindu temple", "place of worship", "religious place",
+  "shrine", "devasthanam", "devasthan", "koyil", "kovil", "gudi", "devalay",
+  "devalaya", "alayam", "mandapa", "mantapa", "chatra", "math", "mutt",
+  "peeth", "peetha", "ashram", "ashrama", "gurukul", "satsang", "bhavan",
+  "bhawan", "kendra", "samaj", "sangh", "seva", "trust temple", "community temple"
+]);
+
+function isGenericName(name = "") {
+  const n = name.trim().toLowerCase();
+  if (n.length < 3) return true;
+  return GENERIC_NAMES.has(n);
+}
+
 export function transformOsmElement(el) {
   const tags = el.tags || {};
   const center = centerForElement(el);
   if (!center) return null;
 
-  const name = tags.name || tags["name:en"] || tags["name:hi"] || "Temple";
-  const townOrCity = tags["addr:city"] || tags["addr:town"] || tags["addr:place"] || "";
-  const stateOrUnionTerritory = tags["addr:state"] || "";
+  const rawName = tags.name || tags["name:en"] || tags["name:hi"] || "";
+  const name = rawName.trim();
+  if (!name || isGenericName(name)) return null;
+
+  const townOrCity = tags["addr:city"] || tags["addr:town"] || tags["addr:place"] || tags["is_in:city"] || "";
+  const district = tags["addr:district"] || tags["is_in:district"] || "";
+  const stateOrUnionTerritory = tags["addr:state"] || tags["is_in:state"] || "";
   const denomination = tags.denomination || "";
   const deity = inferDeity(name, denomination);
 
@@ -67,6 +85,7 @@ export function transformOsmElement(el) {
     id: idForElement(el),
     templeName: name,
     townOrCity,
+    district,
     stateOrUnionTerritory,
     deityPrimary: deity.charAt(0).toUpperCase() + deity.slice(1),
     latitude: center.lat,
