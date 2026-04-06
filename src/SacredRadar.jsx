@@ -65,13 +65,14 @@ export const SacredRadar = memo(({
   const { items, clusters } = useMemo(() => {
     if (!location || !temples?.length) return { items: [], clusters: [] };
     const raw = temples
-      .filter((t) => t.latitude != null && t.longitude != null)
+      .filter((t) => t.latitude != null && t.longitude != null && isFinite(t.latitude) && isFinite(t.longitude))
       .map((t) => {
         const distance = haversineKm(location.latitude, location.longitude, t.latitude, t.longitude);
         const bearing = bearingDeg(location.latitude, location.longitude, t.latitude, t.longitude);
+        if (!isFinite(distance) || !isFinite(bearing)) return null;
         return { ...t, distance, bearing };
       })
-      .filter((t) => t.distance <= maxDistKm)
+      .filter((t) => t != null && t.distance <= maxDistKm)
       .sort((a, b) => a.distance - b.distance);
 
     const grouped = clusterByBearing(raw, 30);

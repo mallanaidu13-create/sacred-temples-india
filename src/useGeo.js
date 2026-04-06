@@ -39,6 +39,12 @@ const loadCache = () => {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Date.now() - parsed.ts > CACHE_TTL_MS) return null;
+    // Normalize to {latitude, longitude} for consistency with geolocation API
+    if (parsed.lat != null && parsed.latitude == null) {
+      parsed.latitude = parsed.lat;
+      parsed.longitude = parsed.lng;
+    }
+    if (parsed.latitude == null || parsed.longitude == null) return null;
     return parsed;
   } catch {
     return null;
@@ -49,7 +55,7 @@ const saveCache = (coords) => {
   try {
     localStorage.setItem(
       CACHE_KEY,
-      JSON.stringify({ lat: coords.latitude, lng: coords.longitude, ts: Date.now() })
+      JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude, lat: coords.latitude, lng: coords.longitude, ts: Date.now() })
     );
   } catch {}
 };
@@ -156,6 +162,12 @@ export function useGeo({ enableHighAccuracy = true } = {}) {
     }
   }, []);
 
+  // Combined permission + watch helper for button handlers
+  const requestAndWatch = useCallback(async () => {
+    await requestIOSPermission();
+    startWatching();
+  }, [requestIOSPermission, startWatching]);
+
   const effectiveLocation = location || cachedLocation || null;
 
   return {
@@ -168,6 +180,7 @@ export function useGeo({ enableHighAccuracy = true } = {}) {
     startWatching,
     stopWatching,
     requestIOSPermission,
+    requestAndWatch,
   };
 }
 

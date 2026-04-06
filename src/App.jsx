@@ -1577,12 +1577,23 @@ const CircuitDetail = ({circuit: c, onBack, isDark}) => {
   );
 };
 
-const FeatureCard = ({ title, sub, icon, hue, onClick, delay, premium }) => (
-  <div className="rv t" onClick={onClick} style={{
+const FeatureCard = ({ title, sub, icon, hue, onClick, delay, premium }) => {
+  const clickedRef = useRef(false);
+  const handleClick = () => {
+    if (clickedRef.current) return;
+    clickedRef.current = true;
+    onClick();
+    setTimeout(() => { clickedRef.current = false; }, 400);
+  };
+  return (
+  <div className="rv t" onClick={handleClick} style={{
     margin:"14px 24px 0", borderRadius:20, overflow:"hidden", position:"relative",
-    height: premium ? 124 : 110, cursor:"pointer", animationDelay: delay,
+    minHeight: premium ? 124 : 110, cursor:"pointer", animationDelay: delay,
     boxShadow:`0 8px 32px rgba(0,0,0,0.16)`,
     border:`1px solid ${premium ? "rgba(196,162,78,0.35)" : "rgba(255,255,255,0.06)"}`,
+    willChange:"transform",
+    WebkitBackfaceVisibility:"hidden",
+    backfaceVisibility:"hidden",
   }}>
     <div style={{position:"absolute", inset:0, background:`linear-gradient(135deg,${hsl(hue, premium?55:45, premium?14:12)},${hsl((hue+40)%360, premium?50:40, premium?10:8)})`}} />
     <div style={{position:"absolute", top:"-20%", right:"-6%", width:160, height:160, borderRadius:"50%", background:`radial-gradient(circle,${hsl(hue,60,45,0.1)},transparent 60%)`, filter:"blur(30px)", pointerEvents:"none"}} />
@@ -1591,12 +1602,13 @@ const FeatureCard = ({ title, sub, icon, hue, onClick, delay, premium }) => (
       <h3 style={{fontFamily:FD, fontSize:19, fontWeight:600, color:"#fff", lineHeight:1.1, marginBottom:4}}>{icon} {title}</h3>
       <p style={{fontSize:12, color:"rgba(255,255,255,0.45)", lineHeight:1.4}}>{sub}</p>
     </div>
-    <div style={{position:"absolute", top:18, right:18, width:32, height:32, borderRadius:10, background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, color:"#fff"}}>→</div>
+    <div style={{position:"absolute", top:18, right:18, width:32, height:32, borderRadius:10, background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.12)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, color:"#fff", pointerEvents:"none"}}>→</div>
     {premium && (
       <div style={{position:"absolute", top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,transparent,${hsl(hue,70,60,0.8)},transparent)`}} />
     )}
   </div>
-);
+  );
+};
 
 const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[]}) => {
   const { playing, toggle } = useOmChant();
@@ -1627,16 +1639,17 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
     const loc = geo.effectiveLocation;
     if (!loc || !temples.length) return { inRange: [], all: [] };
     const all = temples
-      .filter(t => t.latitude != null && t.longitude != null)
+      .filter(t => t.latitude != null && t.longitude != null && isFinite(t.latitude) && isFinite(t.longitude))
       .map(t => ({
         ...t,
         _dist: haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude),
         _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
       }))
+      .filter(t => isFinite(t._dist) && t._dist >= 0)
       .sort((a, b) => a._dist - b._dist);
     // "inRange" for home is loosely defined as first 6 nearest (no hard range limit)
     return { inRange: all.slice(0, 6), all };
-  }, [geo.effectiveLocation, temples]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, temples]);
   return (
   <div className="fi" style={{paddingBottom:28}}>
     {/* Cinematic spiritual overlay — triggered by Om chant */}
@@ -2016,15 +2029,15 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
             <SacredRadar
               location={geo.effectiveLocation}
               heading={geo.heading}
-              temples={nearYou.inRange.length ? nearYou.inRange : nearYou.all}
+              temples={nearYou.inRange.length ? nearYou.inRange : nearYou.all.slice(0, 12)}
               size={160}
-              maxDistKm={nearYou.inRange.length ? Math.max(1, nearYou.inRange[0]._dist * 2.5) : 50}
+              maxDistKm={nearYou.inRange.length ? Math.max(1, (nearYou.inRange[nearYou.inRange.length - 1]?._dist ?? 1) * 1.5) : Math.max(1, (nearYou.all[0]?._dist ?? 50) * 3)}
             />
           </div>
           {nearYou.inRange.slice(0,3).map((t,i) => (
             <NearbyCard
               key={t.id}
-              t={{...t, bearing: t._bearing}}
+              t={{...t, bearing: t._bearing ?? 0}}
               distanceKm={t._dist}
               onClick={() => oT(t)}
               delay={0.6 + i * 0.08}
@@ -2039,7 +2052,7 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
               {nearYou.all.slice(0,3).map((t,i) => (
                 <NearbyCard
                   key={t.id}
-                  t={{...t, bearing: t._bearing}}
+                  t={{...t, bearing: t._bearing ?? 0}}
                   distanceKm={t._dist}
                   onClick={() => oT(t)}
                   delay={0.7 + i * 0.08}
@@ -2059,12 +2072,13 @@ const Home = ({nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds=[
           <div style={{fontSize:12,color:C.textD,lineHeight:1.7,marginBottom:10}}>
             Enable location for real-time discovery of sacred temples around you.
           </div>
+          {geo.error && <div style={{fontSize:11,color:"#f87171",marginBottom:10,lineHeight:1.6}}>{geo.error}</div>}
           <button
             className="t"
-            onClick={() => { geo.requestIOSPermission(); geo.startWatching(); }}
+            onClick={() => geo.requestAndWatch()}
             style={{padding:"9px 18px",borderRadius:12,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,color:C.saffron,fontSize:12,fontWeight:700,cursor:"pointer"}}
           >
-            Enable Location
+            {geo.error ? "Try Again" : "Enable Location"}
           </button>
         </div>
       )}
@@ -2583,14 +2597,15 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
     const loc = geo.effectiveLocation;
     if (!loc) return [];
     return merged
-      .filter(t => t.latitude != null && t.longitude != null)
+      .filter(t => t.latitude != null && t.longitude != null && isFinite(t.latitude) && isFinite(t.longitude))
       .map(t => ({
         ...t,
         _dist: haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude),
         _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
       }))
+      .filter(t => isFinite(t._dist) && t._dist >= 0)
       .sort((a, b) => a._dist - b._dist);
-  }, [geo.effectiveLocation, merged]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, merged]);
 
   const nearby = useMemo(() => {
     return allWithCoords.filter(t => t._dist <= range);
@@ -2600,9 +2615,12 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
     const loc = geo.effectiveLocation;
     if (!loc) return 0;
     return temples
-      .filter(t => t.latitude != null && t.longitude != null)
-      .filter(t => haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude) <= range).length;
-  }, [geo.effectiveLocation, temples, range]);
+      .filter(t => t.latitude != null && t.longitude != null && isFinite(t.latitude) && isFinite(t.longitude))
+      .filter(t => {
+        const d = haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude);
+        return isFinite(d) && d <= range;
+      }).length;
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, temples, range]);
 
   // Smart OSM fetch: trigger for range >=10, OR if < 15 supabase results in range, OR if 0 total coords
   const shouldFetchOsm = useMemo(() => {
@@ -2610,7 +2628,7 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
     if (!loc) return false;
     if (range >= 10) return true;
     return supabaseInRange < 15;
-  }, [geo.effectiveLocation, range, supabaseInRange]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, supabaseInRange]);
 
   const runOsmFetch = useCallback(() => {
     let cancelled = false;
@@ -2646,7 +2664,7 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
         if (!cancelled) setOsmLoading(false);
       });
     return () => { cancelled = true; };
-  }, [geo.effectiveLocation, shouldFetchOsm, range]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, shouldFetchOsm, range]);
 
   useEffect(() => {
     const cleanup = runOsmFetch();
@@ -2737,7 +2755,7 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
       <div style={{display:"flex",justifyContent:"center",margin:"0 24px 14px"}}>
         <button
           className="t"
-          onClick={() => { geo.requestIOSPermission(); geo.startWatching(); }}
+          onClick={() => geo.requestAndWatch()}
           disabled={geo.status === "locating"}
           style={{
             display:"flex",alignItems:"center",gap:8,
@@ -2810,8 +2828,8 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
           {clusterItems.slice(0,5).map((t,i) => (
             <NearbyCard
               key={t.id}
-              t={{...t, bearing: t._bearing}}
-              distanceKm={t._dist}
+              t={{...t, bearing: t._bearing ?? t.bearing ?? 0}}
+              distanceKm={t._dist ?? t.distance ?? 0}
               onClick={() => { setExpandedCluster(null); oT(t); }}
               delay={i * 0.04}
               gyroHeading={geo.heading}
@@ -2833,7 +2851,7 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
           {allWithCoords.slice(0,10).map((t,i) => (
             <NearbyCard
               key={t.id}
-              t={{...t, bearing: t._bearing}}
+              t={{...t, bearing: t._bearing ?? 0}}
               distanceKm={t._dist}
               onClick={() => oT(t)}
               delay={i * 0.05}
@@ -2846,7 +2864,7 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
       {geo.effectiveLocation && nearby.length > 0 && nearby.map((t,i) => (
         <NearbyCard
           key={t.id}
-          t={{...t, bearing: t._bearing}}
+          t={{...t, bearing: t._bearing ?? 0}}
           distanceKm={t._dist}
           onClick={() => oT(t)}
           delay={i * 0.05}
@@ -2865,10 +2883,10 @@ const Nearby = ({oT, oF, temples, loading, isDark, onToggleTheme}) => {
           <div style={{fontSize:12,color:C.textD,lineHeight:1.7,marginBottom:10}}>
             Share your location to discover sacred temples around you.
           </div>
-          {geo.error && <div style={{fontSize:11,color:"#f87171",marginBottom:10}}>{geo.error}</div>}
+          {geo.error && <div style={{fontSize:11,color:"#f87171",marginBottom:10,lineHeight:1.6}}>{geo.error}</div>}
           <button
             className="t"
-            onClick={() => { geo.requestIOSPermission(); geo.startWatching(); }}
+            onClick={() => geo.requestAndWatch()}
             style={{padding:"9px 18px",borderRadius:12,background:C.saffronDim,border:`1px solid rgba(212,133,60,0.2)`,color:C.saffron,fontSize:12,fontWeight:700,cursor:"pointer"}}
           >
             {geo.error ? "Try Again" : "Enable Location"}
@@ -4152,7 +4170,13 @@ export default function App() {
     initParallax();
   }, [fetchTemples]);
 
-  const nav = useCallback(t => { setNavDir('forward'); setPageKey(k => k+1); setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
+  const navGuardRef = useRef(false);
+  const nav = useCallback(t => {
+    if (navGuardRef.current) return;
+    navGuardRef.current = true;
+    setNavDir('forward'); setPageKey(k => k+1); setStk(p => [...p, t]); setScr(t); ref.current?.scrollTo({top:0,behavior:"instant"});
+    setTimeout(() => { navGuardRef.current = false; }, 300);
+  }, []);
   const back = useCallback(() => { setNavDir('back'); setPageKey(k => k+1); setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); setTmp(null); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
   const backNoTmpReset = useCallback(() => { setNavDir('back'); setPageKey(k => k+1); setStk(p => { const n = p.slice(0,-1); setScr(n[n.length-1] || "home"); return n.length ? n : ["home"]; }); ref.current?.scrollTo({top:0,behavior:"instant"}); }, []);
   const oT = useCallback(t => {
