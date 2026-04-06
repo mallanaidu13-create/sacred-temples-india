@@ -42,6 +42,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
   const [showBlessing, setShowBlessing] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const [cameraError, setCameraError] = useState(false);
+  const [needsPermission, setNeedsPermission] = useState(false);
 
   const videoRef = useRef(null);
   const xrSessionRef = useRef(null);
@@ -68,9 +69,9 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
     };
   }, []);
 
-  // Attach camera stream to video element when ref becomes available
+  // Attach camera stream to video element when ref and stream are both available
   useEffect(() => {
-    if (magicWindow && streamRef.current && videoRef.current) {
+    if (magicWindow && streamRef.current && videoRef.current && !videoRef.current.srcObject) {
       videoRef.current.srcObject = streamRef.current;
     }
   }, [magicWindow]);
@@ -79,37 +80,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
   useEffect(() => {
     let cleanupOrientation = null;
 
-    const init = async () => {
-      if (navigator.xr) {
-        try {
-          const ok = await navigator.xr.isSessionSupported("immersive-ar");
-          setHasXR(ok);
-          if (ok) {
-            const session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["local-floor"] });
-            xrSessionRef.current = session;
-          } else {
-            startMagicWindow();
-          }
-        } catch {
-          startMagicWindow();
-        }
-      } else {
-        startMagicWindow();
-      }
-    };
-
-    const startMagicWindow = async () => {
-      if (!mountedRef.current) return;
-      setMagicWindow(true);
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch {
-        setCameraError(true);
-        setMagicWindow(false);
-      }
-
+    const startOrientationListening = () => {
       const onOrient = (e) => {
         targetOrientRef.current = {
           alpha: e.alpha || 0,
@@ -119,6 +90,51 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
       };
       window.addEventListener("deviceorientation", onOrient);
       cleanupOrientation = () => window.removeEventListener("deviceorientation", onOrient);
+    };
+
+    const startMagicWindow = async () => {
+      if (!mountedRef.current) return;
+
+      // Check if iOS requires DeviceOrientation permission
+      if (
+        typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function"
+      ) {
+        // iOS needs user gesture for permission — show prompt
+        setNeedsPermission(true);
+      } else {
+        startOrientationListening();
+      }
+
+      // Request camera
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        if (!mountedRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        setMagicWindow(true);
+        // Attach stream to video after state update renders the element
+        requestAnimationFrame(() => {
+          if (videoRef.current && streamRef.current) {
+            videoRef.current.srcObject = streamRef.current;
+          }
+        });
+      } catch {
+        if (!mountedRef.current) return;
+        setCameraError(true);
+        setMagicWindow(false);
+      }
+    };
+
+    const init = async () => {
+      // Check XR support (for display only — don't auto-request session)
+      if (navigator.xr) {
+        try {
+          const ok = await navigator.xr.isSessionSupported("immersive-ar");
+          setHasXR(ok);
+        } catch {}
+      }
+      // Always use magic window mode (XR immersive requires user gesture + full render pipeline)
+      startMagicWindow();
     };
 
     init();
@@ -180,9 +196,42 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
       typeof DeviceOrientationEvent.requestPermission === "function"
     ) {
       try {
-        await DeviceOrientationEvent.requestPermission();
+        const perm = await DeviceOrientationEvent.requestPermission();
+        if (perm === "granted") {
+          setNeedsPermission(false);
+          const onOrient = (e) => {
+            targetOrientRef.current = {
+              alpha: e.alpha || 0,
+              beta: e.beta || 45,
+              gamma: e.gamma || 0,
+            };
+          };
+          window.addEventListener("deviceorientation", onOrient);
+        }
       } catch {}
     }
+  };
+
+  const grantPermission = async () => {
+    HAPTIC(20);
+    await requestOrientation();
+    // Also start camera if not already running
+    if (!streamRef.current && !cameraError) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        if (!mountedRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        setMagicWindow(true);
+        requestAnimationFrame(() => {
+          if (videoRef.current && streamRef.current) {
+            videoRef.current.srcObject = streamRef.current;
+          }
+        });
+      } catch {
+        setCameraError(true);
+      }
+    }
+    setNeedsPermission(false);
   };
 
   const startTimer = (min) => {
@@ -282,6 +331,36 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
       {/* Fallback gradient when no camera */}
       {(!magicWindow || cameraError) && (
         <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 40%, ${isDark ? "hsl(30,40%,12%)" : "hsl(30,40%,90%)"}, ${C.bg})` }} />
+      )}
+
+      {/* iOS permission prompt */}
+      {needsPermission && (
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 320, background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+        }}>
+          <div style={{
+            maxWidth: 300, padding: 28, borderRadius: 24, background: C.card,
+            border: `1px solid ${C.div}`, textAlign: "center",
+          }}>
+            <div style={{ fontSize: 44, marginBottom: 14 }}>🙏</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: C.cream, marginBottom: 8 }}>AR Darshan</div>
+            <div style={{ fontSize: 13, color: C.textD, lineHeight: 1.7, marginBottom: 22 }}>
+              Allow camera and motion sensors for the immersive sacred experience.
+            </div>
+            <button
+              onClick={grantPermission}
+              style={{
+                padding: "12px 30px", borderRadius: 99,
+                background: `linear-gradient(135deg,${C.saffron},${C.saffronH})`,
+                color: "#fff", border: "none", fontSize: 14, fontWeight: 700, cursor: "pointer",
+                boxShadow: "0 6px 24px rgba(212,133,60,0.4)",
+              }}
+            >
+              Enable AR Experience
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Top bar */}
