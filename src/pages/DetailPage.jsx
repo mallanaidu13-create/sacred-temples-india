@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { C, hsl, FD, FB, FE } from "../theme.js";
-import { deityQuery } from "../utils.js";
 import { useParallax } from "../hooks.js";
 import { TempleImage, BackBtn, ThemeBtn, IR, OmSvg, OmSymbol } from "../components.jsx";
 

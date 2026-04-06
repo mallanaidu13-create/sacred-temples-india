@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { C, hsl, FD, FB, FE } from "../theme.js";
 import { DEITIES, SHLOKAS, HERO_PARTICLES, STATES } from "../data.js";
-import { haptic, deityQuery } from "../utils.js";
+import { haptic } from "../utils.js";
 import { useCountUp, useOmChant } from "../hooks.js";
 import { useGeo, haversineKm, bearingDeg } from "../useGeo.js";
 import { SacredRadar, NearbyCard } from "../SacredRadar.jsx";
 import LivePanchangam from "../LivePanchangam.jsx";
 import CinematicOverlay from "../CinematicOverlay.jsx";
 import {
-  OmSymbol, TempleImage, Reveal, Typewriter, ShlokaWidget,
+  OmSymbol, Reveal, Typewriter, ShlokaWidget,
   PilgrimageCard, SH, FCard, CardCarousel, ThemeBtn,
   SkeletonCard, SkeletonListCard,
   OmVisualizer, SacredCircuits, FeatureCard,

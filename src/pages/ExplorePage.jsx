@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { C, hsl, FD, FB, FE } from "../theme.js";
 import { DEITIES } from "../data.js";
-import { deityQuery, skelBg } from "../utils.js";
+import { skelBg } from "../utils.js";
 import { TempleImage, ThemeBtn, Chip, LCard, FCard, SkeletonListCard, Empty, SH } from "../components.jsx";
 
 const Explore = ({nav, oT, oF, temples, loading, isDark, onToggleTheme}) => {

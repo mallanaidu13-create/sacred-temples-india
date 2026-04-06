@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { C, hsl, FD, FB } from "../theme.js";
-import { haptic, deityQuery } from "../utils.js";
+import { haptic } from "../utils.js";
 import { useParallax } from "../hooks.js";
 import { TempleImage, OmSymbol, BackBtn } from "../components.jsx";
 
