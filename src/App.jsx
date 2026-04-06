@@ -88,23 +88,46 @@ export default function App() {
     });
   }, []);
 
-  // Data fetching with IndexedDB fallback → static fallback
+  // Supabase returns snake_case columns; app uses camelCase everywhere
+  const snakeToCamel = (rows) => rows.map(r => ({
+    id: r.id,
+    templeName: r.temple_name,
+    deityPrimary: r.deity_primary,
+    deitySecondary: r.deity_secondary,
+    village: r.village,
+    townOrCity: r.town_or_city,
+    district: r.district,
+    stateOrUnionTerritory: r.state_or_union_territory,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    nearestCity: r.nearest_city,
+    nearestRailwayStation: r.nearest_railway_station,
+    nearestAirport: r.nearest_airport,
+    routeSummary: r.route_summary,
+    historicalSignificance: r.historical_significance,
+    architectureStyle: r.architecture_style,
+    majorFestivals: Array.isArray(r.major_festivals) ? r.major_festivals.join(", ") : (r.major_festivals ?? ""),
+    darshanTimings: r.darshan_timings,
+    imageUrls: Array.isArray(r.image_urls) ? r.image_urls : [],
+    specialNotes: r.special_notes,
+    isFavorite: r.is_favorite ?? false,
+    isFeatured: r.is_featured ?? false,
+    hue: r.hue ?? 30,
+  }));
+
+  // Data fetching: Supabase → IDB cache → static fallback
   const fetchTemples = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     const { data, error } = await supabase.from("temples").select("*");
     if (error) {
       const cached = await IDB.load();
-      if (cached.length > 0) {
-        setTemples(cached);
-      } else {
-        setTemples(FALLBACK_TEMPLES);
-      }
+      setTemples(cached.length > 0 ? cached : FALLBACK_TEMPLES);
     } else if (data && data.length > 0) {
-      setTemples(data);
-      IDB.save(data);
+      const mapped = snakeToCamel(data);
+      setTemples(mapped);
+      IDB.save(mapped);
     } else {
-      // Supabase returned empty — try IDB cache, then static fallback
       const cached = await IDB.load();
       setTemples(cached.length > 0 ? cached : FALLBACK_TEMPLES);
     }
@@ -176,7 +199,7 @@ export default function App() {
     haptic(next ? 30 : 15);
     setTemples(prev => prev.map(t => t.id === id ? { ...t, isFavorite: next } : t));
     showToast(next ? 'Saved to favourites' : 'Removed from saved', next ? '♥' : '♡');
-    const { error } = await supabase.from("temples").update({ isFavorite: next }).eq("id", id);
+    const { error } = await supabase.from("temples").update({ is_favorite: next }).eq("id", id);
     if (error) {
       console.error("Favorite update failed:", error.message);
       setTemples(prev => prev.map(t => t.id === id ? { ...t, isFavorite: current } : t));
