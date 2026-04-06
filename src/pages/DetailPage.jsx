@@ -30,7 +30,7 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
     setTimeout(() => setShared(false), 2200);
   };
   const b3 = hsl(t.hue,50,3);
-  const imgSrc = `https://source.unsplash.com/860x520/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const imgSrc = null;
   const [px, py] = useParallax();
   return (
     <div className="fi" style={{paddingBottom:44}}>
@@ -174,17 +174,17 @@ const Detail = ({temple: t, onBack, isDark, onToggleTheme, oF, nav}) => {
         {tab === "gallery" && (
           <div key={tabKey} className="tabContent" style={{paddingTop:8}}>
             <div style={{borderRadius:20,overflow:"hidden",height:240,position:"relative",marginBottom:8}}>
-              <TempleImage src={`https://source.unsplash.com/800x480/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g0`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
+              <TempleImage src={null} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={56}/>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
               {[1,2,3,4].map(i => (
                 <div key={i} style={{borderRadius:16,overflow:"hidden",height:150,position:"relative"}}>
-                  <TempleImage src={`https://source.unsplash.com/${380+i*10}x${300+i*12}/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g${i}`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={32}/>
+                  <TempleImage src={null} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={32}/>
                 </div>
               ))}
             </div>
             <div style={{borderRadius:20,overflow:"hidden",height:180,position:"relative",marginTop:8}}>
-              <TempleImage src={`https://source.unsplash.com/800x360/?${deityQuery(t.deityPrimary)}&sig=${t.id}-g5`} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={44}/>
+              <TempleImage src={null} hue={t.hue} style={{width:"100%",height:"100%"}} omSize={44}/>
             </div>
           </div>
         )}

@@ -106,7 +106,7 @@ const Discover = ({temples, oT, onBack}) => {
         )}
         {second && (
           <div style={{...cardBase,transform:`translateY(${10-progress*10}px) scale(${0.94+progress*0.06})`,transition:flyDir?'transform 0.45s cubic-bezier(.16,1,.3,1)':'transform 0.18s',zIndex:2}}>
-            <TempleImage src={`https://source.unsplash.com/400x700/?${deityQuery(second.deityPrimary)}&sig=${second.id}`} hue={second.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={60}/>
+            <TempleImage src={null} hue={second.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={60}/>
             <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'100px 22px 22px',background:'linear-gradient(transparent,rgba(0,0,0,0.88))'}}>
               <h3 style={{fontFamily:FD,fontSize:20,fontWeight:500,color:'#fff',lineHeight:1.1}}>{second.templeName}</h3>
               <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:5}}>{second.townOrCity}</div>
@@ -130,7 +130,7 @@ const Discover = ({temples, oT, onBack}) => {
           onMouseLeave={() => drag.active && onEnd()}
           onTransitionEnd={e => { if (flyDir && e.propertyName === 'transform') afterFly(); }}
         >
-          <TempleImage src={`https://source.unsplash.com/400x700/?${deityQuery(top.deityPrimary)}`} hue={top.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={72} px={px} py={py}/>
+          <TempleImage src={null} hue={top.hue} style={{position:'absolute',inset:0,width:'100%',height:'100%'}} omSize={72} px={px} py={py}/>
           {(() => { const p = Math.max(0, Math.min(1, (drag.x - 55) / 60)); const sc = 0.55 + p * 0.55; return (
           <div style={{position:'absolute',top:32,left:20,padding:'9px 22px',borderRadius:14,background:'rgba(34,197,94,0.92)',backdropFilter:'blur(8px)',border:'2.5px solid rgba(255,255,255,0.55)',fontSize:16,fontWeight:800,color:'#fff',letterSpacing:.8,transform:`rotate(-10deg) scale(${flyDir==='right'?1:sc})`,opacity:flyDir==='right'?1:p,transition:drag.active?'none':'all 0.32s cubic-bezier(.16,1,.3,1)',pointerEvents:'none'}}>
             SAVED ♥
