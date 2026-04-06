@@ -275,62 +275,69 @@ export const Chip = ({label, active, onClick}) => (
 
 // ── Featured Card ──
 export const FCard = memo(({t, onClick, onFav, d=0}) => {
-  const imgSrc = null;
-  const [px, py] = useParallax();
-  const { ref: tiltRef, tilt, onMove: onTiltMove, onLeave: onTiltLeave } = useTilt();
   const [burst, setBurst] = useState(false);
   const handleFav = (e) => {
     e.stopPropagation();
     if (!t.isFavorite) { setBurst(true); setTimeout(() => setBurst(false), 750); }
     onFav?.(t.id, t.isFavorite);
   };
-  const isSettled = tilt.x === 0 && tilt.y === 0;
+  const h = t.hue ?? 30;
   return (
-    <div className="rv" onClick={() => onClick(t)} style={{
-      width:268,minWidth:268,height:360,borderRadius:26,overflow:"hidden",
-      position:"relative",cursor:"pointer",flexShrink:0,scrollSnapAlign:"start",
-      boxShadow:`0 16px 56px ${hsl(t.hue,30,5,0.6)}, 0 0 0 1px ${hsl(t.hue,30,20,0.12)}`,
-      animationDelay:`${d}s`,
+    <div className="t rv" onClick={() => onClick(t)} style={{
+      width: 200, minWidth: 200, borderRadius: 20, overflow: "hidden",
+      position: "relative", cursor: "pointer", flexShrink: 0, scrollSnapAlign: "start",
+      background: `linear-gradient(150deg,${hsl(h,35,14)},${hsl(h,28,10)})`,
+      border: `1px solid ${hsl(h,40,30,0.18)}`,
+      boxShadow: `0 4px 24px ${hsl(h,30,5,0.45)}`,
+      animationDelay: `${d}s`,
     }}>
-      <div ref={tiltRef}
-        onMouseMove={onTiltMove} onTouchMove={onTiltMove}
-        onMouseLeave={onTiltLeave} onTouchEnd={onTiltLeave}
-        className="t"
-        style={{
-          position:'absolute', inset:0,
-          transform:`perspective(820px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-          transition: isSettled ? 'transform 0.5s cubic-bezier(.16,1,.3,1)' : 'none',
-          transformOrigin:'center center',
-          willChange:'transform',
-        }}>
-        <TempleImage src={imgSrc} hue={t.hue} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} omSize={68} px={px} py={py}/>
-        <div style={{position:"absolute",top:0,left:"-120%",width:"60%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)",animation:"shimmer 6s ease-in-out infinite",pointerEvents:"none"}}/>
-        <div style={{position:"absolute",top:18,left:18,zIndex:3}}>
-          <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"5px 13px",borderRadius:100,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.12)",fontSize:10,color:"rgba(255,255,255,0.92)",fontWeight:700,letterSpacing:.7}}>
-            <div style={{width:5,height:5,borderRadius:"50%",background:"#E69A52",boxShadow:"0 0 8px rgba(212,133,60,0.8)"}}/>{t.deityPrimary}
-          </div>
-        </div>
-        <div style={{position:"absolute",top:18,right:18,zIndex:3}}>
-          <div aria-label={t.isFavorite ? "Remove from saved" : "Save temple"} role="button" className="t" onClick={handleFav} style={{width:38,height:38,borderRadius:12,background:t.isFavorite?"rgba(196,64,64,0.85)":"rgba(0,0,0,0.32)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${t.isFavorite?"rgba(196,64,64,0.4)":"rgba(255,255,255,0.1)"}`,fontSize:14,color:"#fff",transition:"all .3s",cursor:"pointer",position:"relative"}}>
+      {/* Top accent bar */}
+      <div style={{ height: 3, background: `linear-gradient(90deg,${hsl(h,65,50)},${hsl(h,55,38)})` }} />
+      <div style={{ padding: "14px 16px 16px" }}>
+        {/* Icon + save row */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 14,
+            background: `linear-gradient(135deg,${hsl(h,55,40,0.35)},${hsl(h,50,28,0.2)})`,
+            border: `1px solid ${hsl(h,55,50,0.25)}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 20,
+          }}>ॐ</div>
+          <div role="button" aria-label={t.isFavorite ? "Remove from saved" : "Save"} className="t" onClick={handleFav}
+            style={{ width: 32, height: 32, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+              background: t.isFavorite ? "rgba(196,64,64,0.2)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${t.isFavorite ? "rgba(196,64,64,0.35)" : "rgba(255,255,255,0.08)"}`,
+              fontSize: 13, color: t.isFavorite ? "#ef4444" : "rgba(255,255,255,0.35)", cursor: "pointer", position: "relative" }}>
             {t.isFavorite ? "♥" : "♡"}
             {burst && [0,60,120,180,240,300].map((deg,i) => (
-              <div key={i} style={{
-                position:'absolute',top:'50%',left:'50%',
-                width:6,height:6,borderRadius:'50%',
-                background:'#ef4444',pointerEvents:'none',zIndex:20,
-                animation:`heartBurst 0.65s ease-out ${i*0.045}s both`,
-                '--hb-deg':`${deg}deg`,
-              }}/>
+              <div key={i} style={{ position:"absolute",top:"50%",left:"50%",width:5,height:5,borderRadius:"50%",
+                background:"#ef4444",pointerEvents:"none",zIndex:20,
+                animation:`heartBurst 0.65s ease-out ${i*0.045}s both`,"--hb-deg":`${deg}deg` }}/>
             ))}
           </div>
         </div>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"110px 22px 24px",background:"linear-gradient(transparent,rgba(0,0,0,0.45) 25%,rgba(0,0,0,0.88) 100%)"}}>
-          <h3 style={{fontFamily:FD,fontSize:23,fontWeight:500,color:"#fff",lineHeight:1.15,marginBottom:8,textShadow:"0 2px 12px rgba(0,0,0,0.4)"}}>{t.templeName}</h3>
-          <div style={{fontSize:11.5,color:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:5}}>
-            <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.3)"}}/>{t.townOrCity}, {t.stateOrUnionTerritory}
-          </div>
-          {t.architectureStyle && <div style={{marginTop:10,fontSize:11,color:"rgba(255,255,255,0.25)",fontFamily:FD,fontStyle:"italic"}}>{t.architectureStyle}</div>}
+        {/* Temple name */}
+        <h3 style={{ fontFamily: FD, fontSize: 16, fontWeight: 500, color: "#F2E8D4", lineHeight: 1.25, marginBottom: 6,
+          overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+          {t.templeName}
+        </h3>
+        {/* Location */}
+        <div style={{ fontSize: 11, color: `${hsl(h,30,65)}`, marginBottom: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {[t.townOrCity, t.stateOrUnionTerritory].filter(Boolean).join(", ") || "India"}
         </div>
+        {/* Deity pill */}
+        {t.deityPrimary && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 99,
+            background: `${hsl(h,50,40,0.18)}`, border: `1px solid ${hsl(h,50,50,0.2)}` }}>
+            <div style={{ width: 4, height: 4, borderRadius: "50%", background: hsl(h,70,55) }} />
+            <span style={{ fontSize: 10, color: hsl(h,60,70), fontWeight: 700, letterSpacing: 0.3 }}>{t.deityPrimary}</span>
+          </div>
+        )}
+        {/* Architecture style */}
+        {t.architectureStyle && (
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.22)", marginTop: 8, fontStyle: "italic",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.architectureStyle}</div>
+        )}
       </div>
     </div>
   );

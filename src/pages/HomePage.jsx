@@ -288,7 +288,7 @@ const Home = ({ nav, oT, oF, temples, loading, isDark, onToggleTheme, recentIds 
         <SH title="Featured Temples" sub="Handpicked sacred destinations" act="See all" onAct={() => nav("explore")} d={.25} />
         {loading
           ? <div style={{ display: "flex", gap: 18, overflowX: "auto", padding: "0 24px 14px" }}>{[0, 1, 2].map(i => <SkeletonCard key={i} />)}</div>
-          : <CardCarousel items={temples.slice(0, 6)} renderCard={(t, i) => <FCard t={t} onClick={oT} onFav={oF} d={.3 + i * .08} />} />}
+          : <CardCarousel items={(temples.filter(t => t.isFeatured).length > 0 ? temples.filter(t => t.isFeatured) : temples.slice(0, 6))} renderCard={(t, i) => <FCard t={t} onClick={oT} onFav={oF} d={.3 + i * .08} />} />}
       </div>
 
       {/* SACRED CIRCUITS */}
