@@ -275,7 +275,7 @@ export const Chip = ({label, active, onClick}) => (
 
 // ── Featured Card ──
 export const FCard = memo(({t, onClick, onFav, d=0}) => {
-  const imgSrc = `https://source.unsplash.com/400x600/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const imgSrc = (t.imageUrls && t.imageUrls.length > 0) ? t.imageUrls[0] : null;
   const [px, py] = useParallax();
   const { ref: tiltRef, tilt, onMove: onTiltMove, onLeave: onTiltLeave } = useTilt();
   const [burst, setBurst] = useState(false);
@@ -338,7 +338,7 @@ export const FCard = memo(({t, onClick, onFav, d=0}) => {
 
 // ── List Card ──
 export const LCard = memo(({t, onClick, onFav, d=0}) => {
-  const imgSrc = `https://source.unsplash.com/180x180/?${deityQuery(t.deityPrimary)}&sig=${t.id}`;
+  const imgSrc = (t.imageUrls && t.imageUrls.length > 0) ? t.imageUrls[0] : null;
   const [burst, setBurst] = useState(0);
   const DEGS = [0,45,90,135,180,225,270,315];
   return (
