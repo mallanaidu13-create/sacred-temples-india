@@ -244,6 +244,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
     }));
     setFlowers((prev) => [...prev, ...next]);
     setTimeout(() => {
+      if (!mountedRef.current) return;
       setFlowers((prev) => prev.filter((f) => !next.find((n) => n.id === f.id)));
     }, 3000);
 

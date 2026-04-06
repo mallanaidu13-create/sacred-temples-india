@@ -61,6 +61,7 @@ const useRecentlyViewed = () => {
 };
 
 // ── Error Boundary ──
+const EB_C = { bg: "#1A1109", cream: "#F2E8D4", textD: "#6E5E48", saffron: "#D4853C" };
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -75,11 +76,11 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, background: C.bg, color: C.cream }}>
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, background: EB_C.bg, color: EB_C.cream }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>🙏</div>
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Something went wrong</div>
-          <div style={{ fontSize: 13, color: C.textD, marginBottom: 24, textAlign: "center" }}>This sacred space encountered an unexpected disturbance.</div>
-          <button onClick={() => this.setState({ hasError: false })} style={{ padding: "10px 22px", borderRadius: 99, background: C.saffron, color: "#fff", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Try Again</button>
+          <div style={{ fontSize: 13, color: EB_C.textD, marginBottom: 24, textAlign: "center" }}>This sacred space encountered an unexpected disturbance.</div>
+          <button onClick={() => this.setState({ hasError: false })} style={{ padding: "10px 22px", borderRadius: 99, background: EB_C.saffron, color: "#fff", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Try Again</button>
         </div>
       );
     }
@@ -90,9 +91,9 @@ class ErrorBoundary extends Component {
 // ── Page Loader for Suspense ──
 function PageLoader() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: C.bg }}>
-      <OmSymbol size={80} style={{ animation: "omLive 2s ease-in-out infinite, omGlow 2s ease-in-out infinite" }} />
-      <div style={{ marginTop: 16, fontSize: 13, color: C.textD }}>Entering sacred space…</div>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#1A1109" }}>
+      <div style={{ fontSize: 80, lineHeight: 1, color: "#D4853C", animation: "omLive 2s ease-in-out infinite, omGlow 2s ease-in-out infinite", fontFamily: "'Noto Serif Devanagari', serif" }}>ॐ</div>
+      <div style={{ marginTop: 16, fontSize: 13, color: "#6E5E48" }}>Entering sacred space…</div>
     </div>
   );
 }
@@ -4179,7 +4180,7 @@ export default function App() {
 
   const tabs = ["home","explore","circuits","saved","profile"];
   const aTab = tabs.includes(scr) ? scr : [...stk].reverse().find(s => tabs.includes(s)) || "home";
-  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat","audio","circuitDetail","mandalaAR","spatialAudio","sarathiVision"].includes(scr);
+  const showNav = !["detail","search","stateBrowse","districtBrowse","discover","about","chat","audio","circuitDetail","mandalaAR","spatialAudio","sarathiVision","kalaChakra","sankalpa","tirthaStamps"].includes(scr);
 
   if (fetchError) return (
     <div style={{maxWidth:430,margin:"0 auto",minHeight:"100vh",background:C.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 32px",textAlign:"center",position:"relative",overflow:"hidden"}}>

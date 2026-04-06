@@ -1,4 +1,4 @@
-const CACHE = 'temples-v13';
+const CACHE = 'temples-v14';
 const STATIC = ['/','/index.html','/manifest.json'];
 
 self.addEventListener('install', e => {

@@ -39,12 +39,15 @@ export default function SpatialAudio({ onBack }) {
   const noiseBufferRef = useRef(null);
   const sourcesRef = useRef([]);
   const intervalRef = useRef([]);
+  const timeoutsRef = useRef([]);
   const stepTimerRef = useRef(null);
   const rotationRef = useRef(0);
 
   const stopAll = useCallback(() => {
     intervalRef.current.forEach(clearInterval);
     intervalRef.current = [];
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
     sourcesRef.current.forEach(({ o, g }) => {
       try {
         const t = ctxRef.current?.currentTime || 0;
@@ -373,9 +376,11 @@ export default function SpatialAudio({ onBack }) {
         playFlute(ctx, freq, 0.11, melodyPanner, reverbSend, t, duration);
         phraseIdx++;
         const delay = m === "vishnu" ? 3200 + Math.random() * 400 : 1800 + Math.random() * 300;
-        setTimeout(nextMelody, delay);
+        const melodyTimeout = setTimeout(nextMelody, delay);
+        timeoutsRef.current.push(melodyTimeout);
       };
-      nextMelody();
+      const melodyTimeout = setTimeout(nextMelody, 0);
+      timeoutsRef.current.push(melodyTimeout);
     }
 
     // ── Percussion / accents ──
@@ -530,6 +535,15 @@ export default function SpatialAudio({ onBack }) {
       } catch {}
     });
   };
+
+  useEffect(() => {
+    return () => {
+      stopAll();
+      if (ctxRef.current && ctxRef.current.state !== "closed") {
+        try { ctxRef.current.close(); } catch {}
+      }
+    };
+  }, [stopAll]);
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, paddingBottom: 40 }}>

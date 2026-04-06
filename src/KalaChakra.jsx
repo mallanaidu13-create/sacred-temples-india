@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { computePanchangam, DEFAULT_LOC } from "./LivePanchangam.jsx";
 import { useGeo } from "./useGeo.js";
 import { CHOGHADIYA_NAMES, HORA_GRAHAS } from "./panchangam-i18n.js";
@@ -141,7 +141,7 @@ export default function KalaChakra({ onBack, isDark, onToggleTheme }) {
         localStorage.removeItem("sti_kalachakra_reminder");
       } else {
         const ms = target - now;
-        setTimeout(() => {
+        reminderTimeoutRef.current = setTimeout(() => {
           if ("Notification" in window && Notification.permission === "granted") {
             new Notification("Your Kāla Chakra", {
               body: `Abhijit Muhurta begins — an auspicious window for new ventures.`,
@@ -152,6 +152,12 @@ export default function KalaChakra({ onBack, isDark, onToggleTheme }) {
         setReminderSet(true);
       }
     } catch {}
+    return () => {
+      if (reminderTimeoutRef.current) {
+        clearTimeout(reminderTimeoutRef.current);
+        reminderTimeoutRef.current = null;
+      }
+    };
   }, []);
 
   const setReminder = () => {
@@ -165,7 +171,7 @@ export default function KalaChakra({ onBack, isDark, onToggleTheme }) {
       const ms = (targetJD - nowJD) * 86400000;
       const targetIso = new Date(Date.now() + ms).toISOString();
       localStorage.setItem("sti_kalachakra_reminder", targetIso);
-      setTimeout(() => {
+      reminderTimeoutRef.current = setTimeout(() => {
         new Notification("Your Kāla Chakra", {
           body: `Abhijit Muhurta begins at ${muhurtas.abhijit.startStr} — an auspicious window for new ventures.`,
         });
