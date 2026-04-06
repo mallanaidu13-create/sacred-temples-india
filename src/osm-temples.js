@@ -105,9 +105,6 @@ function isHighQualityName(name = "") {
   // Must contain at least some Latin letters
   if (!/[a-zA-Z]/.test(n)) return false;
 
-  // Should not be all lowercase (proper nouns are capitalized)
-  if (n === n.toLowerCase()) return false;
-
   const lower = n.toLowerCase();
 
   // Exact generic match

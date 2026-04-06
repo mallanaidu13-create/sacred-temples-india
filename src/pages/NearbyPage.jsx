@@ -6,7 +6,7 @@ import { useGeo, haversineKm, bearingDeg, formatCompass } from "../useGeo.js";
 import { SacredRadar, NearbyCard, RadarLegend } from "../SacredRadar.jsx";
 import { TIRTHA_CIRCUITS } from "../tirtha-data.js";
 import { isMapplsConfigured, fetchNearbyTemples, reverseGeocode, fetchDistanceMatrix, mergeMapplsTemples } from "../mappls-api.js";
-import { mergeTemples, fetchOsmTemplesProgressive } from "../osm-temples.js";
+import { mergeTemples, fetchOsmTemples } from "../osm-temples.js";
 import { reverseGeocodeOSM } from "../overpass-api.js";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -460,7 +460,7 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       .finally(() => setMapplsLoading(false));
   }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, isMapplsAvail]);
 
-  // ── OSM: Discover real temples nearby (progressive: 10→25→50 km) ──
+  // ── OSM: Discover real temples nearby at user's current range ──
   const runOsmFetch = useCallback(() => {
     let cancelled = false;
     const loc = geo.effectiveLocation;
@@ -470,15 +470,16 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       return;
     }
 
-    const fetchKey = `${loc.latitude.toFixed(3)},${loc.longitude.toFixed(3)}`;
+    const fetchKey = `${loc.latitude.toFixed(3)},${loc.longitude.toFixed(3)},${range}`;
     if (fetchedKeyRef.current === fetchKey || fetchingRef.current) return;
     fetchedKeyRef.current = fetchKey;
     fetchingRef.current = true;
 
     setOsmLoading(true);
     setOsmError(null);
-    fetchOsmTemplesProgressive(loc.latitude, loc.longitude, (r) => setOsmRadius(r))
-      .then(({ data, radius }) => {
+    setOsmRadius(range);
+    fetchOsmTemples(loc.latitude, loc.longitude, range)
+      .then((data) => {
         if (cancelled) return;
         setOsmCount(data.length);
         setMerged(mergeTemples(templesRef.current, data));
@@ -493,12 +494,12 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
         if (!cancelled) setOsmLoading(false);
       });
     return () => { cancelled = true; };
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range]);
 
-  // Auto-trigger OSM fetch when location is available
+  // Auto-trigger OSM fetch when location or range changes
   useEffect(() => {
     if (geo.effectiveLocation) runOsmFetch();
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, runOsmFetch]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, runOsmFetch]);
 
   // ── Reverse geocode user location (Mappls or OSM Nominatim) ──
   useEffect(() => {
