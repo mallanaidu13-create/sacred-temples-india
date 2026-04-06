@@ -4159,7 +4159,7 @@ export default function App() {
   else if (scr === "kalaChakra") page = <KalaChakra onBack={back} isDark={isDark} onToggleTheme={toggleTheme} />;
   else if (scr === "sankalpa") page = <SankalpaEngine onBack={back} isDark={isDark} onToggleTheme={toggleTheme} temples={temples} />;
   else if (scr === "sarathiVision") page = <SarathiVision onBack={back} isDark={isDark} onToggleTheme={toggleTheme} temples={temples} onFindTemples={(deity) => { nav("explore"); }} />;
-  else if (scr === "tirthaStamps") page = <TirthaStamps onBack={back} />;
+  else if (scr === "tirthaStamps") page = <TirthaStamps onBack={back} isDark={isDark} onToggleTheme={toggleTheme} />;
   else page = <Home nav={nav} oT={oT} oF={oF} temples={temples} loading={loading} {...th}/>;
 
   const transitionClass = navDir === 'forward' ? 'scrFwd' : navDir === 'back' ? 'scrBack' : '';
