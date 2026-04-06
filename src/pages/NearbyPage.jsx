@@ -5,6 +5,7 @@ import { Chip, ThemeBtn, SkeletonListCard, Empty } from "../components.jsx";
 import { useGeo, haversineKm, bearingDeg, formatCompass } from "../useGeo.js";
 import { SacredRadar, NearbyCard, RadarLegend } from "../SacredRadar.jsx";
 import { TIRTHA_CIRCUITS } from "../tirtha-data.js";
+import { isMapplsConfigured, fetchNearbyTemples, reverseGeocode, fetchDistanceMatrix, mergeMapplsTemples } from "../mappls-api.js";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -159,9 +160,12 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
       });
 
       const dist = formatDist(t._dist);
+      const roadDist = t._roadDist ? formatDist(t._roadDist) : null;
+      const eta = t._eta ? `~${t._eta} min` : null;
       const compass = formatCompass(t._bearing ?? 0);
       const loc = [t.townOrCity, t.district].filter(Boolean).join(", ");
       const deity = t.deityPrimary || "";
+      const isMappls = t._source === "mappls";
 
       const darshan = t.darshanTimings || "";
       const festivals = t.majorFestivals || "";
@@ -177,14 +181,16 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
         <div style="font-family:${FB};padding:2px 0;min-width:200px">
           <div style="font-family:${FD};font-size:15px;font-weight:600;color:#F2E8D4;margin-bottom:4px;line-height:1.3">${t.templeName || "Sacred Temple"}</div>
           ${deity ? `<div style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;background:rgba(212,133,60,0.15);margin-bottom:6px"><span style="font-size:10px;color:#D4853C;font-weight:600">${deity}</span></div>` : ""}
-          ${loc ? `<div style="font-size:11px;color:#A89878;margin-bottom:4px">${loc}</div>` : ""}
+          ${isMappls && t._address ? `<div style="font-size:10px;color:#A89878;margin-bottom:4px;line-height:1.3">${t._address}</div>` : loc ? `<div style="font-size:11px;color:#A89878;margin-bottom:4px">${loc}</div>` : ""}
           ${darshan ? `<div style="font-size:10px;color:#C4A24E;margin-bottom:3px">🕐 ${darshan}</div>` : ""}
           ${archStyle ? `<div style="font-size:10px;color:#A89878;margin-bottom:3px">🏛 ${archStyle}</div>` : ""}
           ${festivals ? `<div style="font-size:10px;color:#e9967a;margin-bottom:4px;line-height:1.4">🎪 ${festivals.length > 80 ? festivals.slice(0, 80) + '…' : festivals}</div>` : ""}
-          <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#6E5E48;margin-top:4px">
-            <span style="color:#D4853C;font-weight:700">${dist}</span>
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#6E5E48;margin-top:4px;flex-wrap:wrap">
+            <span style="color:#D4853C;font-weight:700">${roadDist || dist}</span>
+            ${roadDist ? `<span style="font-size:9px;color:#6E5E48">(${dist} straight)</span>` : ""}
             <span style="width:3px;height:3px;border-radius:50%;background:#6E5E48"></span>
             <span>${compass}</span>
+            ${eta ? `<span style="width:3px;height:3px;border-radius:50%;background:#6E5E48"></span><span style="color:#22c55e;font-weight:600">${eta}</span>` : ""}
           </div>
           <a href="${directionsUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:5px 12px;border-radius:8px;background:rgba(212,133,60,0.15);color:#D4853C;font-size:10px;font-weight:700;text-decoration:none">📍 Directions</a>
         </div>
@@ -298,9 +304,14 @@ const TempleMap = ({ location, nearby, range, isDark, heading, onSelectTemple, s
                 {selectedTemple.templeName}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#A89878", marginTop: 3, flexWrap: "wrap" }}>
-                <span style={{ color: "#D4853C", fontWeight: 700 }}>{formatDist(selectedTemple._dist)}</span>
+                <span style={{ color: "#D4853C", fontWeight: 700 }}>{selectedTemple._roadDist ? formatDist(selectedTemple._roadDist) : formatDist(selectedTemple._dist)}</span>
+                {selectedTemple._roadDist && <span style={{ fontSize: 9, color: "#6E5E48" }}>road</span>}
                 <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#6E5E48" }} />
                 <span>{formatCompass(selectedTemple._bearing ?? 0)}</span>
+                {selectedTemple._eta && <>
+                  <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#6E5E48" }} />
+                  <span style={{ color: "#22c55e", fontWeight: 600 }}>~{selectedTemple._eta} min</span>
+                </>}
                 {selectedTemple.deityPrimary && <>
                   <span style={{ width: 3, height: 3, borderRadius: "50%", background: "#6E5E48" }} />
                   <span>{selectedTemple.deityPrimary}</span>
@@ -371,27 +382,93 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
   const lastHapticRef = useRef(0);
   const templesRef = useRef(temples);
 
+  // Mappls integration state
+  const [mapplsDiscoveries, setMapplsDiscoveries] = useState([]);
+  const [mapplsLoading, setMapplsLoading] = useState(false);
+  const [mapplsError, setMapplsError] = useState(null);
+  const [roadDistances, setRoadDistances] = useState({});
+  const [userAddress, setUserAddress] = useState(null);
+  const mapplsFetchKeyRef = useRef("");
+  const distMatrixKeyRef = useRef("");
+  const isMapplsAvail = useMemo(() => isMapplsConfigured(), []);
+
   useEffect(() => {
     templesRef.current = temples;
   }, [temples]);
 
+  // Merge Supabase + Mappls discovered temples
+  const mergedTemples = useMemo(() => {
+    if (!mapplsDiscoveries.length) return temples;
+    return mergeMapplsTemples(temples, mapplsDiscoveries);
+  }, [temples, mapplsDiscoveries]);
+
   const allWithCoords = useMemo(() => {
     const loc = geo.effectiveLocation;
     if (!loc) return [];
-    return temples
+    return mergedTemples
       .filter(t => t.latitude != null && t.longitude != null && isFinite(t.latitude) && isFinite(t.longitude))
-      .map(t => ({
-        ...t,
-        _dist: haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude),
-        _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
-      }))
+      .map(t => {
+        const straightDist = haversineKm(loc.latitude, loc.longitude, t.latitude, t.longitude);
+        const road = roadDistances[t.id];
+        return {
+          ...t,
+          _dist: straightDist,
+          _roadDist: road?.roadDistKm ?? null,
+          _eta: road?.durationMin ?? null,
+          _bearing: bearingDeg(loc.latitude, loc.longitude, t.latitude, t.longitude),
+        };
+      })
       .filter(t => isFinite(t._dist) && t._dist >= 0)
       .sort((a, b) => a._dist - b._dist);
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, temples]);
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, mergedTemples, roadDistances]);
 
   const nearby = useMemo(() => {
     return allWithCoords.filter(t => t._dist <= range);
   }, [allWithCoords, range]);
+
+  // ── Mappls: Discover nearby temples ──
+  useEffect(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc || !isMapplsAvail) return;
+    const fetchKey = `${loc.latitude.toFixed(3)},${loc.longitude.toFixed(3)},${range}`;
+    if (mapplsFetchKeyRef.current === fetchKey) return;
+    mapplsFetchKeyRef.current = fetchKey;
+
+    setMapplsLoading(true);
+    setMapplsError(null);
+    fetchNearbyTemples(loc.latitude, loc.longitude, Math.min(range, 50))
+      .then(({ results, error }) => {
+        if (error === "not_configured") return;
+        if (error) { setMapplsError(error); return; }
+        setMapplsDiscoveries(results);
+      })
+      .finally(() => setMapplsLoading(false));
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, isMapplsAvail]);
+
+  // ── Mappls: Reverse geocode user location ──
+  useEffect(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc || !isMapplsAvail) return;
+    reverseGeocode(loc.latitude, loc.longitude).then(addr => {
+      if (addr) setUserAddress(addr);
+    });
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, isMapplsAvail]);
+
+  // ── Mappls: Real road distances for closest temples ──
+  useEffect(() => {
+    const loc = geo.effectiveLocation;
+    if (!loc || !isMapplsAvail || !nearby.length) return;
+
+    // Only fetch for the closest 20 temples (API efficiency)
+    const closest = nearby.slice(0, 20);
+    const distKey = `${loc.latitude.toFixed(3)},${loc.longitude.toFixed(3)}_${closest.map(t => t.id).join(",")}`;
+    if (distMatrixKeyRef.current === distKey) return;
+    distMatrixKeyRef.current = distKey;
+
+    fetchDistanceMatrix(loc.latitude, loc.longitude, closest).then(dm => {
+      if (dm) setRoadDistances(prev => ({ ...prev, ...dm }));
+    });
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, isMapplsAvail, nearby.length > 0 && nearby[0]?.id]);
 
   // Proximity haptic
   useEffect(() => {
@@ -489,7 +566,7 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
           <SacredRadar
             location={geo.effectiveLocation}
             heading={geo.heading}
-            temples={temples}
+            temples={mergedTemples}
             size={240}
             maxDistKm={range}
             showClusters={true}
@@ -541,8 +618,23 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
                 {geo.effectiveLocation?.accuracy ? ` · ±${Math.round(geo.effectiveLocation.accuracy)}m` : ""}
               </span>
             </div>
+            {userAddress && (
+              <div style={{ marginBottom: 4 }}>📍 <span style={{ color: C.creamM, fontWeight: 500 }}>{userAddress.area || userAddress.landmark}{userAddress.city ? `, ${userAddress.city}` : ""}</span></div>
+            )}
             <div>Database: <span style={{ color: C.creamM, fontWeight: 600 }}>{temples.filter(t => t.latitude != null && t.longitude != null).length}</span> temples with coordinates</div>
-            {nearest && <div>Nearest temple: <span style={{ color: C.saffron, fontWeight: 600 }}>{nearest.templeName}</span> · {nearest._dist < 1 ? `${(nearest._dist * 1000).toFixed(0)} m` : `${nearest._dist.toFixed(1)} km`} away</div>}
+            {isMapplsAvail && mapplsDiscoveries.length > 0 && (
+              <div>Mappls: <span style={{ color: "#4ade80", fontWeight: 600 }}>+{mapplsDiscoveries.length}</span> verified temples discovered nearby</div>
+            )}
+            {isMapplsAvail && mapplsLoading && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                <span style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.div}`, borderTopColor: "#4ade80", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                <span>Discovering temples via Mappls…</span>
+              </div>
+            )}
+            {Object.keys(roadDistances).length > 0 && (
+              <div style={{ marginTop: 2 }}>🛣 Road distances available for <span style={{ color: C.creamM, fontWeight: 600 }}>{Object.keys(roadDistances).length}</span> temples</div>
+            )}
+            {nearest && <div>Nearest: <span style={{ color: C.saffron, fontWeight: 600 }}>{nearest.templeName}</span> · {nearest._roadDist ? `${nearest._roadDist.toFixed(1)} km by road` : nearest._dist < 1 ? `${(nearest._dist * 1000).toFixed(0)} m` : `${nearest._dist.toFixed(1)} km`}{nearest._eta ? ` · ~${nearest._eta} min` : ""} away</div>}
           </div>
         </div>
       )}

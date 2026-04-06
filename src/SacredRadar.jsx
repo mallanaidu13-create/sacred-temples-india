@@ -270,15 +270,20 @@ export const NearbyCard = memo(({ t, distanceKm, onClick, delay = 0, gyroHeading
           </div>
         )}
         <div style={{ fontSize: 11, color: "#A89878", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {[t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(" · ") || "Sacred Temple"}
+          {t._source === "mappls" && t._address ? t._address : ([t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(" · ") || "Sacred Temple")}
         </div>
         {t.darshanTimings && (
           <div style={{ fontSize: 10, color: "#C4A24E", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>🕐 {t.darshanTimings}</div>
         )}
-        <div style={{ fontSize: 11, color: "#A89878", marginTop: 3, display: "flex", alignItems: "center", gap: 8 }}>
-          <span>{formatDistance(distanceKm)}</span>
+        <div style={{ fontSize: 11, color: "#A89878", marginTop: 3, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: t._roadDist ? 600 : 400 }}>{t._roadDist ? formatDistance(t._roadDist) : formatDistance(distanceKm)}</span>
+          {t._roadDist && <span style={{ fontSize: 9, color: "rgba(168,152,120,0.6)" }}>road</span>}
           <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(168,152,120,0.5)" }} />
-          <span>{walkMin} min walk</span>
+          {t._eta ? (
+            <span style={{ color: "#22c55e", fontWeight: 600 }}>~{t._eta} min</span>
+          ) : (
+            <span>{walkMin} min walk</span>
+          )}
           <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(168,152,120,0.5)" }} />
           <span>{compass}</span>
         </div>
