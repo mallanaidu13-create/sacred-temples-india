@@ -404,11 +404,15 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
   }, [temples]);
 
   // Merge Supabase + Mappls + OSM discovered temples
+  // For Nearby: OSM real-time results are primary source.
+  // Database temples only appear if they're genuinely within range.
   const mergedTemples = useMemo(() => {
-    let merged = temples;
-    if (mapplsDiscoveries.length) merged = mergeMapplsTemples(merged, mapplsDiscoveries);
-    if (osmDiscoveries.length) merged = mergeOsmTemples(merged, osmDiscoveries);
-    return merged;
+    let discovered = [];
+    if (osmDiscoveries.length) discovered = [...osmDiscoveries];
+    if (mapplsDiscoveries.length) discovered = mergeMapplsTemples(discovered.length ? discovered : [], mapplsDiscoveries);
+    // Merge curated database temples in — dedup keeps the curated version (richer data)
+    if (discovered.length) return mergeOsmTemples(temples, discovered);
+    return temples; // fallback before any discovery completes
   }, [temples, mapplsDiscoveries, osmDiscoveries]);
 
   const allWithCoords = useMemo(() => {
@@ -559,7 +563,9 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
   const clusterItems = expandedCluster || [];
   const coordCount = allWithCoords.length;
   const nearest = allWithCoords[0];
-  const showFallback = geo.effectiveLocation && nearby.length === 0 && coordCount > 0;
+  const isDiscovering = osmLoading || (isMapplsAvail && mapplsLoading);
+  const hasDiscovered = osmDiscoveries.length > 0 || mapplsDiscoveries.length > 0;
+  const showFallback = geo.effectiveLocation && nearby.length === 0 && !isDiscovering && coordCount > 0;
 
   return (
     <div className="fi" style={{ paddingBottom: 24 }}>
@@ -651,14 +657,14 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
             {userAddress && (
               <div style={{ marginBottom: 4 }}>📍 <span style={{ color: C.creamM, fontWeight: 500 }}>{userAddress.area || userAddress.landmark}{userAddress.city ? `, ${userAddress.city}` : ""}</span></div>
             )}
-            <div>Database: <span style={{ color: C.creamM, fontWeight: 600 }}>{temples.filter(t => t.latitude != null && t.longitude != null).length}</span> temples with coordinates</div>
+            <div>Curated: <span style={{ color: C.creamM, fontWeight: 600 }}>{temples.filter(t => t.latitude != null && t.longitude != null).length}</span> major temples</div>
             {osmDiscoveries.length > 0 && (
-              <div>OpenStreetMap: <span style={{ color: "#4ade80", fontWeight: 600 }}>+{osmDiscoveries.length}</span> temples discovered nearby</div>
+              <div>Real-time: <span style={{ color: "#4ade80", fontWeight: 600 }}>{osmDiscoveries.length}</span> temples discovered via OpenStreetMap</div>
             )}
             {isMapplsAvail && mapplsDiscoveries.length > 0 && (
-              <div>Mappls: <span style={{ color: "#4ade80", fontWeight: 600 }}>+{mapplsDiscoveries.length}</span> verified temples discovered nearby</div>
+              <div>Mappls: <span style={{ color: "#4ade80", fontWeight: 600 }}>+{mapplsDiscoveries.length}</span> verified temples discovered</div>
             )}
-            {(osmLoading || (isMapplsAvail && mapplsLoading)) && (
+            {isDiscovering && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                 <span style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.div}`, borderTopColor: "#4ade80", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
                 <span>Discovering real-time temples nearby…</span>
@@ -706,12 +712,23 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       {/* Loading skeleton */}
       {loading && !geo.effectiveLocation && [0, 1].map(i => <SkeletonListCard key={i} />)}
 
-      {/* Fallback — show nearest regardless of range */}
+      {/* Discovering real-time temples */}
+      {geo.effectiveLocation && isDiscovering && nearby.length === 0 && (
+        <div style={{ margin: "0 24px 12px", padding: "16px 14px", borderRadius: 14, background: C.card, border: `1px solid ${C.div}`, textAlign: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${C.div}`, borderTopColor: "#4ade80", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.cream }}>Discovering temples near you…</span>
+          </div>
+          <div style={{ fontSize: 11, color: C.textD }}>Searching OpenStreetMap for real temples within {range} km</div>
+        </div>
+      )}
+
+      {/* Fallback — only after discovery finishes with no results */}
       {showFallback && (
         <>
           <div style={{ margin: "0 24px 10px", padding: "10px 14px", borderRadius: 12, background: "rgba(212,133,60,0.08)", border: "1px solid rgba(212,133,60,0.2)" }}>
             <div style={{ fontSize: 12, color: C.saffron, fontWeight: 600 }}>No temples within {range} km</div>
-            <div style={{ fontSize: 11, color: C.textD, marginTop: 3 }}>Showing the nearest temples from our database regardless of radius.</div>
+            <div style={{ fontSize: 11, color: C.textD, marginTop: 3 }}>{hasDiscovered ? "Try a larger radius to find more." : "Showing nearest known temples. Try a larger radius."}</div>
           </div>
           {allWithCoords.slice(0, 10).map((t, i) => (
             <NearbyCard
@@ -739,8 +756,8 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       ))}
 
       {/* Empty states */}
-      {geo.effectiveLocation && nearby.length === 0 && coordCount === 0 && (
-        <Empty emoji="🏛" title="No Temples Nearby" sub="No temples found in the database with coordinates. Try a larger radius or check back later." />
+      {geo.effectiveLocation && nearby.length === 0 && !isDiscovering && coordCount === 0 && (
+        <Empty emoji="🏛" title="No Temples Found" sub="No temples found near your location. Try a larger radius." />
       )}
 
       {!geo.effectiveLocation && !loading && (
