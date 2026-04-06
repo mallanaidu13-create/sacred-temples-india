@@ -4,9 +4,17 @@
  */
 
 import { haversineKm } from "./useGeo.js";
-import { computePanchangam, DEFAULT_LOC } from "./LivePanchangam.jsx";
+import { computePanchangam, DEFAULT_LOC, julianDay, fmtTime } from "./LivePanchangam.jsx";
 import { evaluateFestivals } from "./festival-rules.js";
 import { findAbhijitMuhurta, findRahuKala } from "./kala-chakra-logic.js";
+import {
+  TITHI_NAMES,
+  NAKSHATRA_NAMES,
+  RASHI_NAMES,
+  MASA_NAMES,
+  YOGA_NAMES,
+  VARA_NAMES,
+} from "./panchangam-i18n.js";
 
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
@@ -64,10 +72,11 @@ function fmtDist(km) {
 
 export function buildPanchangContext(loc = DEFAULT_LOC) {
   try {
-    const p = computePanchangam(new Date(), loc);
-    const nowJD = p.jdNow;
-    const sunriseJD = p.sunriseJD;
-    const sunsetJD = p.sunsetJD;
+    const now = new Date();
+    const p = computePanchangam(now, loc);
+    const nowJD = julianDay(now);
+    const sunriseJD = p.dayStartJD;
+    const sunsetJD = p.dayEndJD; // next sunrise
     const varaIdx = p.varaIdx; // 0=Sun ... 6=Sat
 
     const abhijit = findAbhijitMuhurta(sunriseJD, sunsetJD, loc.tz);
@@ -76,28 +85,33 @@ export function buildPanchangContext(loc = DEFAULT_LOC) {
     const inRahuKala = rahu && nowJD >= rahu.startJD && nowJD < rahu.endJD;
     const inAbhijit = abhijit && nowJD >= abhijit.startJD && nowJD < abhijit.endJD;
 
-    // Festival check
-    const festivals = evaluateFestivals(p, p.masaIdx, p.tithi.index, p.sunRashiIdx, p.nakshatra.index);
+    // Festival check (using sunrise-based indices as in LivePanchangam)
+    const festivals = evaluateFestivals(
+      { tithiNum: p.tithiNum, masa: p.masaIdx, sunRashiIdx: p.rashiSunIdx, nakshatraIdx: Math.floor(p.nakshatraIdx) },
+      p.masaIdx,
+      p.tithiNum,
+      p.rashiSunIdx,
+      Math.floor(p.nakshatraIdx)
+    );
     const todayFestivals = festivals
       .filter((f) => f.today || f.tomorrow)
       .map((f) => f.names?.en || f.name || "Unknown festival");
 
     return {
-      tithi: p.tithi.name,
-      nakshatra: p.nakshatra.name,
-      rashi: p.moonRashi?.name || "",
-      masa: p.masaName,
+      tithi: TITHI_NAMES.en[p.tithiIdx] || "",
+      nakshatra: NAKSHATRA_NAMES.en[p.nakshatraIdx] || "",
+      rashi: RASHI_NAMES.en[p.rashiMoonIdx] || "",
+      masa: MASA_NAMES.en[p.masaIdx] || "",
       paksha: p.paksha,
-      yoga: p.yoga?.name || "",
-      vara: p.vara,
-      sunrise: p.sunriseTime,
-      sunset: p.sunsetTime,
+      yoga: YOGA_NAMES.en[p.yogaIdx] || "",
+      vara: VARA_NAMES.en[p.varaIdx] || "",
+      sunrise: fmtTime(p.sunrise),
+      sunset: fmtTime(p.sunset),
       abhijitMuhurta: abhijit ? `${abhijit.start} – ${abhijit.end}` : null,
       rahuKala: rahu ? `${rahu.start} – ${rahu.end}` : null,
       inRahuKala,
       inAbhijit,
       festivalsToday: todayFestivals,
-      ayana: p.ayana || "",
     };
   } catch (e) {
     return null;
@@ -346,7 +360,7 @@ export function searchTemples(temples, query) {
       return { temple: t, score };
     })
     .filter((r) => r.score > 0);
-  scored.sort((a, b) => b.score - b.score);
+  scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, 5).map((r) => r.temple);
 }
 

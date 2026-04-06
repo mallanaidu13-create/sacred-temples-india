@@ -1,4 +1,4 @@
-const CACHE = 'temples-v3';
+const CACHE = 'temples-v4';
 const STATIC = ['/','/','/manifest.json'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)));

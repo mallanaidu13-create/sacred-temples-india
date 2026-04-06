@@ -707,7 +707,7 @@ const TimelineBar = ({ startJD, endJD, nowJD }) => {
 };
 
 // Re-export for App.jsx consumers
-export { computePanchangam, DEFAULT_LOC };
+export { computePanchangam, DEFAULT_LOC, julianDay, fmtTime };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function LivePanchangam({ location: locProp = DEFAULT_LOC }) {

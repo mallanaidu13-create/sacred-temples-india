@@ -281,6 +281,16 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
     } catch {}
   }, [msgs]);
 
+  // Update welcome message dynamically when real-time context loads
+  useEffect(() => {
+    setMsgs((prev) => {
+      if (prev.length >= 1 && prev[0].id === "welcome") {
+        return [{ ...prev[0], text: buildGreeting() }, ...prev.slice(1)];
+      }
+      return prev;
+    });
+  }, [buildGreeting]);
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
