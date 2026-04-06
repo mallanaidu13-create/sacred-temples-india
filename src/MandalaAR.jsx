@@ -41,6 +41,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showBlessing, setShowBlessing] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
 
   const videoRef = useRef(null);
   const xrSessionRef = useRef(null);
@@ -104,7 +105,10 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch {}
+      } catch {
+        setCameraError(true);
+        setMagicWindow(false);
+      }
 
       const onOrient = (e) => {
         targetOrientRef.current = {
@@ -275,7 +279,7 @@ export default function MandalaAR({ onBack, isDark, onToggleTheme }) {
       )}
 
       {/* Fallback gradient when no camera */}
-      {!magicWindow && (
+      {(!magicWindow || cameraError) && (
         <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 40%, ${isDark ? "hsl(30,40%,12%)" : "hsl(30,40%,90%)"}, ${C.bg})` }} />
       )}
 
