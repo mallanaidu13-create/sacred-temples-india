@@ -1,5 +1,5 @@
 // Kāla Chakra — Personal Panchangam Logic
-// Extends existing Panchangam engine with personal astrology
+// Extends existing Panchangam engine with personal astrology, muhurtas, hora, choghadiya
 
 const TARA_NAMES = [
   "Janma","Sampat","Vipat","Kshema","Pratyak","Sadhana","Naidhana","Mitra","Paramitra"
@@ -26,7 +26,7 @@ export function computeChandraBala(birthMoonRashiIdx, currentMoonRashiIdx) {
 }
 
 // Julian Day helpers (match LivePanchangam)
-function julianDay(date) {
+export function julianDay(date) {
   const Y = date.getUTCFullYear();
   const M = date.getUTCMonth() + 1;
   const D = date.getUTCDate()
@@ -38,7 +38,7 @@ function julianDay(date) {
   return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + D + B - 1524.5;
 }
 
-function jdToDate(jd) {
+export function jdToDate(jd) {
   jd = jd + 0.5;
   const Z = Math.floor(jd);
   const F = jd - Z;
@@ -65,7 +65,6 @@ function jdToDate(jd) {
 export function formatMuhurta(jd, tz = 5.5) {
   if (jd == null || isNaN(jd)) return "—";
   const d = jdToDate(jd);
-  // Adjust to local timezone by adding tz hours
   const localMs = d.getTime() + tz * 3600000;
   const local = new Date(localMs);
   let hh = local.getUTCHours();
@@ -75,32 +74,89 @@ export function formatMuhurta(jd, tz = 5.5) {
   return `${disp}:${String(mm).padStart(2, "0")} ${ampm}`;
 }
 
+export function formatDuration(ms) {
+  if (ms <= 0) return "now";
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+}
+
+export function getWindowStatus(startJD, endJD) {
+  const nowJD = julianDay(new Date());
+  if (nowJD < startJD) {
+    return { state: "upcoming", label: `starts in ${formatDuration((startJD - nowJD) * 86400000)}` };
+  } else if (nowJD < endJD) {
+    return { state: "active", label: `${formatDuration((endJD - nowJD) * 86400000)} left` };
+  }
+  return { state: "ended", label: "ended" };
+}
+
+// Muhurta slot mapping by Vara: [Rahu, Yama, Gulika]
+const MUHURTA_SLOT_MAP = [
+  [8, 5, 4], // Sunday
+  [2, 4, 3], // Monday
+  [7, 3, 5], // Tuesday
+  [5, 7, 6], // Wednesday
+  [6, 6, 7], // Thursday
+  [4, 2, 2], // Friday
+  [3, 1, 1], // Saturday
+];
+
 export function findAbhijitMuhurta(sunriseJD, sunsetJD, tz = 5.5) {
-  // Abhijit = 8th of 15 muhurtas = middle of day
   const dayDur = sunsetJD - sunriseJD;
-  const muhurtaDur = dayDur / 15; // ~48 min
+  const muhurtaDur = dayDur / 15;
   const start = sunriseJD + 7 * muhurtaDur;
   const end = sunriseJD + 8 * muhurtaDur;
   return { start, end, startStr: formatMuhurta(start, tz), endStr: formatMuhurta(end, tz) };
 }
 
 export function findRahuKala(sunriseJD, sunsetJD, varaIdx, tz = 5.5) {
-  // Rahu Kala sequence by weekday
-  const slots = [
-    [8, 5, 4], // Sunday: slots 8,5,4
-    [2, 4, 3], // Monday
-    [7, 3, 5], // Tuesday
-    [5, 7, 6], // Wednesday
-    [6, 6, 7], // Thursday
-    [4, 2, 2], // Friday
-    [3, 1, 1], // Saturday
-  ];
   const dayDur = sunsetJD - sunriseJD;
   const slotDur = dayDur / 8;
-  const rahuSlot = slots[varaIdx][0];
+  const rahuSlot = MUHURTA_SLOT_MAP[varaIdx][0];
   const start = sunriseJD + (rahuSlot - 1) * slotDur;
   const end = sunriseJD + rahuSlot * slotDur;
   return { start, end, startStr: formatMuhurta(start, tz), endStr: formatMuhurta(end, tz) };
+}
+
+export function computeGulikaKala(sunriseJD, sunsetJD, varaIdx, tz = 5.5) {
+  const dayDur = sunsetJD - sunriseJD;
+  const slotDur = dayDur / 8;
+  const slot = MUHURTA_SLOT_MAP[varaIdx][2];
+  const start = sunriseJD + (slot - 1) * slotDur;
+  const end = sunriseJD + slot * slotDur;
+  return { start, end, startStr: formatMuhurta(start, tz), endStr: formatMuhurta(end, tz) };
+}
+
+export function computeYamaGandam(sunriseJD, sunsetJD, varaIdx, tz = 5.5) {
+  const dayDur = sunsetJD - sunriseJD;
+  const slotDur = dayDur / 8;
+  const slot = MUHURTA_SLOT_MAP[varaIdx][1];
+  const start = sunriseJD + (slot - 1) * slotDur;
+  const end = sunriseJD + slot * slotDur;
+  return { start, end, startStr: formatMuhurta(start, tz), endStr: formatMuhurta(end, tz) };
+}
+
+export function computeMuhurtaTimeline(sunriseJD, sunsetJD, tz = 5.5) {
+  const dayDur = sunsetJD - sunriseJD;
+  const muhurtaDur = dayDur / 15;
+  const slots = [];
+  for (let i = 0; i < 15; i++) {
+    const start = sunriseJD + i * muhurtaDur;
+    const end = sunriseJD + (i + 1) * muhurtaDur;
+    slots.push({
+      idx: i + 1,
+      start,
+      end,
+      startStr: formatMuhurta(start, tz),
+      endStr: formatMuhurta(end, tz),
+      isAbhijit: i === 7,
+      label: i === 7 ? "Abhijit" : `${i + 1}`,
+    });
+  }
+  return slots;
 }
 
 export function computeOverallScore(tara, chandra) {
@@ -121,4 +177,8 @@ export const NAKSHATRAS = [
 
 export const RASHIS = [
   "Mesha","Vrishabha","Mithuna","Karka","Simha","Kanya","Tula","Vrishchika","Dhanu","Makara","Kumbha","Meena"
+];
+
+export const VARAS = [
+  "Ravivara","Somavara","Mangalavara","Budhavara","Guruvara","Shukravara","Shanivara"
 ];

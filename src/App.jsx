@@ -4156,7 +4156,7 @@ export default function App() {
   else if (scr === "audio") page = <AudioGuide onBack={back} {...th}/>;
   else if (scr === "mandalaAR") page = <MandalaAR onBack={back} />;
   else if (scr === "spatialAudio") page = <SpatialAudio onBack={back} />;
-  else if (scr === "kalaChakra") page = <KalaChakra onBack={back} />;
+  else if (scr === "kalaChakra") page = <KalaChakra onBack={back} isDark={isDark} onToggleTheme={toggleTheme} />;
   else if (scr === "sankalpa") page = <SankalpaEngine onBack={back} />;
   else if (scr === "sarathiVision") page = <SarathiVision onBack={back} onFindTemples={(deity) => { nav("explore"); }} />;
   else if (scr === "tirthaStamps") page = <TirthaStamps onBack={back} />;
