@@ -83,7 +83,7 @@ export const OmSymbol = ({ size = 160, style = {} }) => {
 // ── Temple Image with Ken Burns + parallax ──
 export const TempleImage = ({src, hue, style, omSize=48, px=0, py=0}) => {
   const [loaded, setLoaded] = useState(false);
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState(!src);
   const PAD = 20;
   return (
     <div style={{position:'relative',overflow:'hidden',...style}}>
@@ -275,7 +275,7 @@ export const Chip = ({label, active, onClick}) => (
 
 // ── Featured Card ──
 export const FCard = memo(({t, onClick, onFav, d=0}) => {
-  const imgSrc = (t.imageUrls && t.imageUrls.length > 0) ? t.imageUrls[0] : null;
+  const imgSrc = null;
   const [px, py] = useParallax();
   const { ref: tiltRef, tilt, onMove: onTiltMove, onLeave: onTiltLeave } = useTilt();
   const [burst, setBurst] = useState(false);
@@ -338,7 +338,7 @@ export const FCard = memo(({t, onClick, onFav, d=0}) => {
 
 // ── List Card ──
 export const LCard = memo(({t, onClick, onFav, d=0}) => {
-  const imgSrc = (t.imageUrls && t.imageUrls.length > 0) ? t.imageUrls[0] : null;
+  const imgSrc = null;
   const [burst, setBurst] = useState(0);
   const DEGS = [0,45,90,135,180,225,270,315];
   return (
