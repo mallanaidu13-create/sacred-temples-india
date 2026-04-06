@@ -21,6 +21,8 @@ import {
   stopListening,
   searchTemples,
   formatTempleData,
+  isQuotaError,
+  generateLocalSarathiResponse,
   GEMINI_KEY,
 } from "./sarathi-utils.js";
 
@@ -425,7 +427,28 @@ export default function SarathiChat({ onBack, temple, temples, isDark, onToggleT
     } catch (e) {
       const errText = e?.message || "Unknown error";
       console.error("Sarathi API error:", e);
-      if (matchedTemples.length > 0) {
+
+      // ── Smart local fallback for quota/rate-limit errors ──
+      if (isQuotaError(errText)) {
+        const localResult = generateLocalSarathiResponse(q, {
+          userName,
+          timeCtx,
+          panchangCtx,
+          nearestTemples,
+          currentTemple: temple || null,
+          matchedTemples,
+        });
+        const localMsg = {
+          id: `${Date.now()}-a`,
+          role: "assistant",
+          text: localResult.text,
+          parsed: localResult,
+          isLocal: true,
+          createdAt: Date.now(),
+        };
+        setMsgs((prev) => [...prev, localMsg]);
+        setTypingMsgId(localMsg.id);
+      } else if (matchedTemples.length > 0) {
         const fallback = matchedTemples.map((t) => {
           const parts = [`**🛕 ${t.templeName}**`];
           if (t.deityPrimary) parts.push(`**Deity:** ${t.deityPrimary}`);
@@ -818,6 +841,18 @@ function MessageBubble({ msg, C, enableTyping, onDoneTyping, onAction, onCopy, o
         border: msg.role === "user" ? "none" : `1px solid ${C.div}`,
         boxShadow: msg.role === "user" ? `0 3px 16px rgba(212,133,60,0.25)` : `0 2px 12px rgba(0,0,0,0.08)`,
       }}>
+        {msg.role === "assistant" && msg.isLocal && (
+          <div style={{
+            padding: "6px 10px", borderRadius: 8, marginBottom: 10,
+            background: "rgba(196,162,78,0.12)",
+            border: "1px solid rgba(196,162,78,0.25)",
+            color: C.gold,
+            fontSize: 11, fontWeight: 600, fontFamily: FB,
+          }}>
+            📿 Answering from local sacred wisdom — API quota will refresh soon
+          </div>
+        )}
+
         {msg.role === "assistant" && parsed.alert && (
           <div style={{
             padding: "8px 12px", borderRadius: 10, marginBottom: 10,

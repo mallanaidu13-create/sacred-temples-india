@@ -384,6 +384,383 @@ export function formatTempleData(temple) {
   return lines.join("\n");
 }
 
+/* ─── Local Fallback Engine ──────────────────────────────────────────────── */
+
+export function isQuotaError(errText) {
+  if (!errText) return false;
+  const t = errText.toLowerCase();
+  return (
+    t.includes("quota") ||
+    t.includes("rate limit") ||
+    t.includes("rate-limit") ||
+    t.includes("exceeded your current quota") ||
+    t.includes("limit: 0") ||
+    t.includes("429")
+  );
+}
+
+function matchIntent(query, keywords) {
+  const q = query.toLowerCase();
+  return keywords.some((k) => q.includes(k));
+}
+
+const JYOTIRLINGAS = [
+  "Somnath (Gujarat)", "Mallikarjuna (Andhra Pradesh)", "Mahakaleshwar (Madhya Pradesh)",
+  "Omkareshwar (Madhya Pradesh)", "Kedarnath (Uttarakhand)", "Bhimashankar (Maharashtra)",
+  "Kashi Vishwanath (Uttar Pradesh)", "Trimbakeshwar (Maharashtra)", "Baidyanath (Jharkhand)",
+  "Nageshwar (Gujarat)", "Rameshwaram (Tamil Nadu)", "Grishneshwar (Maharashtra)"
+];
+
+const SHAKTI_PEETHAS_COUNT = 51;
+const DIVYA_DESAMS_COUNT = 108;
+const CHAR_DHAM = ["Badrinath (Uttarakhand)", "Dwarka (Gujarat)", "Puri (Odisha)", "Rameshwaram (Tamil Nadu)"];
+const PANCHA_BHUTA_STALAS = [
+  "Ekambareswarar (Kanchipuram) — Earth",
+  "Jambukeswarar (Tiruvanaikaval) — Water",
+  "Annamalaiyar (Tiruvannamalai) — Fire",
+  "Kalahasteeswarar (Srikalahasti) — Air",
+  "Chidambaram Natarajar (Chidambaram) — Ether"
+];
+
+export function generateLocalSarathiResponse(query, {
+  userName,
+  timeCtx,
+  panchangCtx,
+  nearestTemples,
+  currentTemple,
+  matchedTemples,
+}) {
+  const q = query.trim();
+  const ql = q.toLowerCase();
+
+  // ── Helper to build result
+  const make = (text, { temples = [], actions = [], quickReplies = [], alert = "" } = {}) => ({
+    text,
+    temples,
+    actions,
+    quickReplies,
+    alert,
+  });
+
+  // ── Greeting / identity
+  if (matchIntent(q, ["hello", "hi", "namaste", "who are you", "what is your name", "sarathi", "guide"])) {
+    let base = timeCtx?.greeting || "Namaste 🙏";
+    if (userName) base += `, ${userName}`;
+    base += ". I am **Sarathi**, your divine guide to the sacred temples of Bhārata.";
+    if (panchangCtx) {
+      base += `\n\nToday is **${panchangCtx.vara}**, **${panchangCtx.paksha} ${panchangCtx.tithi}** in **${panchangCtx.masa}** masa. The Nakshatra is **${panchangCtx.nakshatra}** and Moon Rashi is **${panchangCtx.rashi}**.`;
+      if (panchangCtx.festivalsToday?.length) base += `\n\n🎉 Today we celebrate **${panchangCtx.festivalsToday.join(", ")}**.`;
+      if (panchangCtx.inAbhijit) base += `\n\n🌟 It is currently **Abhijit Muhurta** — highly auspicious for new beginnings.`;
+      else if (panchangCtx.inRahuKala) base += `\n\n⚠️ Please note: we are currently in **Rahu Kala**. It is best to avoid starting new ventures.`;
+    }
+    return make(base, {
+      alert: panchangCtx?.inRahuKala ? "⚠️ Rahu Kala is active now" : panchangCtx?.inAbhijit ? "🌟 Abhijit Muhurta now" : "",
+      quickReplies: [
+        { icon: "🕉️", text: "Tell me a shloka" },
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "📿", text: "What are the 12 Jyotirlingas?" },
+        { icon: "🎪", text: "Festivals today" },
+      ],
+    });
+  }
+
+  // ── Panchangam queries
+  if (matchIntent(q, ["panchang", "panchangam", "tithi", "nakshatra", "rahu kala", "abhijit", "muhurta", "sunrise", "sunset", "yoga", "vara", "masa", "rashi"])) {
+    if (!panchangCtx) {
+      return make("🙏 I do not have the Panchangam data at this moment. Please try again shortly.");
+    }
+    let text = "**Today's Panchangam**\n\n";
+    text += `• **Tithi:** ${panchangCtx.paksha} ${panchangCtx.tithi}\n`;
+    text += `• **Nakshatra:** ${panchangCtx.nakshatra}\n`;
+    text += `• **Moon Rashi:** ${panchangCtx.rashi}\n`;
+    text += `• **Yoga:** ${panchangCtx.yoga}\n`;
+    text += `• **Vara:** ${panchangCtx.vara}\n`;
+    text += `• **Masa:** ${panchangCtx.masa}\n`;
+    text += `• **Sunrise:** ${panchangCtx.sunrise}\n`;
+    text += `• **Sunset:** ${panchangCtx.sunset}`;
+    if (panchangCtx.abhijitMuhurta) text += `\n• **Abhijit Muhurta:** ${panchangCtx.abhijitMuhurta}`;
+    if (panchangCtx.rahuKala) text += `\n• **Rahu Kala:** ${panchangCtx.rahuKala}`;
+    if (panchangCtx.festivalsToday?.length) text += `\n• **Festivals:** ${panchangCtx.festivalsToday.join(", ")}`;
+    text += "\n\nMay your day be filled with **Shubh Karma** and divine blessings. 🙏";
+    return make(text, {
+      alert: panchangCtx.inRahuKala ? "⚠️ Rahu Kala is active now" : panchangCtx.inAbhijit ? "🌟 Abhijit Muhurta now" : "",
+      quickReplies: [
+        { icon: "🕐", text: "When is Abhijit Muhurta today?" },
+        { icon: "⚠️", text: "When is Rahu Kala today?" },
+        { icon: "🎪", text: "Festivals today" },
+      ],
+    });
+  }
+
+  // ── Festival today
+  if (matchIntent(q, ["festival", "festivals today", "today festival", "celebration"])) {
+    if (!panchangCtx) return make("🙏 I am unable to fetch the festival calendar right now.");
+    if (panchangCtx.festivalsToday?.length) {
+      return make(`🎉 **Today we celebrate:** ${panchangCtx.festivalsToday.join(", ")}.\n\nMay this auspicious day bring you peace, prosperity, and divine grace. 🙏`, {
+        quickReplies: [
+          { icon: "🛕", text: "Nearest temples" },
+          { icon: "🕉️", text: "Tell me a shloka" },
+        ],
+      });
+    }
+    return make("There are no major festivals today according to the Panchangam. It is still a beautiful day for Darshan and quiet contemplation. 🙏", {
+      quickReplies: [
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  // ── Rahu Kala / Abhijit specific
+  if (matchIntent(q, ["rahu kala"])) {
+    if (!panchangCtx?.rahuKala) return make("🙏 Rahu Kala data is not available at the moment.");
+    let text = `**Rahu Kala today:** ${panchangCtx.rahuKala}.\n\nThis period is considered inauspicious for beginning new ventures, signing contracts, or making major purchases. It is, however, an excellent time for prayer, meditation, and chanting mantras.`;
+    if (panchangCtx.inRahuKala) text += "\n\n⚠️ **We are currently in Rahu Kala.**";
+    text += "\n\n*Om Namah Shivaya.* 🙏";
+    return make(text, {
+      alert: panchangCtx.inRahuKala ? "⚠️ Rahu Kala is active now" : "",
+      quickReplies: [
+        { icon: "🌟", text: "When is Abhijit Muhurta?" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  if (matchIntent(q, ["abhijit"])) {
+    if (!panchangCtx?.abhijitMuhurta) return make("🙏 Abhijit Muhurta data is not available at the moment.");
+    let text = `**Abhijit Muhurta today:** ${panchangCtx.abhijitMuhurta}.\n\nAbhijit Muhurta is the most auspicious time of the day — ideal for starting new ventures, travel, interviews, and important decisions. It is ruled by Vishnu as the victor over darkness.`;
+    if (panchangCtx.inAbhijit) text += "\n\n🌟 **We are currently in Abhijit Muhurta.** Make the most of it!";
+    text += "\n\n*Shubham Bhavatu.* 🙏";
+    return make(text, {
+      alert: panchangCtx.inAbhijit ? "🌟 Abhijit Muhurta now" : "",
+      quickReplies: [
+        { icon: "⚠️", text: "When is Rahu Kala?" },
+        { icon: "🛕", text: "Nearest temples" },
+      ],
+    });
+  }
+
+  // ── Nearest temples / near me
+  if (matchIntent(q, ["near me", "nearest temple", "nearby temple", "close temple", "around me", "sacred places near"])) {
+    const list = nearestTemples?.length ? nearestTemples : matchedTemples;
+    if (!list?.length) {
+      return make("🙏 I could not find any temples near your current location. Try enabling location access, or ask me about a specific city or pilgrimage circuit.", {
+        quickReplies: [
+          { icon: "🗺️", text: "Plan a pilgrimage route" },
+          { icon: "🛕", text: "Famous temples to visit" },
+        ],
+      });
+    }
+    let text = "**Nearest sacred temples to you:**\n\n";
+    const templesCards = [];
+    list.slice(0, 4).forEach((t, i) => {
+      text += `${i + 1}. **${t.templeName}**`;
+      if (t.deityPrimary) text += ` — ${t.deityPrimary}`;
+      if (t.townOrCity) text += `, ${t.townOrCity}`;
+      if (t.distanceKm != null) text += ` (${fmtDist(t.distanceKm)})`;
+      text += "\n";
+      templesCards.push({
+        name: t.templeName,
+        reason: t.deityPrimary ? `Deity: ${t.deityPrimary}` : "Sacred temple",
+        distanceText: t.distanceKm != null ? fmtDist(t.distanceKm) : "",
+      });
+    });
+    text += "\nMay your journey to these Tirthas be blessed. 🙏";
+    const actions = [];
+    if (list[0]?.latitude != null && list[0]?.longitude != null) {
+      actions.push({ label: "Get Directions", type: "maps", value: `${list[0].latitude},${list[0].longitude}` });
+    }
+    return make(text, {
+      temples: templesCards,
+      actions,
+      quickReplies: [
+        { icon: "🕐", text: "Darshan timings" },
+        { icon: "🗺️", text: "How to reach there" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  // ── Matched temples from database (generic query that matched records)
+  if (matchedTemples?.length > 0 && !currentTemple) {
+    const t = matchedTemples[0];
+    let text = `**🛕 ${t.templeName}**\n\n`;
+    if (t.deityPrimary) text += `**Primary Deity:** ${t.deityPrimary}\n`;
+    if (t.deitySecondary) text += `**Secondary Deity:** ${t.deitySecondary}\n`;
+    const loc = [t.townOrCity, t.district, t.stateOrUnionTerritory].filter(Boolean).join(", ");
+    if (loc) text += `**Location:** ${loc}\n`;
+    if (t.darshanTimings) text += `**Darshan Timings:** ${t.darshanTimings}\n`;
+    if (t.majorFestivals) text += `**Major Festivals:** ${t.majorFestivals}\n`;
+    if (t.architectureStyle) text += `**Architecture:** ${t.architectureStyle}\n`;
+    if (t.historicalSignificance) text += `**History:** ${t.historicalSignificance}\n`;
+    if (t.routeSummary) text += `**Route:** ${t.routeSummary}\n`;
+    if (t.specialNotes) text += `**Special Notes:** ${t.specialNotes}\n`;
+    text += "\n*May your Darshan be fulfilling and your heart be filled with Bhakti.* 🙏";
+    const templesCards = [{ name: t.templeName, reason: t.deityPrimary ? `Deity: ${t.deityPrimary}` : "Sacred temple" }];
+    const actions = [];
+    if (t.latitude != null && t.longitude != null) actions.push({ label: "Get Directions", type: "maps", value: `${t.latitude},${t.longitude}` });
+    if (t.id || t.templeName) actions.push({ label: "Open Details", type: "detail", value: t.id || t.templeName });
+    return make(text, {
+      temples: templesCards,
+      actions,
+      quickReplies: [
+        { icon: "🗺️", text: "How to reach" },
+        { icon: "🎪", text: "Festivals here" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  // ── Current temple context
+  if (currentTemple) {
+    let text = `**🛕 ${currentTemple.templeName}**\n\n`;
+    if (currentTemple.deityPrimary) text += `**Primary Deity:** ${currentTemple.deityPrimary}\n`;
+    if (currentTemple.deitySecondary) text += `**Secondary Deity:** ${currentTemple.deitySecondary}\n`;
+    const loc = [currentTemple.townOrCity, currentTemple.district, currentTemple.stateOrUnionTerritory].filter(Boolean).join(", ");
+    if (loc) text += `**Location:** ${loc}\n`;
+    if (currentTemple.darshanTimings) text += `**Darshan Timings:** ${currentTemple.darshanTimings}\n`;
+    if (currentTemple.majorFestivals) text += `**Major Festivals:** ${currentTemple.majorFestivals}\n`;
+    if (currentTemple.architectureStyle) text += `**Architecture:** ${currentTemple.architectureStyle}\n`;
+    if (currentTemple.historicalSignificance) text += `**History:** ${currentTemple.historicalSignificance}\n`;
+    if (currentTemple.routeSummary) text += `**Route:** ${currentTemple.routeSummary}\n`;
+    if (currentTemple.specialNotes) text += `**Special Notes:** ${currentTemple.specialNotes}\n`;
+    text += "\n*May the blessings of this sacred space uplift your soul.* 🙏";
+    const templesCards = [{ name: currentTemple.templeName, reason: currentTemple.deityPrimary ? `Deity: ${currentTemple.deityPrimary}` : "Sacred temple" }];
+    const actions = [];
+    if (currentTemple.latitude != null && currentTemple.longitude != null) actions.push({ label: "Get Directions", type: "maps", value: `${currentTemple.latitude},${currentTemple.longitude}` });
+    return make(text, {
+      temples: templesCards,
+      actions,
+      quickReplies: [
+        { icon: "🗺️", text: "How to reach" },
+        { icon: "🎪", text: "Festivals here" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  // ── 12 Jyotirlingas
+  if (matchIntent(q, ["jyotirlinga", "12 jyotirlinga", "jyotirlingas"])) {
+    let text = "**The 12 Jyotirlingas** are the most sacred abodes of Lord Shiva, where He appeared as a pillar of light.\n\n";
+    JYOTIRLINGAS.forEach((j, i) => { text += `${i + 1}. ${j}\n`; });
+    text += "\n*Chanting the Dwadasha Jyotirlinga Stotram brings spiritual merit and liberation.* 🙏";
+    return make(text, {
+      quickReplies: [
+        { icon: "📿", text: "Dwadasha Jyotirlinga Stotram" },
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "🗺️", text: "Plan a pilgrimage route" },
+      ],
+    });
+  }
+
+  // ── 51 Shakti Peethas
+  if (matchIntent(q, ["shakti peetha", "shakti peethas", "51 shakti"])) {
+    return make(`There are **${SHAKTI_PEETHAS_COUNT} Shakti Peethas** across the Indian subcontinent — sacred seats of the Divine Mother where parts of Devi Sati's body are believed to have fallen.\n\nProminent ones include **Kamakhya** (Assam), **Kalighat** (West Bengal), **Vaishno Devi** (Jammu & Kashmir), **Meenakshi** (Tamil Nadu), and **Tulja Bhavani** (Maharashtra).\n\n*May Devi's grace protect you always.* 🙏`, {
+      quickReplies: [
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  // ── 108 Divya Desams
+  if (matchIntent(q, ["divya desam", "divya desams", "108 divya"])) {
+    return make(`The **${DIVYA_DESAMS_COUNT} Divya Desams** are the holiest Vishnu temples praised by the 12 Alvar saints in the Naalayira Divya Prabandham. Most are in Tamil Nadu, with others in Kerala, Andhra Pradesh, Gujarat, Uttar Pradesh, and Nepal.\n\n*Srirangam, Tirupati, Kanchipuram, and Badrinath* are among the most revered.\n\n*May your Bhakti deepen with every Darshan.* 🙏`, {
+      quickReplies: [
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "🗺️", text: "Plan a pilgrimage route" },
+      ],
+    });
+  }
+
+  // ── Char Dham
+  if (matchIntent(q, ["char dham", "chardham", "four dhams"])) {
+    let text = "**Char Dham** — the four sacred abodes:\n\n";
+    CHAR_DHAM.forEach((d, i) => { text += `${i + 1}. ${d}\n`; });
+    text += "\nTraditionally, the pilgrimage is undertaken in the order: **West (Dwarka) → South (Rameshwaram) → East (Puri) → North (Badrinath).**\n\n*May your Tirtha Yatra be safe and spiritually fulfilling.* 🙏";
+    return make(text, {
+      quickReplies: [
+        { icon: "🗺️", text: "Plan a pilgrimage route" },
+        { icon: "🛕", text: "Nearest temples" },
+      ],
+    });
+  }
+
+  // ── Pancha Bhuta Stalas
+  if (matchIntent(q, ["pancha bhuta", "panchabhuta", "five elements"])) {
+    let text = "**Pancha Bhuta Stalas** — temples representing the five elements:\n\n";
+    PANCHA_BHUTA_STALAS.forEach((t, i) => { text += `${i + 1}. ${t}\n`; });
+    text += "\nAll five are sacred Shaivite shrines in Tamil Nadu and Andhra Pradesh.\n\n*May the five elements bless your path.* 🙏";
+    return make(text, {
+      quickReplies: [
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  // ── Shloka / mantra / peace
+  if (matchIntent(q, ["shloka", "shlok", "mantra", "peace", "chant", "prayer"])) {
+    const shlokas = [
+      { title: "Shanti Mantra", text: "*Om Sarve Bhavantu Sukhinah*\n*Sarve Santu Niramayah*\n*Sarve Bhadrani Pashyantu*\n*Ma Kashchit Duhkha Bhagbhavet*\n*Om Shantih Shantih Shantih*" },
+      { title: "Gayatri Mantra", text: "*Om Bhur Bhuvaḥ Svaḥ*\n*Tat Savitur Vareṇyaṃ*\n*Bhargo Devasya Dhīmahi*\n*Dhiyo Yo Naḥ Prachodayāt*" },
+      { title: "Maha Mrityunjaya Mantra", text: "*Om Tryambakam Yajamahe*\n*Sugandhim Pushtivardhanam*\n*Urvarukamiva Bandhanan*\n*Mrityor Mukshiya Maamritat*" },
+    ];
+    const pick = shlokas[Math.floor(Math.random() * shlokas.length)];
+    return make(`**${pick.title}**\n\n${pick.text}\n\nChant this with devotion and a calm mind. *May peace and divine grace be yours.* 🙏`, {
+      quickReplies: [
+        { icon: "📿", text: "Another shloka" },
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "🕉️", text: "Teach me a mantra" },
+      ],
+    });
+  }
+
+  // ── Pilgrimage route / plan
+  if (matchIntent(q, ["route", "pilgrimage", "plan", "itinerary", "travel", "how to reach", "directions"])) {
+    return make(`**Planning a sacred pilgrimage** is a beautiful intention. Here are some tips:\n\n1. **Choose your circuit** — Char Dham, 12 Jyotirlingas, Shakti Peethas, or Tamil Nadu's Navagraha/Divya Desam trails.\n2. **Best seasons** — October to March for North India; year-round for South India (avoid peak summer).\n3. **Travel modes** — Indian Railways connects most major Tirthas. For remote temples, hire local taxis or join organized Yatra buses.\n4. **Stay** — Many temples offer budget Dharmashalas; book in advance during festivals.\n5. **Pack light** — modest clothing, a small puja kit, water, and an open heart.\n\n*May your Tirtha Yatra transform your soul.* 🙏`, {
+      quickReplies: [
+        { icon: "🗺️", text: "Char Dham route" },
+        { icon: "🛕", text: "12 Jyotirlingas" },
+        { icon: "🛕", text: "Nearest temples" },
+      ],
+    });
+  }
+
+  // ── Temple etiquette / dress code / visit tips
+  if (matchIntent(q, ["etiquette", "dress code", "what to wear", "visit tips", "darshan tips", "rules", "guidelines", "offering"])) {
+    return make(`**Temple Etiquette & Darshan Tips**\n\n• **Dress modestly** — traditional Indian attire is best; avoid shorts, sleeveless tops, and leather.\n• **Remove footwear** before entering the sanctum.\n• **Maintain silence** inside the Garbha Griha and avoid photography unless permitted.\n• **Prasad & offerings** — flowers, coconuts, and camphor are common. Avoid non-vegetarian food before visiting.\n• **Head coverings** may be required in some temples (especially Gurudwaras and certain Devi shrines).\n• **Queue patiently** — early mornings and weekdays are less crowded.\n\n*May your visit be filled with reverence and divine blessings.* 🙏`, {
+      quickReplies: [
+        { icon: "🛕", text: "Nearest temples" },
+        { icon: "🕐", text: "Darshan timings" },
+        { icon: "🕉️", text: "Tell me a shloka" },
+      ],
+    });
+  }
+
+  // ── Default graceful fallback
+  let text = "🙏 I am currently answering from **local sacred wisdom**, as the cloud connection is resting.\n\n";
+  text += "I can help you with:\n";
+  text += "• Today's **Panchangam** (Tithi, Nakshatra, Rahu Kala, Abhijit Muhurta)\n";
+  text += "• **Nearest temples** and directions\n";
+  text += "• **12 Jyotirlingas**, **51 Shakti Peethas**, **108 Divya Desams**, **Char Dham**\n";
+  text += "• **Shlokas**, **mantras**, and temple etiquette\n";
+  text += "• **Pilgrimage routes** and travel guidance\n\n";
+  text += "Please ask me about any of these, and I shall guide you with devotion.";
+  if (panchangCtx?.inRahuKala) text += "\n\n⚠️ *Note: Rahu Kala is active right now.*";
+  else if (panchangCtx?.inAbhijit) text += "\n\n🌟 *Note: Abhijit Muhurta is active right now — an auspicious time!*";
+  text += "\n\n*Om Shantih Shantih Shantih.* 🙏";
+  return make(text, {
+    alert: panchangCtx?.inRahuKala ? "⚠️ Rahu Kala is active now" : panchangCtx?.inAbhijit ? "🌟 Abhijit Muhurta now" : "",
+    quickReplies: [
+      { icon: "🕉️", text: "Tell me a shloka" },
+      { icon: "🛕", text: "Nearest temples" },
+      { icon: "📿", text: "What are the 12 Jyotirlingas?" },
+      { icon: "🎪", text: "Festivals today" },
+    ],
+  });
+}
+
 /* ─── Markdown Renderer helper (returns React-like structure data) ─────────── */
 
 export function renderMd(text) {
