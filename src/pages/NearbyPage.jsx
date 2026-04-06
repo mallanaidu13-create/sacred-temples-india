@@ -6,7 +6,8 @@ import { useGeo, haversineKm, bearingDeg, formatCompass } from "../useGeo.js";
 import { SacredRadar, NearbyCard, RadarLegend } from "../SacredRadar.jsx";
 import { TIRTHA_CIRCUITS } from "../tirtha-data.js";
 import { isMapplsConfigured, fetchNearbyTemples, reverseGeocode, fetchDistanceMatrix, mergeMapplsTemples } from "../mappls-api.js";
-import { fetchOverpassTemples, mergeOsmTemples, reverseGeocodeOSM } from "../overpass-api.js";
+import { mergeTemples, fetchOsmTemplesProgressive } from "../osm-temples.js";
+import { reverseGeocodeOSM } from "../overpass-api.js";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -393,27 +394,28 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
   const distMatrixKeyRef = useRef("");
   const isMapplsAvail = useMemo(() => isMapplsConfigured(), []);
 
-  // OSM / Overpass real-time discovery state
-  const [osmDiscoveries, setOsmDiscoveries] = useState([]);
+  // OSM real-time discovery state (original pattern)
   const [osmLoading, setOsmLoading] = useState(false);
+  const [osmRadius, setOsmRadius] = useState(0);
   const [osmError, setOsmError] = useState(null);
-  const osmFetchKeyRef = useRef("");
+  const [osmCount, setOsmCount] = useState(0);
+  const [merged, setMerged] = useState(temples);
+  const fetchedKeyRef = useRef("");
+  const fetchingRef = useRef(false);
 
   useEffect(() => {
     templesRef.current = temples;
+    setMerged(prev => {
+      const osmOnly = prev.filter(p => p._source === "osm");
+      return mergeTemples(temples, osmOnly);
+    });
   }, [temples]);
 
-  // Merge Supabase + Mappls + OSM discovered temples
-  // For Nearby: OSM real-time results are primary source.
-  // Database temples only appear if they're genuinely within range.
+  // Merge: Mappls discoveries into merged list
   const mergedTemples = useMemo(() => {
-    let discovered = [];
-    if (osmDiscoveries.length) discovered = [...osmDiscoveries];
-    if (mapplsDiscoveries.length) discovered = mergeMapplsTemples(discovered.length ? discovered : [], mapplsDiscoveries);
-    // Merge curated database temples in — dedup keeps the curated version (richer data)
-    if (discovered.length) return mergeOsmTemples(temples, discovered);
-    return temples; // fallback before any discovery completes
-  }, [temples, mapplsDiscoveries, osmDiscoveries]);
+    if (!mapplsDiscoveries.length) return merged;
+    return mergeMapplsTemples(merged, mapplsDiscoveries);
+  }, [merged, mapplsDiscoveries]);
 
   const allWithCoords = useMemo(() => {
     const loc = geo.effectiveLocation;
@@ -458,23 +460,45 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
       .finally(() => setMapplsLoading(false));
   }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range, isMapplsAvail]);
 
-  // ── OSM Overpass: Discover nearby temples (free, always available) ──
-  useEffect(() => {
+  // ── OSM: Discover real temples nearby (progressive: 10→25→50 km) ──
+  const runOsmFetch = useCallback(() => {
+    let cancelled = false;
     const loc = geo.effectiveLocation;
-    if (!loc) return;
-    const fetchKey = `${loc.latitude.toFixed(3)},${loc.longitude.toFixed(3)},${range}`;
-    if (osmFetchKeyRef.current === fetchKey) return;
-    osmFetchKeyRef.current = fetchKey;
+    if (!loc) {
+      setOsmRadius(0);
+      setOsmError(null);
+      return;
+    }
+
+    const fetchKey = `${loc.latitude.toFixed(3)},${loc.longitude.toFixed(3)}`;
+    if (fetchedKeyRef.current === fetchKey || fetchingRef.current) return;
+    fetchedKeyRef.current = fetchKey;
+    fetchingRef.current = true;
 
     setOsmLoading(true);
     setOsmError(null);
-    fetchOverpassTemples(loc.latitude, loc.longitude, range)
-      .then(({ results, error }) => {
-        if (error) { setOsmError(error); return; }
-        setOsmDiscoveries(results);
+    fetchOsmTemplesProgressive(loc.latitude, loc.longitude, (r) => setOsmRadius(r))
+      .then(({ data, radius }) => {
+        if (cancelled) return;
+        setOsmCount(data.length);
+        setMerged(mergeTemples(templesRef.current, data));
+        setOsmError(null);
       })
-      .finally(() => setOsmLoading(false));
-  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, range]);
+      .catch((e) => {
+        if (cancelled) return;
+        setOsmError(e.message || "Could not reach OpenStreetMap. Try again.");
+      })
+      .finally(() => {
+        fetchingRef.current = false;
+        if (!cancelled) setOsmLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude]);
+
+  // Auto-trigger OSM fetch when location is available
+  useEffect(() => {
+    if (geo.effectiveLocation) runOsmFetch();
+  }, [geo.effectiveLocation?.latitude, geo.effectiveLocation?.longitude, runOsmFetch]);
 
   // ── Reverse geocode user location (Mappls or OSM Nominatim) ──
   useEffect(() => {
@@ -564,7 +588,6 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
   const coordCount = allWithCoords.length;
   const nearest = allWithCoords[0];
   const isDiscovering = osmLoading || (isMapplsAvail && mapplsLoading);
-  const hasDiscovered = osmDiscoveries.length > 0 || mapplsDiscoveries.length > 0;
   const showFallback = geo.effectiveLocation && nearby.length === 0 && !isDiscovering && coordCount > 0;
 
   return (
@@ -657,18 +680,24 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
             {userAddress && (
               <div style={{ marginBottom: 4 }}>📍 <span style={{ color: C.creamM, fontWeight: 500 }}>{userAddress.area || userAddress.landmark}{userAddress.city ? `, ${userAddress.city}` : ""}</span></div>
             )}
-            <div>Curated: <span style={{ color: C.creamM, fontWeight: 600 }}>{temples.filter(t => t.latitude != null && t.longitude != null).length}</span> major temples</div>
-            {osmDiscoveries.length > 0 && (
-              <div>Real-time: <span style={{ color: "#4ade80", fontWeight: 600 }}>{osmDiscoveries.length}</span> temples discovered via OpenStreetMap</div>
+            <div>Database: <span style={{ color: C.creamM, fontWeight: 600 }}>{temples.filter(t => t.latitude != null && t.longitude != null).length}</span> temples with coordinates</div>
+            {osmLoading && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <span style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.div}`, borderTopColor: C.saffron, animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                <span>Scanning OpenStreetMap{osmRadius ? ` up to ${osmRadius} km…` : "…"}</span>
+              </div>
+            )}
+            {!osmLoading && osmCount > 0 && (
+              <div style={{ marginTop: 4, color: "#4ade80" }}>✔ OpenStreetMap added <span style={{ fontWeight: 700 }}>{osmCount}</span> real temples nearby</div>
+            )}
+            {osmError && (
+              <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
+                <span style={{ color: "#f87171" }}>⚠ {osmError}</span>
+                <button className="t" onClick={() => { fetchedKeyRef.current = ""; fetchingRef.current = false; runOsmFetch(); }} style={{ padding: "5px 10px", borderRadius: 8, background: C.saffronDim, border: "none", color: C.saffron, fontSize: 10, fontWeight: 700, cursor: "pointer" }}>Retry</button>
+              </div>
             )}
             {isMapplsAvail && mapplsDiscoveries.length > 0 && (
               <div>Mappls: <span style={{ color: "#4ade80", fontWeight: 600 }}>+{mapplsDiscoveries.length}</span> verified temples discovered</div>
-            )}
-            {isDiscovering && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                <span style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.div}`, borderTopColor: "#4ade80", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
-                <span>Discovering real-time temples nearby…</span>
-              </div>
             )}
             {Object.keys(roadDistances).length > 0 && (
               <div style={{ marginTop: 2 }}>🛣 Road distances available for <span style={{ color: C.creamM, fontWeight: 600 }}>{Object.keys(roadDistances).length}</span> temples</div>
@@ -728,7 +757,7 @@ const Nearby = ({ oT, oF, temples, loading, isDark, onToggleTheme }) => {
         <>
           <div style={{ margin: "0 24px 10px", padding: "10px 14px", borderRadius: 12, background: "rgba(212,133,60,0.08)", border: "1px solid rgba(212,133,60,0.2)" }}>
             <div style={{ fontSize: 12, color: C.saffron, fontWeight: 600 }}>No temples within {range} km</div>
-            <div style={{ fontSize: 11, color: C.textD, marginTop: 3 }}>{hasDiscovered ? "Try a larger radius to find more." : "Showing nearest known temples. Try a larger radius."}</div>
+            <div style={{ fontSize: 11, color: C.textD, marginTop: 3 }}>{osmCount > 0 ? "Try a larger radius to find more." : "Showing nearest known temples. Try a larger radius."}</div>
           </div>
           {allWithCoords.slice(0, 10).map((t, i) => (
             <NearbyCard
